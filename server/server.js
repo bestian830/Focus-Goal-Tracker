@@ -22,6 +22,12 @@ const PORT = process.env.PORT || 5050;
 // Auth routes - handles user authentication (including guest login)
 app.use("/api/auth", require("./routes/auth"));
 
+// Goals routes - handles goal management
+app.use("/api/goals", require("./routes/goals"));
+
+// Progress routes - handles progress tracking
+app.use("/api/progress", require("./routes/progress"));
+
 // Test API - simple endpoint to verify server is running
 app.get("/", (req, res) => {
   res.send("Hello from Express Server!");
