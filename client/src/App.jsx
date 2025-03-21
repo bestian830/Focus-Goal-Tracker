@@ -5,6 +5,8 @@ import {
   Navigate,
 } from "react-router-dom";
 import GuestLogin from "./pages/GuestLogin";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Home from "./pages/Home";
 import "./App.css";
 
@@ -12,8 +14,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* route for guest login */}
-        <Route path="/login" element={<GuestLogin />} />
+        {/* Authentication Routes */}
+        <Route path="/guest-login" element={<GuestLogin />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Main Page Route - no authentication required */}
         <Route path="/" element={<Home />} />
