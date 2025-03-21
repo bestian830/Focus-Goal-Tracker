@@ -6,7 +6,102 @@
   },
   "item": [
     {
-      "name": "1. Guest User Management",
+      "name": "1. User Management",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get User Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5050/api/auth/me/:userId",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "auth", "me", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Link Temp User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tempId\": \"{{tempId}}\",\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/auth/link-temp",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "auth", "link-temp"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Guest User Management",
       "item": [
         {
           "name": "Create Guest User",
@@ -46,7 +141,86 @@
       ]
     },
     {
-      "name": "2. Goal Management",
+      "name": "3. TempUser API (Future Implementation)",
+      "item": [
+        {
+          "name": "Create Temp User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tempId\": \"temp_{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/temp-users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "temp-users"]
+            }
+          }
+        },
+        {
+          "name": "Get Temp User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5050/api/temp-users/:tempId",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "temp-users", ":tempId"],
+              "variable": [
+                {
+                  "key": "tempId",
+                  "value": "{{tempId}}",
+                  "description": "Temp User ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Goal to Temp User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Learn React as Temp User\",\n  \"description\": \"Complete React tutorial before registering a full account\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/temp-users/:tempId/goals",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "temp-users", ":tempId", "goals"],
+              "variable": [
+                {
+                  "key": "tempId",
+                  "value": "{{tempId}}",
+                  "description": "Temp User ID"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Goal Management",
       "item": [
         {
           "name": "Create Goal",
@@ -174,6 +348,66 @@
           }
         },
         {
+          "name": "Add Goal Checkpoint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete React Hooks section\",\n  \"description\": \"Learn and practice React Hooks concepts\",\n  \"targetDate\": \"2023-04-15\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/goals/:id/checkpoints",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "goals", ":id", "checkpoints"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{goalId}}",
+                  "description": "Goal ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Goal Declaration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"I will become a skilled React developer\",\n  \"vision\": \"I see myself building complex React applications with confidence\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/goals/:id/declaration",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "goals", ":id", "declaration"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{goalId}}",
+                  "description": "Goal ID"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Delete Goal",
           "request": {
             "method": "DELETE",
@@ -197,7 +431,7 @@
       ]
     },
     {
-      "name": "3. Progress Tracking",
+      "name": "5. Progress Tracking",
       "item": [
         {
           "name": "Create Progress Record",
@@ -304,6 +538,41 @@
           }
         },
         {
+          "name": "Update Checkpoint Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isCompleted\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/progress/:id/checkpoints/:checkpointId",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "progress", ":id", "checkpoints", ":checkpointId"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{progressId}}",
+                  "description": "Progress ID"
+                },
+                {
+                  "key": "checkpointId",
+                  "value": "{{checkpointId}}",
+                  "description": "Checkpoint ID"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Progress Summary",
           "request": {
             "method": "GET",
@@ -333,11 +602,161 @@
           }
         }
       ]
+    },
+    {
+      "name": "6. Report Management",
+      "item": [
+        {
+          "name": "Generate Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"goalId\": \"{{goalId}}\",\n  \"userId\": \"{{guestUserId}}\",\n  \"type\": \"weekly\",\n  \"period\": {\n    \"startDate\": \"2023-03-01\",\n    \"endDate\": \"2023-03-07\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/reports/generate",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "reports", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Get Reports for Goal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5050/api/reports?goalId={{goalId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "reports"],
+              "query": [
+                {
+                  "key": "goalId",
+                  "value": "{{goalId}}",
+                  "description": "Goal ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Report Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5050/api/reports/:id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "reports", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{reportId}}",
+                  "description": "Report ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Report Content",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated report content with manual edits\",\n  \"insights\": [\n    \"Insight 1: Progress has been consistent\",\n    \"Insight 2: More focus needed on practical exercises\"\n  ],\n  \"recommendations\": [\n    \"Recommendation 1: Spend more time on coding exercises\",\n    \"Recommendation 2: Review core concepts weekly\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5050/api/reports/:id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "reports", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{reportId}}",
+                  "description": "Report ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Report",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5050/api/reports/:id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "reports", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{reportId}}",
+                  "description": "Report ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Report as PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5050/api/export/reports/:id/pdf",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5050",
+              "path": ["api", "export", "reports", ":id", "pdf"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{reportId}}",
+                  "description": "Report ID"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [
     {
+      "key": "userId",
+      "value": ""
+    },
+    {
       "key": "guestUserId",
+      "value": ""
+    },
+    {
+      "key": "tempId",
       "value": ""
     },
     {
@@ -346,6 +765,14 @@
     },
     {
       "key": "progressId",
+      "value": ""
+    },
+    {
+      "key": "reportId",
+      "value": ""
+    },
+    {
+      "key": "checkpointId",
       "value": ""
     }
   ]
