@@ -319,8 +319,8 @@ focus-app/
 
 - email: 用戶電子郵件 (唯一)
 - googleId: Google 認證 ID
+- tempID: if exist （從tempUser轉到User需要的）
 - username: 用戶名稱
-- isGuest: 是否訪客
 - goals: 關聯目標 ID 數組
 - preferences: 用戶偏好設置
   - language: 語言偏好
@@ -369,7 +369,7 @@ focus-app/
 - insights: AI 生成的洞察
 - recommendations: 推薦建議
 
-### 5. 臨時用戶集合 (tempUsers)
+### 5. 臨時用戶集合 (temp_users) (mongoDB 規定的syntax)
 
 主要字段:
 

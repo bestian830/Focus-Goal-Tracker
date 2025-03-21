@@ -9,16 +9,16 @@
    - 只包含正式註冊用戶
    - 正式註冊用戶：有 email/password 或 googleID，
    - 存儲在 users 集合
-   - 可以創建最多4個目標(預設3個)：bonus 1
+   - 可以創建最多 4 個目標(預設 3 個)：bonus 1
    - 正式用戶可以長期使用所有功能
-   - 帳號密碼如果用google API 認證就是需要一個轉換儲存的問題（這部分可能要用到google的api)
+   - 帳號密碼如果用 google API 認證就是需要一個轉換儲存的問題（這部分可能要用到 google 的 api)
 
 2. **TempUser 模型** (temp_users 集合)
    - 完全獨立的臨時數據存儲
-   - 使用 tempId 標識
    - 只能創建一個目標
    - 21 天後自動過期
    - 用於前期體驗，可以轉換為正式用戶
+   - 考慮使用 tempId 標識，目前只有可能前期體驗轉換成正式用戶需要（下面有 link temp user)
 
 ## API 端點詳細說明
 
@@ -35,7 +35,7 @@
   - tempId: (可選) 如要關聯 TempUser 數據
 - **使用場景**: 創建新賬戶或從 TempUser 轉換為正式賬戶
 
-#### Login User (用戶登錄)
+#### Login User (用戶登錄) (ok)
 
 - **端點**: `POST /api/auth/login`
 - **目的**: 用戶登錄並獲取 JWT 認證令牌
@@ -52,43 +52,26 @@
   - userId: 用戶 ID（URL 參數）
 - **使用場景**: 獲取已登錄或訪客用戶的信息
 
-#### Link Temp User (關聯臨時用戶)
+<!-- #### Link Temp User (關聯臨時用戶) consider to delete this coz the tempID can be dealt in register user
 
 - **端點**: `POST /api/auth/link-temp`
 - **目的**: 將臨時用戶(TempUser)數據關聯到正式用戶賬戶
 - **參數**:
   - tempId: 臨時用戶 ID
   - userId: 正式用戶 ID
-- **使用場景**: 當臨時用戶註冊正式賬戶時，保留其之前的數據
+- **使用場景**: 當臨時用戶註冊正式賬戶時，保留其之前的數據 -->
 
-### 2. Guest User Management
+### 2. TempUser API
 
-#### Create Guest User (創建訪客用戶)
-
-- **端點**: `POST /api/auth/guest`
-- **目的**: 創建一個新的訪客用戶（存儲在 users 集合中）
-- **參數**: 無需參數，系統自動生成
-- **使用場景**: 用戶希望無需註冊即可使用基本功能
-
-#### Get Guest User Info (獲取訪客用戶信息)
-
-- **端點**: `GET /api/auth/me/:userId`
-- **目的**: 獲取訪客用戶的詳細信息
-- **參數**:
-  - userId: 訪客用戶 ID（URL 參數）
-- **使用場景**: 獲取已創建的訪客用戶信息
-
-### 3. TempUser API (Future Implementation)
-
-#### Create Temp User (創建臨時用戶)
+#### Create Temp User (創建臨時用戶) (OK)
 
 - **端點**: `POST /api/temp-users`
-- **目的**: 創建一個新的臨時用戶記錄（存儲在 temp_users 集合）
+- **目的**: 創建一個新的臨時用戶記錄（存儲在 temp_users 集合）當點選 enter as Guest 時就創建。
 - **參數**:
   - tempId: 臨時用戶唯一標識（可選，如不提供則自動生成）
-- **使用場景**: 為首次使用應用的用戶提供最小功能體驗
+- **使用場景**: 為首次使用應用的用戶提供 21 天，限制最多一個目標的體驗。
 
-#### Get Temp User (獲取臨時用戶)
+#### Get Temp User (獲取臨時用戶) (OK)
 
 - **端點**: `GET /api/temp-users/:tempId`
 - **目的**: 獲取指定臨時用戶的信息
@@ -96,7 +79,7 @@
   - tempId: 臨時用戶 ID（URL 參數）
 - **使用場景**: 查詢臨時用戶的基本信息和目標
 
-#### Add Goal to Temp User (為臨時用戶添加目標)
+#### Add Goal to Temp User (為臨時用戶添加目標) (OK)
 
 - **端點**: `POST /api/temp-users/:tempId/goals`
 - **目的**: 為臨時用戶創建一個目標（限一個）
@@ -108,7 +91,7 @@
 
 ### 4. Goal Management
 
-#### Create Goal (創建目標)
+#### Create Goal (創建目標) (OK)
 
 - **端點**: `POST /api/goals`
 - **目的**: 為用戶創建一個新目標
@@ -120,15 +103,15 @@
   - deadline: 截止日期（可選）
 - **使用場景**: 用戶希望創建一個新的目標進行追蹤
 
-#### Get User Goals (獲取用戶目標)
+#### Get User Goals (獲取ㄋ用戶目標) (OK)
 
-- **端點**: `GET /api/goals/:userId`
+- **端點**: `GET /api/goals/user/:userId`
 - **目的**: 獲取指定用戶的所有目標
 - **參數**:
   - userId: 用戶 ID（URL 參數）
 - **使用場景**: 查看用戶創建的所有目標列表
 
-#### Get Goal Details (獲取目標詳情)
+#### Get Goal Details (獲取目標詳情)(suggest skip detail)
 
 - **端點**: `GET /api/goals/detail/:id`
 - **目的**: 獲取特定目標的詳細信息
@@ -306,12 +289,12 @@
 
 ### 關鍵區別
 
-- **User (所有透過帳號密碼註冊/或者googelAPI認證的用戶）**:
+- **User (所有透過帳號密碼註冊/或者 googelAPI 認證的用戶）**:
 
   - 存儲在 users 集合
-  - 可以創建最多4個目標(預設3個)：bonus 1
+  - 可以創建最多 4 個目標(預設 3 個)：bonus 1
   - 正式用戶可以長期使用所有功能
-  - 帳號密碼如果用google API 認證就是需要一個轉換儲存的問題（這部分可能要用到google的api)
+  - 帳號密碼如果用 google API 認證就是需要一個轉換儲存的問題（這部分可能要用到 google 的 api)
 
 - **TempUser**:
   - 存儲在 temp_users 集合
@@ -328,25 +311,43 @@
 
 #### 數據轉換示例代碼
 
+1. **整合到註冊流程中**
+
+   - 在 `POST /api/auth/register` 端點中已經包含了可選的 `tempId` 參數
+   - 當用戶註冊時，後端可直接檢查是否提供了 `tempId`，如果有，就自動處理數據轉移
+
+2. **簡化用戶體驗**
+
+   - 用戶不需要在註冊後再執行一個單獨的「關聯」操作
+   - 整個流程對用戶來說更流暢，減少了操作步驟
+
+3. **前端實現**
+   - 前端可以在臨時用戶使用期間將其 `tempId` 存儲在 localStorage 或 cookie 中
+   - 當用戶決定註冊時，自動從本地存儲中獲取 `tempId` 並包含在註冊請求中
+
+### 建議的實現方式
+
 ```javascript
-// 1. 從 tempuser 找到該文件
-const tempUser = await TempUser.findById(tempUserId);
-if (!tempUser) {
-  throw new Error("未找到臨時用戶");
+// 註冊端點已足夠處理數據轉移
+POST /api/auth/register
+{
+  username: "用戶名",
+  email: "郵箱",
+  password: "密碼",
+  tempId: "temp_12345" // 從本地存儲中獲取，如果存在的話
 }
+```
 
-// 2. 建立新的 user 文件，並把 _id 直接複製
-const newUser = new User({
-  _id: tempUser._id, // 保留原 _id
-  username: tempUser.username,
-  email: tempUser.email,
-  goal: tempUser.goal,
-  // ... 其他需要遷移的欄位
-});
-await newUser.save();
+後端處理邏輯：
 
-// 3. 遷移完畢後，可選擇刪除 tempuser 中的文件
-await TempUser.findByIdAndRemove(tempUserId);
+1. 創建新用戶
+2. 檢查是否提供了 `tempId`
+3. 如果有，查找對應的臨時用戶數據
+4. 將臨時用戶的數據轉移到新創建的用戶
+5. 刪除或標記臨時用戶數據為已轉移
+
+這樣的設計更簡潔，減少了 API 端點數量，並簡化了整個用戶體驗流程。除非您有特殊需求（如在用戶註冊後的某個時間點才需要關聯臨時數據），否則單獨的 `link-temp` 端點可能是多餘的。
+
 ```
 
 ## 使用說明
@@ -356,3 +357,4 @@ await TempUser.findByIdAndRemove(tempUserId);
 3. 只在需要測試極簡體驗流程時使用 TempUser API
 4. 按照集合中的順序測試，先創建用戶，再創建目標
 5. 使用變量存儲返回的 ID，以便後續請求使用
+```
