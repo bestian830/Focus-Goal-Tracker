@@ -12,8 +12,8 @@ import '../styles/GuestLogin.css'; // We'll create this file later
  * 3. Stores the user ID in localStorage
  * 4. Navigates to the home page
  * 
- * Route: / (root path)
- * Next route: /home (after successful login)
+ * Route: /login
+ * Next route: / (after successful login)
  */
 function GuestLogin() {
   // State to track if login request is in progress
@@ -38,7 +38,7 @@ function GuestLogin() {
       localStorage.setItem('userId', response.data.data.id);
       
       // Redirect to the home page
-      navigate('/home');
+      navigate('/');
     } catch (error) {
       console.error('Failed to login as guest:', error);
       alert('Login failed. Please try again.');

@@ -7,70 +7,21 @@ import '../styles/Home.css'; // We'll create this file later
  * Home Component
  * 
  * This component:
- * 1. Fetches the current user information using the ID stored in localStorage
- * 2. Displays a welcome message and the Goal Tracker interface
- * 3. Shows placeholder content for goals (to be implemented in future iterations)
+ * 1. Displays the Goal Tracker interface
+ * 2. Shows placeholder content for goals (to be implemented in future iterations)
  * 
- * Route: /home
- * Previous route: / (GuestLogin)
+ * Route: /home or /
  */
 function Home() {
-  // State for user data and loading status
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
-
-  // Effect to fetch user data when component mounts
-  useEffect(() => {
-    const fetchUserData = async () => {
-      // Get userId from localStorage (set during login)
-      const userId = localStorage.getItem('userId');
-      
-      // If no userId is found, redirect to login page
-      if (!userId) {
-        navigate('/');
-        return;
-      }
-      
-      try {
-        // Fetch user information from backend API
-        const response = await axios.get(`http://localhost:5050/api/auth/me/${userId}`);
-        setUser(response.data.data);
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-        setError('Failed to load user data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [navigate]);
-
-  // Loading state
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
-
-  // Error state
-  if (error) {
-    return <div className="error">{error}</div>;
-  }
-
-  // If user not found (should not happen due to redirect in useEffect)
-  if (!user) {
-    return <div className="error">User not found. Please log in again.</div>;
-  }
 
   return (
     <div className="home-container">
       <header className="app-header">
         <h1>Goal Tracker</h1>
         <div className="user-info">
-          <span>Welcome, {user.username}</span>
+          <span>Welcome, Guest</span>
         </div>
       </header>
       
