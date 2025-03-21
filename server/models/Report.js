@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 /**
  * Report Schema - Defines the structure for AI-generated reports in MongoDB
- * 
+ *
  * Fields:
  * - goalId: Reference to the goal this report is about
  * - userId: Reference to the user who owns this report
@@ -13,65 +13,74 @@ const mongoose = require("mongoose");
  * - recommendations: AI-generated recommendations
  * - createdAt: Timestamp when the report was created
  */
-const ReportSchema = new mongoose.Schema({
-  goalId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Goal",
-    required: true
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-  type: {
-    type: String,
-    enum: ["weekly", "monthly", "custom"],
-    default: "weekly"
-  },
-  period: {
-    startDate: {
+const ReportSchema = new mongoose.Schema(
+  {
+    goalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Goal",
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ["weekly", "monthly", "custom"],
+      default: "weekly",
+    },
+    period: {
+      startDate: {
+        type: Date,
+        required: true,
+      },
+      endDate: {
+        type: Date,
+        required: true,
+      },
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    insights: [
+      {
+        type: String,
+      },
+    ],
+    recommendations: [
+      {
+        type: String,
+      },
+    ],
+    metrics: {
+      totalDuration: {
+        type: Number,
+        default: 0,
+      },
+      completedCheckpoints: {
+        type: Number,
+        default: 0,
+      },
+      totalSessions: {
+        type: Number,
+        default: 0,
+      },
+    },
+    isGenerated: {
+      type: Boolean,
+      default: true,
+    },
+    createdAt: {
       type: Date,
-      required: true
+      default: Date.now,
     },
-    endDate: {
-      type: Date,
-      required: true
-    }
   },
-  content: {
-    type: String,
-    required: true
-  },
-  insights: [{
-    type: String
-  }],
-  recommendations: [{
-    type: String
-  }],
-  metrics: {
-    totalDuration: {
-      type: Number,
-      default: 0
-    },
-    completedCheckpoints: {
-      type: Number,
-      default: 0
-    },
-    totalSessions: {
-      type: Number,
-      default: 0
-    }
-  },
-  isGenerated: {
-    type: Boolean,
-    default: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  {
+    collection: "reports",
   }
-});
+);
 
 // Create and export the Report model
-module.exports = mongoose.model("Report", ReportSchema); 
+module.exports = mongoose.model("Report", ReportSchema);

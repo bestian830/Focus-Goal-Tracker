@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 /**
  * Goal Schema - Defines the structure for goal documents in MongoDB
- * 
+ *
  * Fields:
  * - userId: Reference to the user who created this goal
  * - title: Title of the goal
@@ -14,72 +14,79 @@ const mongoose = require("mongoose");
  * - checkpoints: Array of milestones to track progress
  * - createdAt: Timestamp when the goal was created
  */
-const GoalSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  priority: {
-    type: String,
-    enum: ["High", "Medium", "Low"],
-    default: "Medium"
-  },
-  status: {
-    type: String,
-    enum: ["active", "completed", "archived"],
-    default: "active"
-  },
-  targetDate: {
-    type: Date
-  },
-  declaration: {
-    content: {
-      type: String,
-      default: ""
+const GoalSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    vision: {
-      type: String,
-      default: ""
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
-    }
-  },
-  checkpoints: [{
     title: {
       type: String,
-      required: true
+      required: true,
+      trim: true,
     },
     description: {
-      type: String
+      type: String,
+      required: true,
+    },
+    priority: {
+      type: String,
+      enum: ["High", "Medium", "Low"],
+      default: "Medium",
+    },
+    status: {
+      type: String,
+      enum: ["active", "completed", "archived"],
+      default: "active",
     },
     targetDate: {
-      type: Date
+      type: Date,
     },
-    isCompleted: {
-      type: Boolean,
-      default: false
+    declaration: {
+      content: {
+        type: String,
+        default: "",
+      },
+      vision: {
+        type: String,
+        default: "",
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
-    completedAt: {
-      type: Date
-    }
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
+    checkpoints: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        description: {
+          type: String,
+        },
+        targetDate: {
+          type: Date,
+        },
+        isCompleted: {
+          type: Boolean,
+          default: false,
+        },
+        completedAt: {
+          type: Date,
+        },
+      },
+    ],
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    collection: "goals",
   }
-});
+);
 
 // Create and export the Goal model
-module.exports = mongoose.model("Goal", GoalSchema); 
+module.exports = mongoose.model("Goal", GoalSchema);

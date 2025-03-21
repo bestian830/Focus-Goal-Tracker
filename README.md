@@ -343,7 +343,7 @@ focus-app/
   - vision: 願景
   - checkpoints: 檢查點數組
 
-### 3. 進度集合 (progress)
+### 3. 進度集合 (progresses)
 
 主要字段:
 
@@ -369,7 +369,7 @@ focus-app/
 - insights: AI 生成的洞察
 - recommendations: 推薦建議
 
-### 5. 臨時用戶集合 (temp_users)
+### 5. 臨時用戶集合 (tempUsers)
 
 主要字段:
 

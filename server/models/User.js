@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 
 /**
  * User Schema - Defines the structure for user documents in MongoDB
- * 
+ *
  * Fields:
  * - email: User's email address (required for registered users)
  * - password: User's password (hashed, required for registered users)
@@ -20,58 +20,64 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
     unique: true,
-    sparse: true // Allows multiple null values (for guest users)
+    sparse: true, // Allows multiple null values (for guest users)
   },
   password: {
     type: String,
-    required: function() {
+    required: function () {
       // Password is required only if user is not a guest and not using Google login
       return !this.isGuest && !this.googleId;
-    }
+    },
   },
   googleId: {
     type: String,
-    sparse: true
+    sparse: true,
   },
   username: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   isGuest: {
     type: Boolean,
-    default: true
+    default: true,
   },
   tempId: {
     type: String,
-    sparse: true
+    sparse: true,
   },
   createdAt: {
     type: Date,
     default: Date.now,
     // Only expire guest accounts
-    expires: function() {
+    expires: function () {
       return this.isGuest ? 60 * 60 * 24 * 14 : undefined; // 14 days in seconds for guests
-    }
-  }
+    },
+  },
 });
 
 // Password hash middleware
-UserSchema.pre("save", async function(next) {
-  // Only hash the password if it's modified (or new)
-  if (!this.isModified("password")) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+UserSchema.pre(
+  "save",
+  async function (next) {
+    // Only hash the password if it's modified (or new)
+    if (!this.isModified("password")) return next();
+
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  {
+    collection: "users",
   }
-});
+);
 
 // Method to compare passwords
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
@@ -79,4 +85,4 @@ UserSchema.methods.comparePassword = async function(candidatePassword) {
 // The unique: true and sparse: true in the schema fields already create indexes
 
 // Create and export the User model
-module.exports = mongoose.model("User", UserSchema); 
+module.exports = mongoose.model("User", UserSchema);
