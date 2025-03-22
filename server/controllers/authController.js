@@ -287,23 +287,34 @@ const loginUser = async (req, res) => {
 };
 
 /**
- * Logout user
+ * Logout user and clear authentication cookie
  *
  * This function:
- * 1. Clears the authentication cookie
+ * 1. Clears the authentication token cookie
  * 2. Returns success message
  *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const logoutUser = (req, res) => {
-  // Clear the authentication cookie
-  clearTokenCookie(res);
-
-  res.status(200).json({
-    success: true,
-    message: "Logged out successfully",
-  });
+  try {
+    // Clear the authentication cookie
+    clearTokenCookie(res);
+    
+    res.status(200).json({
+      success: true,
+      message: "Successfully logged out"
+    });
+  } catch (error) {
+    console.error("Error logging out user:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to logout",
+        details: error.message,
+      },
+    });
+  }
 };
 
 module.exports = {

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TempUser = require("../models/TempUser");
-const { generateTempToken, setTokenCookie, verifyToken } = require('../utils/jwtUtils');
+const { generateTempToken, setTokenCookie, verifyToken, clearTokenCookie } = require('../utils/jwtUtils');
 const { requireAuth, requireOwnership } = require('../middleware/auth');
 const { tempUserCreationLimiter, rateLimiter } = require('../middleware/rateLimiter');
 
@@ -13,6 +13,7 @@ const { tempUserCreationLimiter, rateLimiter } = require('../middleware/rateLimi
  * - Creating a new temporary user
  * - Getting temp user by ID
  * - Adding goals to temp user
+ * - Deleting a temporary user
  */
 
 // Apply general rate limiter to all temp user routes
@@ -61,7 +62,7 @@ router.post("/", tempUserCreationLimiter({ maxCreations: 5, windowMs: 60 * 60 * 
     const token = generateTempToken(tempId);
     
     // set the JWT token as an HttpOnly cookie
-    setTokenCookie(res, token);
+    setTokenCookie(res, token, 14 * 24 * 60 * 60 * 1000); // 14 days
     
     // return the temp user data (return tempId so it can be stored in localStorage as backup)
     res.status(201).json({
@@ -164,6 +165,49 @@ router.post("/:tempId/goals", requireAuth, requireOwnership((req) => req.params.
         message: "Failed to add goal",
         details: error.message
       }
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/temp-users/:tempId
+ * @desc    Delete a temporary user
+ * @access  Private (owner only)
+ */
+router.delete("/:tempId", requireAuth, async (req, res) => {
+  try {
+    const { tempId } = req.params;
+    
+    // Check if the user is authenticated as the temp user they're trying to delete
+    if (req.user.userType !== 'temp' || req.user.tempId !== tempId) {
+      return res.status(403).json({
+        success: false,
+        error: { message: "Access denied. You can only delete your own temporary account." }
+      });
+    }
+    
+    // Delete the temporary user
+    const deletedUser = await TempUser.findOneAndDelete({ tempId });
+    
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        error: { message: "Temporary user not found" }
+      });
+    }
+    
+    // Clear the authentication cookie
+    clearTokenCookie(res);
+    
+    res.status(200).json({
+      success: true,
+      message: "Temporary user account deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting temporary user:", error);
+    res.status(500).json({
+      success: false,
+      error: { message: "Server error", details: error.message }
     });
   }
 });
