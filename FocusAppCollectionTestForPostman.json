@@ -135,11 +135,11 @@
               "raw": "{}"
             },
             "url": {
-              "raw": "http://localhost:5050/api/auth/temp-user",
+              "raw": "http://localhost:5050/api/temp-users",
               "protocol": "http",
               "host": ["localhost"],
               "port": "5050",
-              "path": ["api", "auth", "temp-user"]
+              "path": ["api", "temp-users"]
             },
             "description": "Creates a new temporary user with limited features and 21-day expiration"
           }

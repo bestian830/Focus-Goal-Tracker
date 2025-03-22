@@ -7,9 +7,42 @@ const TempUser = require("../models/TempUser");
  * Base path: /api/temp-users
  * 
  * These routes handle temporary user operations:
+ * - Creating a new temporary user
  * - Getting temp user by ID
  * - Adding goals to temp user
  */
+
+// POST /api/temp-users - Create a new temporary user
+router.post("/", async (req, res) => {
+  try {
+    // Generate a random tempId with "temp_" prefix and random string
+    const tempId = `temp_${Math.random().toString(36).substring(2, 10)}`;
+    
+    // Create a new temp user in the database
+    const tempUser = await TempUser.create({
+      tempId
+    });
+    
+    // Return temp user data
+    res.status(201).json({
+      success: true,
+      data: {
+        tempId: tempUser.tempId,
+        createdAt: tempUser.createdAt,
+        expiresAt: tempUser.expiresAt
+      },
+    });
+  } catch (error) {
+    console.error("Error creating temporary user:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to create temporary user",
+        details: error.message,
+      },
+    });
+  }
+});
 
 // GET /api/temp-users/:tempId - Get temporary user by ID
 router.get("/:tempId", async (req, res) => {

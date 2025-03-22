@@ -34,7 +34,7 @@ function GuestLogin() {
     
     try {
       // Call the backend API to create a temporary user
-      const response = await axios.post('http://localhost:5050/api/auth/temp-user');
+      const response = await axios.post('http://localhost:5050/api/temp-users');
       
       // For debugging purposes
       setApiResponse(response.data);
