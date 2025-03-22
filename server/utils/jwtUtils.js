@@ -66,7 +66,9 @@ const setTokenCookie = (res, token, maxAge) => {
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // Use secure in production
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    // allows cross-site cookies in production
+    path: '/', // allow access to all routes
     maxAge: maxAge || 14 * 24 * 60 * 60 * 1000 // Default 14 days
   });
 };
@@ -77,7 +79,9 @@ const setTokenCookie = (res, token, maxAge) => {
  * @param {Object} res - Express response object
  */
 const clearTokenCookie = (res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    path: '/'
+  });
 };
 
 module.exports = {
