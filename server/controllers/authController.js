@@ -268,70 +268,70 @@ const loginUser = async (req, res) => {
   }
 };
 
-/**
- * Link temporary user data to existing user
- *
- * This function:
- * 1. Finds existing user and temp user
- * 2. Associates tempId with user
- * 3. Returns success message
- *
- * @param {Object} req - Express request object with userId and tempId
- * @param {Object} res - Express response object
- */
-const linkTempUser = async (req, res) => {
-  try {
-    const { userId, tempId } = req.body;
+// /*
+//  * Link temporary user data to existing user
+//  *
+//  * This function:
+//  * 1. Finds existing user and temp user
+//  * 2. Associates tempId with user
+//  * 3. Returns success message
+//  *
+//  * @param {Object} req - Express request object with userId and tempId
+//  * @param {Object} res - Express response object
+//  */
+// const linkTempUser = async (req, res) => {
+//   try {
+//     const { userId, tempId } = req.body;
 
-    // Validate input
-    if (!userId || !tempId) {
-      return res.status(400).json({
-        success: false,
-        error: { message: "Please provide userId and tempId" },
-      });
-    }
+//     // Validate input
+//     if (!userId || !tempId) {
+//       return res.status(400).json({
+//         success: false,
+//         error: { message: "Please provide userId and tempId" },
+//       });
+//     }
 
-    // Find user and temp user
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" },
-      });
-    }
+//     // Find user and temp user
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         error: { message: "User not found" },
+//       });
+//     }
 
-    const tempUser = await TempUser.findOne({ tempId });
-    if (!tempUser) {
-      return res.status(404).json({
-        success: false,
-        error: { message: "Temporary user not found" },
-      });
-    }
+//     const tempUser = await TempUser.findOne({ tempId });
+//     if (!tempUser) {
+//       return res.status(404).json({
+//         success: false,
+//         error: { message: "Temporary user not found" },
+//       });
+//     }
 
-    // Associate tempId with user for later data migration
-    user.tempId = tempId;
-    await user.save();
+//     // Associate tempId with user for later data migration
+//     user.tempId = tempId;
+//     await user.save();
 
-    // In a real implementation, you would migrate goals and progress data here
+//     // In a real implementation, you would migrate goals and progress data here
 
-    res.status(200).json({
-      success: true,
-      data: {
-        message: "Temporary user data has been linked to your account",
-        userId: user._id,
-      },
-    });
-  } catch (error) {
-    console.error("Error linking temp user:", error);
-    res.status(500).json({
-      success: false,
-      error: {
-        message: "Failed to link temporary user data",
-        details: error.message,
-      },
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         message: "Temporary user data has been linked to your account",
+//         userId: user._id,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error linking temp user:", error);
+//     res.status(500).json({
+//       success: false,
+//       error: {
+//         message: "Failed to link temporary user data",
+//         details: error.message,
+//       },
+//     });
+//   }
+// };
 
 /**
  * Generate JWT token for a user

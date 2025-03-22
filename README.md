@@ -235,7 +235,7 @@ focus-app/
 │   ├── models/            # MongoDB 模型
 │   │   ├── User.js        # 用戶模型 (users集合)
 │   │   ├── Goal.js        # 目標模型 (goals集合)
-│   │   ├── Progress.js    # 進度模型 (progress集合)
+│   │   ├── Progress.js    # 進度模型 (progresses集合)
 │   │   ├── Report.js      # 報告模型 (reports集合)
 │   │   └── TempUser.js    # 臨時用戶模型 (temp_users集合)
 │   ├── routes/            # API 路由

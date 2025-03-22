@@ -5,7 +5,7 @@ const {
   getCurrentUser,
   registerUser,
   loginUser,
-  linkTempUser
+  // linkTempUser
 } = require("../controllers/authController");
 
 /**
@@ -36,8 +36,8 @@ router.post("/register", registerUser);
 // Used for traditional login
 router.post("/login", loginUser);
 
-// POST /api/auth/link-temp - Link temporary user data to existing user
-// Used to migrate guest data to registered account
-router.post("/link-temp", linkTempUser);
+// // POST /api/auth/link-temp - Link temporary user data to existing user
+// // Used to migrate guest data to registered account
+// router.post("/link-temp", linkTempUser);
 
 module.exports = router; 
