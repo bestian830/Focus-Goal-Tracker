@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TempUser = require("../models/TempUser");
-const { generateTempToken, setTokenCookie } = require('../utils/jwtUtils');
+const { generateTempToken, setTokenCookie, verifyToken } = require('../utils/jwtUtils');
 const { requireAuth, requireOwnership } = require('../middleware/auth');
 
 /**
@@ -17,21 +17,48 @@ const { requireAuth, requireOwnership } = require('../middleware/auth');
 // POST /api/temp-users - Create a new temporary user
 router.post("/", async (req, res) => {
   try {
-    // Generate a random tempId with "temp_" prefix and random string
+    // 檢查是否已經有臨時用戶的token
+    const existingToken = req.cookies.token;
+    
+    if (existingToken) {
+      // 驗證token是否有效
+      const decoded = verifyToken(existingToken);
+      
+      if (decoded && decoded.userType === 'temp') {
+        // 檢查此臨時用戶是否仍存在於數據庫中
+        const existingTempUser = await TempUser.findOne({ tempId: decoded.tempId });
+        
+        if (existingTempUser) {
+          // 如果找到已存在的臨時用戶，則返回該用戶信息
+          return res.status(200).json({
+            success: true,
+            message: "使用現有的臨時用戶",
+            data: {
+              tempId: existingTempUser.tempId,
+              createdAt: existingTempUser.createdAt,
+              expiresAt: existingTempUser.expiresAt
+            }
+          });
+        }
+        // 如果找不到用戶，繼續創建新的臨時用戶
+      }
+    }
+    
+    // 生成帶有"temp_"前綴和隨機字符串的臨時ID
     const tempId = `temp_${Math.random().toString(36).substring(2, 10)}`;
     
-    // Create a new temp user in the database
+    // 在數據庫中創建新的臨時用戶
     const tempUser = await TempUser.create({
       tempId
     });
     
-    // Generate JWT token for temporary user
+    // 為臨時用戶生成JWT token
     const token = generateTempToken(tempId);
     
-    // Set JWT token as HttpOnly cookie
+    // 將JWT token設置為HttpOnly cookie
     setTokenCookie(res, token);
     
-    // Return temp user data (tempId is returned so it can be stored in localStorage as backup)
+    // 返回臨時用戶數據（返回tempId以便可以存儲在localStorage作為備份）
     res.status(201).json({
       success: true,
       data: {
