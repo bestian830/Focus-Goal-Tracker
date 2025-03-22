@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
+const cookieParser = require('cookie-parser');
 
 // import routes
 const authRoutes = require("./routes/auth");
@@ -19,8 +20,12 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes (allows frontend to communicate with backend)
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true // Enable cookies with CORS
+}));
 app.use(express.json()); // Parse JSON request bodies
+app.use(cookieParser()); // Parse cookies
 
 // Set port from environment variables or use default
 const PORT = process.env.PORT || 5050;
