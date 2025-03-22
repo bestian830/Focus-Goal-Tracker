@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const TempUser = require("../models/TempUser");
-const cookieParser = require('cookie-parser');
+const { generateTempToken, setTokenCookie } = require('../utils/jwtUtils');
+const { requireAuth, requireOwnership } = require('../middleware/auth');
 
 /**
  * TempUser Routes
@@ -24,7 +25,13 @@ router.post("/", async (req, res) => {
       tempId
     });
     
-    // Return temp user data
+    // Generate JWT token for temporary user
+    const token = generateTempToken(tempId);
+    
+    // Set JWT token as HttpOnly cookie
+    setTokenCookie(res, token);
+    
+    // Return temp user data (tempId is returned so it can be stored in localStorage as backup)
     res.status(201).json({
       success: true,
       data: {
@@ -46,7 +53,7 @@ router.post("/", async (req, res) => {
 });
 
 // GET /api/temp-users/:tempId - Get temporary user by ID
-router.get("/:tempId", async (req, res) => {
+router.get("/:tempId", requireAuth, requireOwnership((req) => req.params.tempId), async (req, res) => {
   try {
     const tempUser = await TempUser.findOne({ tempId: req.params.tempId });
     
@@ -74,7 +81,7 @@ router.get("/:tempId", async (req, res) => {
 });
 
 // POST /api/temp-users/:tempId/goals - Add a goal to temporary user
-router.post("/:tempId/goals", async (req, res) => {
+router.post("/:tempId/goals", requireAuth, requireOwnership((req) => req.params.tempId), async (req, res) => {
   try {
     const { title, description } = req.body;
     
