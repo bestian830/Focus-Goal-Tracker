@@ -1,33 +1,33 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import '../styles/Login.css'; // We'll create this CSS file later
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
+import "../styles/Login.css"; // We'll create this CSS file later
 
 /**
  * Login Component
- * 
+ *
  * This component:
  * 1. Displays a login form with email and password fields
  * 2. Handles form submission and authentication
  * 3. Stores user data and token in localStorage on successful login
  * 4. Provides links to Register and Guest Login pages
- * 
+ *
  * Route: /login
  * Next route: / (after successful login)
  */
 function Login() {
   // Form state
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
-  
+
   // Loading state for form submission
   const [loading, setLoading] = useState(false);
-  
+
   // Error message state
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   // Navigation hook for redirect after login
   const navigate = useNavigate();
 
@@ -37,11 +37,11 @@ function Login() {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
-    
+
     // Clear error when user types
-    if (error) setError('');
+    if (error) setError("");
   };
 
   /**
@@ -49,33 +49,38 @@ function Login() {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Simple validation
     if (!formData.email || !formData.password) {
-      setError('Please enter both email and password');
+      setError("Please enter both email and password");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
-      // Call the login API
-      const response = await axios.post('http://localhost:5050/api/auth/login', formData);
-      
-      // Store user data and token in localStorage
-      localStorage.setItem('userId', response.data.data.id);
-      localStorage.setItem('token', response.data.data.token);
-      
+      // Call the login API with credentials option
+      const response = await axios.post(
+        "http://localhost:5050/api/auth/login",
+        formData,
+        {
+          withCredentials: true, // Ensure credentials (cookies) are sent
+        }
+      );
+
+      // Store user ID in localStorage (token has passed the cookie)
+      localStorage.setItem("userId", response.data.data.id);
+
       // Redirect to home page
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Login failed:', error);
-      
+      console.error("Login failed:", error);
+
       // Display appropriate error message
       if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('Login failed. Please try again.');
+        setError("Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -86,13 +91,9 @@ function Login() {
     <div className="login-container">
       <h1>Focus</h1>
       <p className="subtitle">Log in to track your goals</p>
-      
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-      
+
+      {error && <div className="error-message">{error}</div>}
+
       <form onSubmit={handleSubmit} className="login-form">
         <div className="form-group">
           <label htmlFor="email">Email</label>
@@ -106,7 +107,7 @@ function Login() {
             placeholder="your@email.com"
           />
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -119,16 +120,12 @@ function Login() {
             placeholder="Your password"
           />
         </div>
-        
-        <button 
-          type="submit"
-          className="login-button"
-          disabled={loading}
-        >
-          {loading ? 'Logging in...' : 'Log In'}
+
+        <button type="submit" className="login-button" disabled={loading}>
+          {loading ? "Logging in..." : "Log In"}
         </button>
       </form>
-      
+
       <div className="login-options">
         <p>
           Don't have an account? <Link to="/register">Sign Up</Link>
@@ -142,4 +139,4 @@ function Login() {
   );
 }
 
-export default Login; 
+export default Login;

@@ -28,34 +28,39 @@ function Home() {
       setLoading(true);
       
       try {
+        // 尝试获取用户ID
         const userId = localStorage.getItem('userId');
+        const tempId = localStorage.getItem('tempId');
         
         if (userId) {
-          if (userId.startsWith('guest_')) {
-            // For guest users created on the client side, we use localStorage data
-            setUser({
-              id: userId,
-              username: localStorage.getItem('guestUsername') || userId,
-              isGuest: true
+          // 对于注册用户，从服务器获取信息
+          try {
+            const response = await axios.get(`http://localhost:5050/api/auth/me/${userId}`, {
+              withCredentials: true // 确保包含凭证（cookies）
             });
-          } else {
-            // For registered users, fetch from the server
-            try {
-              const response = await axios.get(`http://localhost:5050/api/auth/me/${userId}`);
-              
-              if (response.data && response.data.success) {
-                setUser(response.data.data);
-              }
-            } catch (apiError) {
-              console.error('Error fetching user data from API:', apiError);
-              // If API call fails, still try to use locally stored data
+            
+            if (response.data && response.data.success) {
               setUser({
-                id: userId,
-                username: 'User',
-                isGuest: true
+                ...response.data.data,
+                isGuest: false
               });
             }
+          } catch (apiError) {
+            console.error('Error fetching user data from API:', apiError);
+            // 如果API调用失败，尝试使用本地存储的数据
+            setUser({
+              id: userId,
+              username: 'User',
+              isGuest: true
+            });
           }
+        } else if (tempId) {
+          // 对于临时用户，使用本地存储数据
+          setUser({
+            id: tempId,
+            username: 'Guest User',
+            isGuest: true
+          });
         }
       } catch (error) {
         console.error('Error in user data logic:', error);
