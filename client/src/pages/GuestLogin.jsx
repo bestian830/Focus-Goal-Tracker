@@ -8,8 +8,8 @@ import '../styles/GuestLogin.css'; // We'll create this file later
  * 
  * This component:
  * 1. Displays a welcome page with a "Enter as Guest" button
- * 2. When the button is clicked, it calls the backend API to create a guest user
- * 3. Stores the returned user ID in localStorage
+ * 2. When the button is clicked, it calls the backend API to create a temporary user
+ * 3. Stores the returned tempId in localStorage
  * 4. Navigates to the home page
  * 
  * Route: /guest-login
@@ -26,38 +26,35 @@ function GuestLogin() {
 
   /**
    * Handle guest login button click
-   * Calls the backend API to create a guest user
+   * Calls the backend API to create a temporary user
    */
   const handleGuestLogin = async () => {
     setLoading(true);
     setError('');
     
     try {
-      // Call the backend API to create a guest user
-      const response = await axios.post('http://localhost:5050/api/auth/guest');
+      // Call the backend API to create a temporary user
+      const response = await axios.post('http://localhost:5050/api/auth/temp-user');
       
       // For debugging purposes
       setApiResponse(response.data);
       console.log('API Response:', response.data);
       
       if (response.data && response.data.success) {
-        // Store the user ID in localStorage
-        localStorage.setItem('userId', response.data.data.id);
+        // Store the tempId in localStorage
+        localStorage.setItem('tempId', response.data.data.tempId);
         
-        // Also store username for display purposes
-        localStorage.setItem('guestUsername', response.data.data.username);
-        
-        console.log('Created guest user with ID:', response.data.data.id);
+        console.log('Created temporary user with ID:', response.data.data.tempId);
         
         // Redirect to the home page after a short delay to ensure localStorage is updated
         setTimeout(() => {
           navigate('/', { replace: true });
         }, 100);
       } else {
-        throw new Error(response.data?.error?.message || 'Failed to create guest user');
+        throw new Error(response.data?.error?.message || 'Failed to create temporary user');
       }
     } catch (error) {
-      console.error('Failed to create guest session:', error);
+      console.error('Failed to create temporary session:', error);
       setError('登入失敗。請嘗試使用"前往主頁"按鈕或稍後再試。');
     } finally {
       setLoading(false);
@@ -67,14 +64,12 @@ function GuestLogin() {
   // Handle manual navigation
   const handleManualNavigation = () => {
     // If we have a successful API response but navigation failed, try to use that
-    if (apiResponse?.success && apiResponse?.data?.id) {
-      localStorage.setItem('userId', apiResponse.data.id);
-      localStorage.setItem('guestUsername', apiResponse.data.username);
+    if (apiResponse?.success && apiResponse?.data?.tempId) {
+      localStorage.setItem('tempId', apiResponse.data.tempId);
     } else {
-      // Fallback to client-side guest ID generation
-      const guestId = `guest_${Math.random().toString(36).substring(2, 10)}`;
-      localStorage.setItem('userId', guestId);
-      localStorage.setItem('guestUsername', guestId);
+      // Fallback to client-side temp ID generation
+      const tempId = `temp_${Math.random().toString(36).substring(2, 10)}`;
+      localStorage.setItem('tempId', tempId);
     }
     
     navigate('/', { replace: true });
