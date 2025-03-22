@@ -3,6 +3,7 @@ const router = express.Router();
 const TempUser = require("../models/TempUser");
 const { generateTempToken, setTokenCookie, verifyToken } = require('../utils/jwtUtils');
 const { requireAuth, requireOwnership } = require('../middleware/auth');
+const { tempUserCreationLimiter, rateLimiter } = require('../middleware/rateLimiter');
 
 /**
  * TempUser Routes
@@ -14,25 +15,29 @@ const { requireAuth, requireOwnership } = require('../middleware/auth');
  * - Adding goals to temp user
  */
 
+// Apply general rate limiter to all temp user routes
+router.use(rateLimiter({ maxRequests: 200, windowMs: 15 * 60 * 1000 })); // 200 requests per 15 minutes
+
 // POST /api/temp-users - Create a new temporary user
-router.post("/", async (req, res) => {
+// Apply specific stricter rate limiter for temp user creation
+router.post("/", tempUserCreationLimiter({ maxCreations: 5, windowMs: 60 * 60 * 1000 }), async (req, res) => {
   try {
-    // 檢查是否已經有臨時用戶的token
+    // check if there is already a temp user's token
     const existingToken = req.cookies.token;
     
     if (existingToken) {
-      // 驗證token是否有效
+      // check if the token is valid
       const decoded = verifyToken(existingToken);
       
       if (decoded && decoded.userType === 'temp') {
-        // 檢查此臨時用戶是否仍存在於數據庫中
+        // check if the temp user still exists in the database
         const existingTempUser = await TempUser.findOne({ tempId: decoded.tempId });
         
         if (existingTempUser) {
-          // 如果找到已存在的臨時用戶，則返回該用戶信息
+          // if the existing temp user is found, return the user information
           return res.status(200).json({
             success: true,
-            message: "使用現有的臨時用戶",
+            message: "use the existing temp user",
             data: {
               tempId: existingTempUser.tempId,
               createdAt: existingTempUser.createdAt,
@@ -40,25 +45,25 @@ router.post("/", async (req, res) => {
             }
           });
         }
-        // 如果找不到用戶，繼續創建新的臨時用戶
+        // if the user is not found, continue to create a new temp user
       }
     }
     
-    // 生成帶有"temp_"前綴和隨機字符串的臨時ID
+    // generate a temp id with "temp_" prefix and random string
     const tempId = `temp_${Math.random().toString(36).substring(2, 10)}`;
     
-    // 在數據庫中創建新的臨時用戶
+    // create a new temp user in the database
     const tempUser = await TempUser.create({
       tempId
     });
     
-    // 為臨時用戶生成JWT token
+    // generate a JWT token for the temp user
     const token = generateTempToken(tempId);
     
-    // 將JWT token設置為HttpOnly cookie
+    // set the JWT token as an HttpOnly cookie
     setTokenCookie(res, token);
     
-    // 返回臨時用戶數據（返回tempId以便可以存儲在localStorage作為備份）
+    // return the temp user data (return tempId so it can be stored in localStorage as backup)
     res.status(201).json({
       success: true,
       data: {
