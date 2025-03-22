@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const cookieParser = require('cookie-parser');
+const cookieParser = require("cookie-parser");
 
 // import routes
 const authRoutes = require("./routes/auth");
@@ -20,10 +20,14 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true // Enable cookies with CORS
-}));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true, // Enable cookies with CORS
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow only specified methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow only specified headers
+  })
+);
 app.use(express.json()); // Parse JSON request bodies
 app.use(cookieParser()); // Parse cookies
 
