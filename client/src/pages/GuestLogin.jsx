@@ -34,7 +34,9 @@ function GuestLogin() {
     
     try {
       // Call the backend API to create a temporary user
-      const response = await axios.post('http://localhost:5050/api/temp-users');
+      const response = await axios.post('http://localhost:5050/api/temp-users', {}, {
+        withCredentials: true // 確保 cookie 被包含在請求中
+      });
       
       // For debugging purposes
       setApiResponse(response.data);
