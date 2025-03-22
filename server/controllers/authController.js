@@ -3,13 +3,18 @@
    - should use local storage to store the temp user ID if visited then no need to create a new temp user
  * getCurrentUser: Get current user information by ID, when a user logs in or registers
  * registerUser: Register a new user, when a user signs up, 
-   - and if a tempId is provided when they click register or google outh, migrate data from temp user
+   - and if a tempId is provided when they click register or google oauth, migrate data from temp user
  * loginUser: Login user, when a user logs in
+ * logoutUser: Logout user, when a user logs out
 */
 
 const User = require("../models/User");
 const TempUser = require("../models/TempUser");
-const jwt = require("jsonwebtoken");
+const { 
+  generateUserToken, 
+  setTokenCookie, 
+  clearTokenCookie 
+} = require('../utils/jwtUtils');
 // The JWT_SECRET should be defined in .env file
 const JWT_SECRET =
   process.env.JWT_SECRET || "your_jwt_secret_key_for_development";
@@ -163,15 +168,17 @@ const registerUser = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = generateToken(user._id);
+    const token = generateUserToken(user._id);
+    
+    // Set JWT token as HttpOnly cookie
+    setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
 
     res.status(201).json({
       success: true,
       data: {
         id: user._id,
         username: user.username,
-        email: user.email,
-        token,
+        email: user.email
       },
     });
   } catch (error) {
@@ -228,7 +235,10 @@ const loginUser = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = generateToken(user._id);
+    const token = generateUserToken(user._id);
+    
+    // Set JWT token as HttpOnly cookie
+    setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
 
     // Update last login time
     user.lastLogin = Date.now();
@@ -239,8 +249,7 @@ const loginUser = async (req, res) => {
       data: {
         id: user._id,
         username: user.username,
-        email: user.email,
-        token,
+        email: user.email
       },
     });
   } catch (error) {
@@ -256,13 +265,23 @@ const loginUser = async (req, res) => {
 };
 
 /**
- * Generate JWT token for a user
- *
- * @param {String} userId - User ID to include in token payload
- * @returns {String} JWT token
+ * Logout user
+ * 
+ * This function:
+ * 1. Clears the authentication cookie
+ * 2. Returns success message
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
  */
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "30d" });
+const logoutUser = (req, res) => {
+  // Clear the authentication cookie
+  clearTokenCookie(res);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 };
 
 module.exports = {
@@ -270,4 +289,5 @@ module.exports = {
   getCurrentUser,
   registerUser,
   loginUser,
+  logoutUser
 };
