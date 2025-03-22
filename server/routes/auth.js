@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const {
-  createGuestUser,
+  createTempUser,
   getCurrentUser,
   registerUser,
   loginUser,
@@ -13,16 +13,16 @@ const {
  * Base path: /api/auth
  *
  * These routes handle user authentication operations:
- * - Guest user creation
+ * - Temporary user creation
  * - User registration (email/password)
  * - User login
  * - Retrieving user information
  * - Linking temporary user data
  */
 
-// POST /api/auth/guest - Create a guest user account
+// POST /api/auth/temp-user - Create a temporary user account
 // Used when a user clicks "Enter as Guest" button
-router.post("/guest", createGuestUser);
+router.post("/temp-user", createTempUser);
 
 // GET /api/auth/me/:userId - Get current user information
 // Used to fetch user details after login

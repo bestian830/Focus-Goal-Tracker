@@ -8,25 +8,23 @@ const bcrypt = require("bcryptjs");
  * - email: User's email address (required for registered users)
  * - password: User's password (hashed, required for registered users)
  * - username: User's display name
- * - isGuest: Boolean flag indicating if this is a guest account
  * - googleId: Google OAuth ID for users who sign in with Google
  * - tempId: Temporary ID for linking guest data when converting to registered user
  * - createdAt: Timestamp when the user was created
- *             For guest users, this will be used to expire the document after 14 days
  */
 const UserSchema = new mongoose.Schema({
   email: {
     type: String,
+    required: true,
     trim: true,
     lowercase: true,
     unique: true,
-    sparse: true, // Allows multiple null values (for guest users)
   },
   password: {
     type: String,
     required: function () {
-      // Password is required only if user is not a guest and not using Google login
-      return !this.isGuest && !this.googleId;
+      // Password is required only if not using Google login
+      return !this.googleId;
     },
   },
   googleId: {
@@ -38,10 +36,6 @@ const UserSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  isGuest: {
-    type: Boolean,
-    default: true,
-  },
   tempId: {
     type: String,
     sparse: true,
@@ -49,11 +43,11 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
-    // Only expire guest accounts
-    expires: function () {
-      return this.isGuest ? 60 * 60 * 24 * 14 : undefined; // 14 days in seconds for guests
-    },
   },
+  lastLogin: {
+    type: Date,
+    default: Date.now,
+  }
 });
 
 // Password hash middleware

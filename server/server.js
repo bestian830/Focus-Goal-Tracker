@@ -5,6 +5,11 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 
+// import routes
+const authRoutes = require("./routes/auth");
+const tempUserRoutes = require("./routes/tempUserRoutes");
+// add other routes import as needed
+
 // load env variables
 dotenv.config();
 
@@ -22,13 +27,16 @@ const PORT = process.env.PORT || 5050;
 
 // Routes
 // Auth routes - handles user authentication (including guest login)
-app.use("/api/auth", require("./routes/auth"));
+app.use("/api/auth", authRoutes);
 
 // Goals routes - handles goal management
 app.use("/api/goals", require("./routes/goals"));
 
 // Progress routes - handles progress tracking
 app.use("/api/progress", require("./routes/progress"));
+
+// Temp User routes - handles temporary user management
+app.use("/api/temp-users", tempUserRoutes);
 
 // Test API - simple endpoint to verify server is running
 app.get("/", (req, res) => {

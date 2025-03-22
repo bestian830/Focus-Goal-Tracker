@@ -135,11 +135,11 @@
               "raw": "{\n  \"tempId\": \"temp_{{$timestamp}}\"\n}"
             },
             "url": {
-              "raw": "http://localhost:5050/api/temp-users",
+              "raw": "http://localhost:5050/api/auth/temp-user",
               "protocol": "http",
               "host": ["localhost"],
               "port": "5050",
-              "path": ["api", "temp-users"]
+              "path": ["api", "auth", "temp-user"]
             },
             "description": "Creates a new temporary user with limited features and 21-day expiration"
           }
