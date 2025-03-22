@@ -244,4 +244,55 @@ h3 {
   .goal-list-section {
     max-width: none;
   }
+}
+
+/* 標題區域 */
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.welcome-text {
+  font-size: 1.8rem;
+  color: #333;
+  margin: 0;
+}
+
+.user-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.profile-btn:hover {
+  background-color: #1976d2;
+}
+
+.logout-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #d32f2f;
 } 
