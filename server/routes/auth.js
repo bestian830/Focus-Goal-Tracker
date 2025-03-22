@@ -5,8 +5,10 @@ const {
   getCurrentUser,
   registerUser,
   loginUser,
+  logoutUser,
   // linkTempUser
 } = require("../controllers/authController");
+const { requireAuth, requireRegisteredUser } = require('../middleware/auth');
 
 /**
  * Auth Routes
@@ -26,7 +28,7 @@ router.post("/temp-user", createTempUser);
 
 // GET /api/auth/me/:userId - Get current user information
 // Used to fetch user details after login
-router.get("/me/:userId", getCurrentUser);
+router.get("/me/:userId", requireRegisteredUser, getCurrentUser);
 
 // POST /api/auth/register - Register a new user
 // Used for email/password registration
@@ -35,6 +37,10 @@ router.post("/register", registerUser);
 // POST /api/auth/login - Login with email/password
 // Used for traditional login
 router.post("/login", loginUser);
+
+// POST /api/auth/logout - Logout user
+// Used to logout the current user
+router.post("/logout", logoutUser);
 
 // // POST /api/auth/link-temp - Link temporary user data to existing user
 // // Used to migrate guest data to registered account
