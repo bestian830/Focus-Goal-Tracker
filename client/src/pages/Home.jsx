@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaUser } from "react-icons/fa";
+import ProfileModal from "../components/ProfileModal";
 import "../styles/Home.css"; // We'll create this file later
 
 /**
@@ -18,6 +20,8 @@ function Home() {
   // State for user information
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // State for profile modal
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
@@ -54,13 +58,15 @@ function Home() {
             setUser({
               id: userId,
               username: "User",
+              isGuest: false,
             });
           }
         } else if (tempId) {
           //  For guest users, set user data with temporary ID
           setUser({
             id: tempId,
-            username: "Temp User",
+            username: "Guest User",
+            isGuest: true,
           });
         }
       } catch (error) {
@@ -124,6 +130,11 @@ function Home() {
     }
   };
 
+  // Toggle profile modal
+  const toggleProfileModal = () => {
+    setShowProfileModal(!showProfileModal);
+  };
+
   return (
     <div className="home-container">
       <header className="app-header">
@@ -133,9 +144,14 @@ function Home() {
             <span>Loading...</span>
           ) : user ? (
             <div className="logged-in-user">
-              <span>
-                Welcome, {user.username} {user.isGuest ? "(Guest)" : ""}
-              </span>
+              <span>Welcome, {user.username}</span>
+              <div className="avatar-container" onClick={toggleProfileModal}>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="User Avatar" className="avatar-image" />
+                ) : (
+                  <FaUser className="avatar-icon" />
+                )}
+              </div>
               <button onClick={handleLogout} className="logout-button">
                 Logout
               </button>
@@ -224,19 +240,20 @@ function Home() {
           </h1>
 
           <div className="user-actions">
-            {!user.isGuest && (
-              <button
-                className="profile-btn"
-                onClick={() => navigate("/profile")}
-              >
-                個人資料
-              </button>
-            )}
             <button className="logout-btn" onClick={handleLogout}>
               {user.isGuest ? "返回" : "登出"}
             </button>
           </div>
         </div>
+      )}
+
+      {/* Profile Modal */}
+      {user && (
+        <ProfileModal 
+          isOpen={showProfileModal} 
+          onClose={toggleProfileModal} 
+          user={user} 
+        />
       )}
     </div>
   );
