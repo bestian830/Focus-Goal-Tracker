@@ -348,5 +348,5 @@ module.exports = {
   getCurrentUser,
   registerUser,
   loginUser,
-  linkTempUser,
+  // linkTempUser,
 };

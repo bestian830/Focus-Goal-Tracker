@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { 
-  createGuestUser, 
+const {
+  createGuestUser,
   getCurrentUser,
   registerUser,
   loginUser,
@@ -11,7 +11,7 @@ const {
 /**
  * Auth Routes
  * Base path: /api/auth
- * 
+ *
  * These routes handle user authentication operations:
  * - Guest user creation
  * - User registration (email/password)
@@ -40,4 +40,4 @@ router.post("/login", loginUser);
 // // Used to migrate guest data to registered account
 // router.post("/link-temp", linkTempUser);
 
-module.exports = router; 
+module.exports = router;
