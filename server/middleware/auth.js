@@ -47,7 +47,8 @@ const requireAuth = async (req, res, next) => {
         userType: 'registered',
         // Add other user data as needed
         email: user.email,
-        username: user.username
+        username: user.username,
+        role: user.role || 'regular'
       };
     } else if (decoded.userType === 'temp') {
       // For temporary users, check if they exist
@@ -62,7 +63,8 @@ const requireAuth = async (req, res, next) => {
       
       req.user = {
         tempId: decoded.tempId,
-        userType: 'temp'
+        userType: 'temp',
+        role: 'regular'
       };
     } else {
       return res.status(401).json({
@@ -99,6 +101,30 @@ const requireRegisteredUser = (req, res, next) => {
 };
 
 /**
+ * Middleware to check if user has the required role
+ * 
+ * @param {String|Array} roles - Required role(s) to access the route
+ */
+const requireRole = (roles) => {
+  return (req, res, next) => {
+    requireAuth(req, res, () => {
+      // Convert single role to array for consistent handling
+      const requiredRoles = Array.isArray(roles) ? roles : [roles];
+      
+      // Check if user has one of the required roles
+      if (req.user && requiredRoles.includes(req.user.role)) {
+        next();
+      } else {
+        res.status(403).json({
+          success: false,
+          error: { message: 'Access denied. Insufficient permissions.' }
+        });
+      }
+    });
+  };
+};
+
+/**
  * Middleware to ensure a user can only access their own data
  * Should be used after requireAuth
  * 
@@ -113,6 +139,11 @@ const requireOwnership = (getResourceUserId) => {
           success: false,
           error: { message: 'Authentication required.' }
         });
+      }
+      
+      // Admin users can access any resource (bypass ownership check)
+      if (req.user.role === 'admin') {
+        return next();
       }
       
       // Get the resource owner ID using the provided function
@@ -142,5 +173,6 @@ const requireOwnership = (getResourceUserId) => {
 module.exports = {
   requireAuth,
   requireRegisteredUser,
+  requireRole,
   requireOwnership
 }; 

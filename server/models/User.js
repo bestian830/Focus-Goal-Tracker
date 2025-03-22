@@ -11,6 +11,7 @@ const bcrypt = require("bcryptjs");
  * - googleId: Google OAuth ID for users who sign in with Google
  * - tempId: Temporary ID for linking guest data when converting to registered user
  * - createdAt: Timestamp when the user was created
+ * - role: User's role in the system (regular, admin, premium)
  */
 const UserSchema = new mongoose.Schema({
   email: {
@@ -39,6 +40,11 @@ const UserSchema = new mongoose.Schema({
   tempId: {
     type: String,
     sparse: true,
+  },
+  role: {
+    type: String,
+    enum: ['regular', 'premium', 'admin'],
+    default: 'regular'
   },
   createdAt: {
     type: Date,

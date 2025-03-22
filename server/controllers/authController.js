@@ -10,11 +10,11 @@
 
 const User = require("../models/User");
 const TempUser = require("../models/TempUser");
-const { 
-  generateUserToken, 
-  setTokenCookie, 
-  clearTokenCookie 
-} = require('../utils/jwtUtils');
+const {
+  generateUserToken,
+  setTokenCookie,
+  clearTokenCookie,
+} = require("../utils/jwtUtils");
 // The JWT_SECRET should be defined in .env file
 const JWT_SECRET =
   process.env.JWT_SECRET || "your_jwt_secret_key_for_development";
@@ -40,7 +40,7 @@ const createTempUser = async (req, res) => {
 
     // Create a new temp user in the database
     const tempUser = await TempUser.create({
-      tempId
+      tempId,
     });
 
     // Return temp user data
@@ -49,7 +49,7 @@ const createTempUser = async (req, res) => {
       data: {
         tempId: tempUser.tempId,
         createdAt: tempUser.createdAt,
-        expiresAt: tempUser.expiresAt
+        expiresAt: tempUser.expiresAt,
       },
     });
   } catch (error) {
@@ -76,26 +76,48 @@ const createTempUser = async (req, res) => {
  */
 const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    // Check if the user is a registered or temporary user
+    if (req.user.userType === "registered") {
+      // Registered user: find user by ID
+      const user = await User.findById(req.params.userId);
 
-    if (!user) {
-      return res.status(404).json({
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: "User not found",
+          },
+        });
+      }
+
+      // Return user information
+      return res.status(200).json({
+        success: true,
+        data: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+        },
+      });
+    } else if (req.user.userType === "temp") {
+      // Temporary user: return guest user information
+      return res.status(200).json({
+        success: true,
+        data: {
+          id: req.user.tempId,
+          username: "Guest User",
+          isGuest: true,
+        },
+      });
+    } else {
+      // Invalid user type
+      return res.status(400).json({
         success: false,
         error: {
-          message: "User not found",
+          message: "Invalid user type",
         },
       });
     }
-
-    // Update response to include email if it exists
-    res.status(200).json({
-      success: true,
-      data: {
-        id: user._id,
-        username: user.username,
-        email: user.email
-      },
-    });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({
@@ -146,7 +168,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       username,
       email,
-      password
+      password,
     });
 
     // If tempId is provided, find and migrate temp user data
@@ -169,7 +191,7 @@ const registerUser = async (req, res) => {
 
     // Generate JWT token
     const token = generateUserToken(user._id);
-    
+
     // Set JWT token as HttpOnly cookie
     setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
 
@@ -178,7 +200,7 @@ const registerUser = async (req, res) => {
       data: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
       },
     });
   } catch (error) {
@@ -236,7 +258,7 @@ const loginUser = async (req, res) => {
 
     // Generate JWT token
     const token = generateUserToken(user._id);
-    
+
     // Set JWT token as HttpOnly cookie
     setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
 
@@ -249,7 +271,7 @@ const loginUser = async (req, res) => {
       data: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
       },
     });
   } catch (error) {
@@ -266,21 +288,21 @@ const loginUser = async (req, res) => {
 
 /**
  * Logout user
- * 
+ *
  * This function:
  * 1. Clears the authentication cookie
  * 2. Returns success message
- * 
+ *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const logoutUser = (req, res) => {
   // Clear the authentication cookie
   clearTokenCookie(res);
-  
+
   res.status(200).json({
     success: true,
-    message: 'Logged out successfully'
+    message: "Logged out successfully",
   });
 };
 
@@ -289,5 +311,5 @@ module.exports = {
   getCurrentUser,
   registerUser,
   loginUser,
-  logoutUser
+  logoutUser,
 };
