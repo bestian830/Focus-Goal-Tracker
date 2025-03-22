@@ -85,25 +85,28 @@ function Home() {
   const handleLogout = async () => {
     try {
       if (user.isGuest) {
-        // For guest users, delete the temporary account
+        // For guest users, we don't actually delete the temporary account
+        // Just clear localStorage and cookies, but keep the account in database
+        // This allows the user to come back later using the same tempId
         const tempId = localStorage.getItem("tempId");
-
+        
         if (tempId) {
           try {
-            // Call the API to delete the temporary account
-            await axios.delete(
-              `http://localhost:5050/api/temp-users/${tempId}`,
+            // Instead of deleting, just clear the cookie
+            await axios.post(
+              "http://localhost:5050/api/auth/logout",
+              {},
               {
                 withCredentials: true,
               }
             );
           } catch (error) {
-            console.error("Error deleting temporary account:", error);
-            // If there's an error, we'll still clear local storage
+            console.error("Error during guest logout:", error);
+            // If there's an error, we'll still continue with local cleanup
           }
-
-          // Clear local storage
-          localStorage.removeItem("tempId");
+          
+          // Don't remove tempId from localStorage, keep it for potential reuse
+          // Just clear the cookie which will happen via the logout API call
         }
       } else {
         // For registered users, call the logout API
@@ -115,7 +118,7 @@ function Home() {
           }
         );
 
-        // Clear local storage
+        // Clear userId from localStorage
         localStorage.removeItem("userId");
       }
 
@@ -123,9 +126,8 @@ function Home() {
       navigate("/login");
     } catch (error) {
       console.error("Error during logout:", error);
-      // Clear local storage in case of error
+      // Only clear userId in case of error, preserve tempId
       localStorage.removeItem("userId");
-      localStorage.removeItem("tempId");
       navigate("/login");
     }
   };

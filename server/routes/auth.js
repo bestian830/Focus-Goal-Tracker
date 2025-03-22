@@ -27,7 +27,7 @@ const { rateLimiter } = require('../middleware/rateLimiter');
 router.use(rateLimiter({ maxRequests: 100, windowMs: 15 * 60 * 1000 }));
 
 // Apply stricter rate limits for sensitive operations
-const authLimiter = rateLimiter({ maxRequests: 30, windowMs: 15 * 60 * 1000 });
+const authLimiter = rateLimiter({ maxRequests: 35, windowMs: 15 * 60 * 1000 });
 
 // POST /api/auth/temp-user - Create a temporary user account
 // Used when a user clicks "Enter as Guest" button

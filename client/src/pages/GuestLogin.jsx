@@ -33,8 +33,14 @@ function GuestLogin() {
     setError('');
     
     try {
-      // Call the backend API to create a temporary user
-      const response = await axios.post('http://localhost:5050/api/temp-users', {}, {
+      // 首先检查 localStorage 中是否已有 tempId
+      const existingTempId = localStorage.getItem('tempId');
+      
+      // 无论是否有现有tempId，都发送请求，让后端决定是返回现有用户还是创建新用户
+      // 如果有现有tempId，则传递给后端进行验证
+      const requestData = existingTempId ? { existingTempId } : {};
+      
+      const response = await axios.post('http://localhost:5050/api/temp-users', requestData, {
         withCredentials: true // 確保 cookie 被包含在請求中
       });
       
@@ -46,7 +52,7 @@ function GuestLogin() {
         // Store the tempId in localStorage
         localStorage.setItem('tempId', response.data.data.tempId);
         
-        console.log('Created temporary user with ID:', response.data.data.tempId);
+        console.log('Using temporary user with ID:', response.data.data.tempId);
         
         // Redirect to the home page after a short delay to ensure localStorage is updated
         setTimeout(() => {
@@ -65,6 +71,16 @@ function GuestLogin() {
 
   // Handle manual navigation
   const handleManualNavigation = () => {
+    // 首先檢查 localStorage 中是否已有 tempId
+    const existingTempId = localStorage.getItem('tempId');
+      
+    if (existingTempId) {
+      // 如果已有 tempId，直接使用它並重定向
+      console.log('Using existing temporary user ID (manual navigation):', existingTempId);
+      navigate('/', { replace: true });
+      return;
+    }
+    
     // If we have a successful API response but navigation failed, try to use that
     if (apiResponse?.success && apiResponse?.data?.tempId) {
       localStorage.setItem('tempId', apiResponse.data.tempId);

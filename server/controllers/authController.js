@@ -184,8 +184,9 @@ const registerUser = async (req, res) => {
           `Temp user data for ${tempId} will be migrated to user ${user._id}`
         );
 
-        // Note: We're not deleting the temp user here to allow for data migration
-        // The temp user will eventually be deleted by the TTL index
+        // 成功迁移后删除临时用户
+        await TempUser.findOneAndDelete({ tempId });
+        console.log(`Temp user ${tempId} has been deleted after migration`);
       }
     }
 
