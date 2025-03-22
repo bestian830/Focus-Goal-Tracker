@@ -1,3 +1,5 @@
+// Description: Main server file for the Express.js backend. first part: as the door to the restaurant
+
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");

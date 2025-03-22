@@ -529,5 +529,43 @@ npm start
 
 ```
 
+``` register/login decide to use JWT or middleware?
+產品型態
+
+個人日記系統，主打「簡單記錄，無壓力使用」
+
+使用者類型
+
+guest / register
+
+guest 特性
+
+無帳號密碼、只存在 21 天、有 tempId（存在 localStorage）
+
+register 特性
+
+可手動註冊，也可從 guest 轉移
+
+目標 1️⃣
+
+不希望 guest 體驗被打斷（方便進入、無需填寫）
+
+目標 2️⃣
+
+避免惡意刷 guest 造成資料庫壓力 / 被 DDoS（安全性）
+
+已有的手段
+
+MongoDB TTL 機制清除過期 guest ✔️
+
+顧慮 1️⃣
+
+使用者可能記得 _id 想要繞過驗證
+
+顧慮 2️⃣
+
+localStorage 可被刪除，用戶就變成創新的 guest
+```
+
 ```
 `````
