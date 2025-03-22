@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TempUser = require("../models/TempUser");
+const cookieParser = require('cookie-parser');
 
 /**
  * TempUser Routes
