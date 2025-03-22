@@ -233,20 +233,6 @@ function Home() {
         )}
       </div>
 
-      {!loading && user && (
-        <div className="home-header">
-          <h1 className="welcome-text">
-            {user.isGuest ? "Welcome, Guest User!" : `Welcome, ${user.username}!`}
-          </h1>
-
-          <div className="user-actions">
-            <button className="logout-btn" onClick={handleLogout}>
-              {user.isGuest ? "Back" : "Logout"}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Profile Modal */}
       {user && (
         <ProfileModal 
