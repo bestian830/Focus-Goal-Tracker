@@ -236,12 +236,12 @@ function Home() {
       {!loading && user && (
         <div className="home-header">
           <h1 className="welcome-text">
-            {user.isGuest ? "歡迎，訪客用戶！" : `歡迎，${user.username}！`}
+            {user.isGuest ? "Welcome, Guest User!" : `Welcome, ${user.username}!`}
           </h1>
 
           <div className="user-actions">
             <button className="logout-btn" onClick={handleLogout}>
-              {user.isGuest ? "返回" : "登出"}
+              {user.isGuest ? "Back" : "Logout"}
             </button>
           </div>
         </div>
