@@ -12,6 +12,7 @@ const bcrypt = require("bcryptjs");
  * - tempId: Temporary ID for linking guest data when converting to registered user
  * - createdAt: Timestamp when the user was created
  * - role: User's role in the system (regular, admin, premium)
+ * - avatarUrl: URL to user's profile image (can be null)
  */
 const UserSchema = new mongoose.Schema({
   email: {
@@ -40,6 +41,10 @@ const UserSchema = new mongoose.Schema({
   tempId: {
     type: String,
     sparse: true,
+  },
+  avatarUrl: {
+    type: String,
+    default: null,
   },
   role: {
     type: String,
