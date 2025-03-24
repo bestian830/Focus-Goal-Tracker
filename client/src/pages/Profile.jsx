@@ -400,3 +400,17 @@ function Profile() {
 }
 
 export default Profile; 
+// =======
+// import ProfileInfo from '../components/Profile/ProfileInfo';
+// import ChangePassword from '../components/Profile/ChangePassword';
+// import '../style/style.css';
+
+// export default function Profile() {
+//     return (
+//         <div className="profile-container">
+//             <ProfileInfo />
+//             <ChangePassword />
+//         </div>
+//     );
+// }
+// >>>>>>> b560d1e7384e6cf25894eebe0dda7abde88ab209

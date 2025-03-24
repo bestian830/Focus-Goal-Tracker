@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaUser } from "react-icons/fa";
 import ProfileModal from "../components/ProfileModal";
-import "../styles/Home.css"; // We'll create this file later
+import Header from "../components/Header/Header";
+import Sidebar from "../components/Sidebar/Sidebar";
+import GoalDetails from "../components/GoalDetails/GoalDetails";
+import ProgressReport from "../components/ProgressReport/ProgressReport";
+import "../styles/Home.css";
+import "../styles/ComponentStyles.css";
 
 /**
  * Home Component
@@ -139,91 +143,19 @@ function Home() {
 
   return (
     <div className="home-container">
-      <header className="app-header">
-        <h1>Focus Goal Tracker</h1>
-        <div className="user-info">
-          {loading ? (
-            <span>Loading...</span>
-          ) : user ? (
-            <div className="logged-in-user">
-              <span>Welcome, {user.username}</span>
-              <div className="avatar-container" onClick={toggleProfileModal}>
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="User Avatar" className="avatar-image" />
-                ) : (
-                  <FaUser className="avatar-icon" />
-                )}
-              </div>
-              <button onClick={handleLogout} className="logout-button">
-                Logout
-              </button>
-            </div>
-          ) : (
-            <div className="guest-options">
-              <button
-                onClick={() => navigate("/login")}
-                className="login-button"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => navigate("/guest-login")}
-                className="guest-button"
-              >
-                Continue as Guest
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+      <Header 
+        user={user} 
+        loading={loading} 
+        handleLogout={handleLogout} 
+        toggleProfileModal={toggleProfileModal} 
+      />
 
       <div className="main-content">
         {user ? (
           <>
-            <div className="goal-list-section">
-              <div className="section-header">
-                <h2>My Goals</h2>
-                <button className="add-goal-button">Add Goal</button>
-              </div>
-
-              {/* Placeholder for goal list - will be implemented in future iterations */}
-              <div className="goal-placeholder">
-                <p>No goals yet. Click "Add Goal" to create your first goal!</p>
-              </div>
-            </div>
-
-            <div className="goal-details-section">
-              <h2>Goal Details</h2>
-              <div className="details-placeholder">
-                <p>Select a goal to see its details</p>
-              </div>
-
-              {/* Placeholder for progress timeline */}
-              <h3>Progress Timeline</h3>
-              <div className="timeline-placeholder">
-                {/* Will be implemented in future iterations */}
-                <div className="timeline-bar">
-                  {Array(7)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div key={i} className="timeline-day"></div>
-                    ))}
-                </div>
-              </div>
-
-              {/* Placeholder for daily tasks */}
-              <h3>Daily Tasks</h3>
-              <div className="tasks-placeholder">
-                <label className="task-item">
-                  <input type="checkbox" disabled />
-                  Sample Task 1
-                </label>
-                <label className="task-item">
-                  <input type="checkbox" disabled />
-                  Sample Task 2
-                </label>
-              </div>
-            </div>
+            <Sidebar />
+            <GoalDetails />
+            <ProgressReport />
           </>
         ) : (
           <div className="welcome-message">

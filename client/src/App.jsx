@@ -8,6 +8,7 @@ import GuestLogin from "./pages/GuestLogin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
+import Profile from "./pages/Profile";
 import "./App.css";
 
 function App() {
@@ -21,6 +22,9 @@ function App() {
 
         {/* Main Page Route - no authentication required */}
         <Route path="/" element={<Home />} />
+        
+        {/* Profile Page Route */}
+        <Route path="/profile" element={<Profile />} />
 
         {/* Default redirect to home page */}
         <Route path="*" element={<Navigate to="/" />} />

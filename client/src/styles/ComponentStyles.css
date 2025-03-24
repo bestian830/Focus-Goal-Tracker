@@ -1,0 +1,198 @@
+/* 
+* ComponentStyles.css
+* 整合搭档组件的样式，避免与Home.css冲突
+* 用于Sidebar、GoalDetails和ProgressReport组件
+*/
+
+/* 组件布局基础样式 */
+.sidebar, .goal-details, .progress-report {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar {
+    flex: 1;
+}
+
+.goal-details {
+    flex: 2;
+}
+
+.progress-report {
+    flex: 1;
+}
+
+/* 保留原avatar样式，但重命名避免冲突 */
+.component-avatar {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* ProfileInfo和ChangePassword样式 */
+.profile-info, .change-password {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.change-password {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.change-password input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.change-password button {
+    padding: 8px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.message {
+    color: green;
+    font-size: 14px;
+}
+
+/* Sidebar组件样式 */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* GoalDetails组件样式 */
+.goal-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ProgressReport组件样式 */
+.progress-report {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* DailyTasks组件样式 */
+.daily-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.task-item .completed {
+    text-decoration: line-through;
+    color: #888;
+}
+
+/* ProgressTimeline组件样式 */
+.progress-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-blocks {
+    display: flex;
+    gap: 4px;
+}
+
+.progress-block {
+    width: 40px;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+}
+
+.progress-block.filled {
+    background-color: #555;
+}
+
+/* KeyAchievements组件样式 */
+.key-achievements ul {
+    padding-left: 20px;
+}
+
+.achievement-item {
+    padding: 4px 0;
+}
+
+/* AIFeedback组件样式 */
+.ai-feedback {
+    padding: 8px;
+    background-color: #f0f4ff;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* ExportButton组件样式 */
+.export-btn {
+    padding: 8px 12px;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* AddGoalButton组件样式 */
+.add-goal-btn {
+    padding: 8px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* GoalCard组件样式 */
+.goal-card {
+    padding: 8px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.priority.high {
+    color: red;
+}
+
+.priority.medium {
+    color: orange;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .sidebar, .goal-details, .progress-report {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+} 
