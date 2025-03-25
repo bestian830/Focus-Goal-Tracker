@@ -1,16 +1,16 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   getAllGoals,
   createGoal,
   getGoalById,
   updateGoal,
   deleteGoal,
   updateGoalStatus
-} = require("../controllers/goalsController");
-const { requireAuth, requireOwnership } = require('../middleware/auth');
-const { rateLimiter } = require('../middleware/rateLimiter');
-const Goal = require('../models/Goal');
+} from "../controllers/goalsController.js";
+import { requireAuth, requireOwnership } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
+import Goal from '../models/Goal.js';
 
 /**
  * Goals Routes
@@ -62,4 +62,4 @@ router.put("/:id/status", requireAuth, requireOwnership(async (req) => {
   return goal ? goal.userId : null;
 }), updateGoalStatus);
 
-module.exports = router; 
+export default router; 

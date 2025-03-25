@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const User = require("../models/User");
-const { requireAuth, requireRegisteredUser } = require('../middleware/auth');
-const { rateLimiter } = require('../middleware/rateLimiter');
+import User from "../models/User.js";
+import { requireAuth, requireRegisteredUser } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
 
 /**
  * User Routes
@@ -199,4 +199,4 @@ router.put("/password", requireRegisteredUser, async (req, res) => {
   }
 });
 
-module.exports = router; 
+export default router; 

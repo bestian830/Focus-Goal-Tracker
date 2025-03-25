@@ -8,13 +8,13 @@
  * logoutUser: Logout user, when a user logs out
 */
 
-const User = require("../models/User");
-const TempUser = require("../models/TempUser");
-const {
+import User from "../models/User.js";
+import TempUser from "../models/TempUser.js";
+import {
   generateUserToken,
   setTokenCookie,
   clearTokenCookie,
-} = require("../utils/jwtUtils");
+} from "../utils/jwtUtils.js";
 // The JWT_SECRET should be defined in .env file
 const JWT_SECRET =
   process.env.JWT_SECRET || "your_jwt_secret_key_for_development";
@@ -248,7 +248,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Validate password
+    // Check if password is correct
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -257,15 +257,15 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
     // Generate JWT token
     const token = generateUserToken(user._id);
 
     // Set JWT token as HttpOnly cookie
     setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
-
-    // Update last login time
-    user.lastLogin = Date.now();
-    await user.save();
 
     res.status(200).json({
       success: true,
@@ -276,7 +276,7 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error logging in user:", error);
+    console.error("Error logging in:", error);
     res.status(500).json({
       success: false,
       error: {
@@ -288,26 +288,26 @@ const loginUser = async (req, res) => {
 };
 
 /**
- * Logout user and clear authentication cookie
+ * Logout user
  *
  * This function:
- * 1. Clears the authentication token cookie
- * 2. Returns success message
+ * 1. Clears the JWT token cookie
+ * 2. Returns a success message
  *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const logoutUser = (req, res) => {
   try {
-    // Clear the authentication cookie
+    // Clear the JWT token cookie
     clearTokenCookie(res);
-    
+
     res.status(200).json({
       success: true,
-      message: "Successfully logged out"
+      message: "Logged out successfully",
     });
   } catch (error) {
-    console.error("Error logging out user:", error);
+    console.error("Error logging out:", error);
     res.status(500).json({
       success: false,
       error: {
@@ -318,7 +318,8 @@ const logoutUser = (req, res) => {
   }
 };
 
-module.exports = {
+// Export controller functions
+export {
   createTempUser,
   getCurrentUser,
   registerUser,

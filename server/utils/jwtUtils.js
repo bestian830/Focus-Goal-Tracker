@@ -1,7 +1,7 @@
 /**
  * Utility functions for JWT token generation and verification
  */
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 // The JWT_SECRET should be defined in .env file
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_for_development';
@@ -84,7 +84,7 @@ const clearTokenCookie = (res) => {
   });
 };
 
-module.exports = {
+export {
   generateUserToken,
   generateTempToken,
   verifyToken,

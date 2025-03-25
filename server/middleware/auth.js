@@ -1,9 +1,9 @@
 /**
  * Authentication middleware for protecting routes
  */
-const { verifyToken } = require('../utils/jwtUtils');
-const User = require('../models/User');
-const TempUser = require('../models/TempUser');
+import { verifyToken } from '../utils/jwtUtils.js';
+import User from '../models/User.js';
+import TempUser from '../models/TempUser.js';
 
 /**
  * Middleware to authenticate any user (registered or temporary)
@@ -170,7 +170,7 @@ const requireOwnership = (getResourceUserId) => {
   };
 };
 
-module.exports = {
+export {
   requireAuth,
   requireRegisteredUser,
   requireRole,

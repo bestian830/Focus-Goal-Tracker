@@ -1,9 +1,9 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const TempUser = require("../models/TempUser");
-const { generateTempToken, setTokenCookie, verifyToken, clearTokenCookie } = require('../utils/jwtUtils');
-const { requireAuth, requireOwnership } = require('../middleware/auth');
-const { tempUserCreationLimiter, rateLimiter } = require('../middleware/rateLimiter');
+import TempUser from "../models/TempUser.js";
+import { generateTempToken, setTokenCookie, verifyToken, clearTokenCookie } from '../utils/jwtUtils.js';
+import { requireAuth, requireOwnership } from '../middleware/auth.js';
+import { tempUserCreationLimiter, rateLimiter } from '../middleware/rateLimiter.js';
 
 /**
  * TempUser Routes
@@ -242,4 +242,4 @@ router.delete("/:tempId", requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+export default router; 

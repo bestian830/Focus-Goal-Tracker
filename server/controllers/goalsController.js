@@ -1,5 +1,5 @@
-const Goal = require("../models/Goal");
-const User = require("../models/User");
+import Goal from "../models/Goal.js";
+import User from "../models/User.js";
 
 /**
  * Get all goals for a specific user
@@ -249,11 +249,13 @@ const updateGoalStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     
-    if (!status || !["active", "completed", "archived"].includes(status)) {
+    // Validate status value
+    const validStatuses = ["active", "completed", "abandoned"];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Valid status (active, completed, or archived) is required"
+          message: "Invalid status value. Must be one of: active, completed, abandoned"
         }
       });
     }
@@ -269,7 +271,16 @@ const updateGoalStatus = async (req, res) => {
       });
     }
     
+    // Update status
     goal.status = status;
+    
+    // If completed, set completedAt
+    if (status === "completed") {
+      goal.completedAt = new Date();
+    } else {
+      goal.completedAt = undefined; // Remove completedAt if not completed
+    }
+    
     await goal.save();
     
     res.status(200).json({
@@ -288,7 +299,7 @@ const updateGoalStatus = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getAllGoals,
   createGoal,
   getGoalById,

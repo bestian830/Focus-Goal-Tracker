@@ -1,6 +1,6 @@
 // Initiate connection to MongoDB database:
 // if server.js is the door to the restaurant, this is the kitchen
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
@@ -12,4 +12,4 @@ const connectDB = async () => {
   }
 };
 
-module.exports = connectDB;
+export default connectDB;

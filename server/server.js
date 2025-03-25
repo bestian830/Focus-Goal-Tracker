@@ -1,16 +1,20 @@
 // Description: Main server file for the Express.js backend. first part: as the door to the restaurant
 
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const connectDB = require("./config/db");
-const cookieParser = require("cookie-parser");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
+import cookieParser from "cookie-parser";
 
 // import routes
-const authRoutes = require("./routes/auth");
-const tempUserRoutes = require("./routes/tempUserRoutes");
-const userRoutes = require("./routes/userRoutes");
+import authRoutes from "./routes/auth.js";
+import tempUserRoutes from "./routes/tempUserRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 // add other routes import as needed
+
+// import directly for routes that are immediately used
+import goalsRoutes from "./routes/goals.js";
+import progressRoutes from "./routes/progress.js";
 
 // load env variables
 dotenv.config();
@@ -40,10 +44,10 @@ const PORT = process.env.PORT || 5050;
 app.use("/api/auth", authRoutes);
 
 // Goals routes - handles goal management
-app.use("/api/goals", require("./routes/goals"));
+app.use("/api/goals", goalsRoutes);
 
 // Progress routes - handles progress tracking
-app.use("/api/progress", require("./routes/progress"));
+app.use("/api/progress", progressRoutes);
 
 // Temp User routes - handles temporary user management
 app.use("/api/temp-users", tempUserRoutes);

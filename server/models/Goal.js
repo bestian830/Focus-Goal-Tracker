@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 /**
  * Goal Schema - Defines the structure for goal documents in MongoDB
@@ -89,4 +89,5 @@ const GoalSchema = new mongoose.Schema(
 );
 
 // Create and export the Goal model
-module.exports = mongoose.model("Goal", GoalSchema);
+const Goal = mongoose.model("Goal", GoalSchema);
+export default Goal;

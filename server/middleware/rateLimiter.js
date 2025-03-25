@@ -145,7 +145,7 @@ const tempUserCreationLimiter = (options = {}) => {
   };
 };
 
-module.exports = {
+export {
   rateLimiter,
   tempUserCreationLimiter
 }; 

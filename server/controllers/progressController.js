@@ -1,6 +1,6 @@
-const Progress = require("../models/Progress");
-const Goal = require("../models/Goal");
-const User = require("../models/User");
+import Progress from "../models/Progress.js";
+import Goal from "../models/Goal.js";
+import User from "../models/User.js";
 
 /**
  * Get progress records for a specific goal
@@ -277,19 +277,19 @@ const deleteProgress = async (req, res) => {
 const addRecord = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, duration, mood, images } = req.body;
+    const { activity, duration, notes } = req.body;
     
-    // Validate required fields
-    if (!content) {
+    // Validate input
+    if (!activity || !duration) {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Content is required for a record"
+          message: "Activity and duration are required for a record"
         }
       });
     }
     
-    // Find progress
+    // Find progress record
     const progress = await Progress.findById(id);
     
     if (!progress) {
@@ -303,25 +303,27 @@ const addRecord = async (req, res) => {
     
     // Create new record
     const newRecord = {
-      content,
-      duration: duration || 0,
-      mood: mood || "Neutral",
-      images: images || [],
-      createdAt: new Date()
+      activity,
+      duration,
+      time: new Date(), // Current time
+      notes: notes || ""
     };
     
-    // Add record to array
+    // Add to records array
     progress.records.push(newRecord);
     
     // Update total duration
-    progress.totalDuration += (duration || 0);
+    progress.totalDuration = (progress.totalDuration || 0) + duration;
     
-    // Save progress
+    // Save updated progress
     await progress.save();
     
     res.status(201).json({
       success: true,
-      data: progress
+      data: {
+        record: newRecord,
+        progress
+      }
     });
   } catch (error) {
     console.error("Error adding record:", error);
@@ -336,7 +338,7 @@ const addRecord = async (req, res) => {
 };
 
 /**
- * Update a checkpoint status in a progress record
+ * Update checkpoint status
  * 
  * @route PUT /api/progress/:id/checkpoints/:checkpointId
  * @param {Object} req - Express request object
@@ -345,19 +347,19 @@ const addRecord = async (req, res) => {
 const updateCheckpointStatus = async (req, res) => {
   try {
     const { id, checkpointId } = req.params;
-    const { isCompleted } = req.body;
+    const { completed } = req.body;
     
-    // Validate required fields
-    if (isCompleted === undefined) {
+    // Validate input
+    if (completed === undefined) {
       return res.status(400).json({
         success: false,
         error: {
-          message: "isCompleted field is required"
+          message: "Completed status is required"
         }
       });
     }
     
-    // Find progress
+    // Find progress record
     const progress = await Progress.findById(id);
     
     if (!progress) {
@@ -369,48 +371,44 @@ const updateCheckpointStatus = async (req, res) => {
       });
     }
     
-    // Find checkpoint in array
-    const checkpointIndex = progress.checkpoints.findIndex(c => c.checkpointId.toString() === checkpointId);
+    // Find checkpoint
+    const checkpoint = progress.checkpoints.find(cp => cp._id.toString() === checkpointId);
     
-    if (checkpointIndex === -1) {
-      // Checkpoint not found in this progress, add it
-      progress.checkpoints.push({
-        checkpointId,
-        isCompleted,
-        completedAt: isCompleted ? new Date() : null
-      });
-    } else {
-      // Update existing checkpoint
-      progress.checkpoints[checkpointIndex].isCompleted = isCompleted;
-      progress.checkpoints[checkpointIndex].completedAt = isCompleted ? new Date() : null;
-    }
-    
-    // Save progress
-    await progress.save();
-    
-    // Also update the corresponding goal's checkpoint if completed
-    if (isCompleted) {
-      const goal = await Goal.findById(progress.goalId);
-      if (goal) {
-        const goalCheckpointIndex = goal.checkpoints.findIndex(c => c._id.toString() === checkpointId);
-        if (goalCheckpointIndex !== -1) {
-          goal.checkpoints[goalCheckpointIndex].isCompleted = true;
-          goal.checkpoints[goalCheckpointIndex].completedAt = new Date();
-          await goal.save();
+    if (!checkpoint) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: "Checkpoint not found in this progress record"
         }
-      }
+      });
     }
+    
+    // Update checkpoint status
+    checkpoint.completed = completed;
+    
+    // If completed, add completedAt timestamp
+    if (completed) {
+      checkpoint.completedAt = new Date();
+    } else {
+      checkpoint.completedAt = undefined; // Remove completedAt if not completed
+    }
+    
+    // Save updated progress
+    await progress.save();
     
     res.status(200).json({
       success: true,
-      data: progress
+      data: {
+        checkpoint,
+        progress
+      }
     });
   } catch (error) {
-    console.error("Error updating checkpoint status:", error);
+    console.error("Error updating checkpoint:", error);
     res.status(500).json({
       success: false,
       error: {
-        message: "Failed to update checkpoint status",
+        message: "Failed to update checkpoint",
         details: error.message
       }
     });
@@ -438,58 +436,83 @@ const getProgressSummary = async (req, res) => {
       });
     }
     
-    // Convert string dates to Date objects
+    // Parse dates
     const startDateObj = new Date(startDate);
     startDateObj.setHours(0, 0, 0, 0);
     
     const endDateObj = new Date(endDate);
     endDateObj.setHours(23, 59, 59, 999);
     
-    // Find progress records in date range
+    // Find all progress records in date range
     const progressRecords = await Progress.find({
       goalId,
       date: { $gte: startDateObj, $lte: endDateObj }
     }).sort({ date: 1 });
     
-    // Calculate summary metrics
-    const summary = {
-      totalDuration: 0,
-      recordsCount: 0,
-      daysWithProgress: progressRecords.length,
-      checkpointsCompleted: 0,
-      dateRange: {
-        startDate: startDateObj,
-        endDate: endDateObj
-      }
-    };
+    // Calculate summary statistics
+    const totalDuration = progressRecords.reduce((total, record) => total + (record.totalDuration || 0), 0);
+    const totalRecords = progressRecords.reduce((total, record) => total + record.records.length, 0);
     
-    // Process progress records
-    progressRecords.forEach(progress => {
-      summary.totalDuration += progress.totalDuration || 0;
-      summary.recordsCount += progress.records.length;
-      summary.checkpointsCompleted += progress.checkpoints.filter(c => c.isCompleted).length;
+    // Calculate checkpoint completion
+    let totalCheckpoints = 0;
+    let completedCheckpoints = 0;
+    
+    progressRecords.forEach(record => {
+      totalCheckpoints += record.checkpoints.length;
+      completedCheckpoints += record.checkpoints.filter(cp => cp.completed).length;
     });
     
+    // Group by activity
+    const activityBreakdown = {};
+    progressRecords.forEach(progressRecord => {
+      progressRecord.records.forEach(record => {
+        const activity = record.activity;
+        if (!activityBreakdown[activity]) {
+          activityBreakdown[activity] = 0;
+        }
+        activityBreakdown[activity] += record.duration || 0;
+      });
+    });
+    
+    // Create activity array sorted by duration
+    const activities = Object.keys(activityBreakdown).map(activity => ({
+      activity,
+      totalDuration: activityBreakdown[activity]
+    })).sort((a, b) => b.totalDuration - a.totalDuration);
+    
+    // Return summary
     res.status(200).json({
       success: true,
       data: {
-        summary,
-        progressRecords
+        totalDuration,
+        totalRecords,
+        recordDays: progressRecords.length,
+        checkpoints: {
+          total: totalCheckpoints,
+          completed: completedCheckpoints,
+          completion: totalCheckpoints > 0 ? Math.round((completedCheckpoints / totalCheckpoints) * 100) : 0
+        },
+        activities,
+        range: {
+          startDate: startDateObj,
+          endDate: endDateObj,
+          daysInRange: Math.ceil((endDateObj - startDateObj) / (1000 * 60 * 60 * 24)) + 1
+        }
       }
     });
   } catch (error) {
-    console.error("Error fetching progress summary:", error);
+    console.error("Error generating progress summary:", error);
     res.status(500).json({
       success: false,
       error: {
-        message: "Failed to fetch progress summary",
+        message: "Failed to generate progress summary",
         details: error.message
       }
     });
   }
 };
 
-module.exports = {
+export {
   getProgress,
   createProgress,
   updateProgress,
