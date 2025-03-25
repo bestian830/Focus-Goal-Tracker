@@ -90,12 +90,7 @@ function ProfileModal({ isOpen, onClose, user }) {
         }
 
         // for registered user, get user data
-        const response = await axios.get(
-          "http://localhost:5050/api/users/profile",
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await apiService.users.getProfile();
 
         if (response.data && response.data.success) {
           const userData = response.data.data;
@@ -143,13 +138,7 @@ function ProfileModal({ isOpen, onClose, user }) {
     setSuccessMessage("");
 
     try {
-      const response = await axios.put(
-        "http://localhost:5050/api/users/profile",
-        formData,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await apiService.users.updateProfile(formData);
 
       if (response.data && response.data.success) {
         setProfile(response.data.data);
@@ -179,16 +168,10 @@ function ProfileModal({ isOpen, onClose, user }) {
     }
 
     try {
-      const response = await axios.put(
-        "http://localhost:5050/api/users/password",
-        {
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await apiService.users.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
 
       if (response.data && response.data.success) {
         setSuccessMessage("Updated password successfully!");
