@@ -27,7 +27,18 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function(origin, callback) {
+      const allowedOrigins = [
+        process.env.CLIENT_URL || "http://localhost:5173",
+        "https://focusappdeploy-frontend.onrender.com"
+      ];
+      // allow requests with no origin (like mobile apps or curl requests)
+      if(!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true, // Enable cookies with CORS
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow only specified methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allow only specified headers
