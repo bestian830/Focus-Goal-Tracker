@@ -6,8 +6,8 @@ export default defineConfig(({ mode }) => {
   // 加載環境變量
   const env = loadEnv(mode, process.cwd())
   
-  return {
-    plugins: [react()],
+  // 開發環境配置
+  const devConfig = {
     server: {
       proxy: {
         "/api": {
@@ -16,6 +16,16 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+  }
+  
+  // 生產環境配置
+  const prodConfig = {
+    // 生產環境不需要代理
+  }
+  
+  return {
+    plugins: [react()],
+    ...(mode === 'production' ? prodConfig : devConfig)
   }
 });
 

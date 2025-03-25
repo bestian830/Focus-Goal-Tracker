@@ -24,17 +24,40 @@ connectDB();
 
 const app = express();
 
+// 配置允許的來源
+const allowedOrigins = [
+  "http://localhost:5173",  // 本地開發環境
+  "https://focusappdeploy-frontend.onrender.com",  // Render部署的前端
+  process.env.CLIENT_URL,  // 環境變量中配置的客戶端URL
+].filter(Boolean); // 過濾掉 undefined 或 null
+
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true, // Enable cookies with CORS
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow only specified methods
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow only specified headers
+    origin: function(origin, callback) {
+      // 允許沒有來源的請求（比如同源請求）
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`Blocked request from unauthorized origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true, // 允許跨域請求攜帶cookie
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-app.use(express.json()); // Parse JSON request bodies
-app.use(cookieParser()); // Parse cookies
+
+// 輸出CORS配置信息
+console.log("=== CORS Configuration ===");
+console.log("Allowed Origins:", allowedOrigins);
+console.log("=======================");
+
+app.use(express.json());
+app.use(cookieParser());
 
 // Set port from environment variables or use default
 const PORT = process.env.PORT || 5050;

@@ -1,22 +1,21 @@
 import axios from "axios";
 
-// 設置後端 API URL，確保在不同環境中正確配置
+// 設置後端 API URL
 const PRODUCTION_API_URL = "https://focusappdeploy-backend.onrender.com";
 const DEVELOPMENT_API_URL = "http://localhost:5050";
 
-// 根據環境強制選擇 API URL
-// 1. 檢查主機名，如果不是localhost，直接使用生產URL
-// 2. 否則，使用環境變量或默認開發URL
+// 根據環境選擇 API URL
 const API_URL = 
-  window.location.hostname !== "localhost" 
-    ? PRODUCTION_API_URL  // 非localhost環境，強制使用生產API
+  import.meta.env.PROD || import.meta.env.MODE === "production"
+    ? PRODUCTION_API_URL
     : import.meta.env.VITE_API_URL || DEVELOPMENT_API_URL;
 
 // 輸出配置信息，幫助診斷連接問題
 console.log("=== API 配置信息 ===");
 console.log("運行模式:", import.meta.env.MODE);
+console.log("是否生產環境:", import.meta.env.PROD);
 console.log("使用的 API URL:", API_URL);
-console.log("主機名:", window.location.hostname);
+console.log("環境變量 VITE_API_URL:", import.meta.env.VITE_API_URL);
 console.log("====================");
 
 // 創建 axios 實例
@@ -107,6 +106,20 @@ setTimeout(() => {
 
 // 封裝 API 方法
 const apiService = {
+  // 診斷方法
+  getDiagnostics: () => {
+    return {
+      apiUrl: API_URL,
+      mode: import.meta.env.MODE,
+      isProd: import.meta.env.PROD,
+      viteApiUrl: import.meta.env.VITE_API_URL,
+      allowedOrigins: [
+        "http://localhost:5173",
+        "https://focusappdeploy-frontend.onrender.com"
+      ]
+    };
+  },
+
   // 健康檢查
   healthCheck: checkApiHealth,
   
