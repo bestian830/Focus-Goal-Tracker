@@ -47,7 +47,12 @@ app.use(
     },
     credentials: true, // 允許跨域請求攜帶cookie
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type", 
+      "Authorization", 
+      "X-User-Id"
+    ],
+    exposedHeaders: ["Set-Cookie"],
   })
 );
 

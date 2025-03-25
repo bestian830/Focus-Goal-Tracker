@@ -6,9 +6,7 @@ const DEVELOPMENT_API_URL = "http://localhost:5050";
 
 // 根據環境選擇 API URL - 優化環境檢測邏輯
 const isProduction = import.meta.env.PROD === true || import.meta.env.MODE === "production";
-const API_URL = isProduction 
-  ? PRODUCTION_API_URL 
-  : (import.meta.env.VITE_API_URL || DEVELOPMENT_API_URL);
+const API_URL = isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
 
 // 輸出配置信息，幫助診斷連接問題
 console.log("=== API 配置信息 ===");
@@ -16,7 +14,6 @@ console.log("運行模式:", import.meta.env.MODE);
 console.log("是否生產環境:", import.meta.env.PROD);
 console.log("環境檢測結果:", isProduction ? "生產環境" : "開發環境");
 console.log("使用的 API URL:", API_URL);
-console.log("環境變量 VITE_API_URL:", import.meta.env.VITE_API_URL);
 console.log("====================");
 
 // 創建 axios 實例
