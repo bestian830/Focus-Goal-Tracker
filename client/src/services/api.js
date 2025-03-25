@@ -1,21 +1,21 @@
 import axios from 'axios';
 
-// 使用環境變量或默認值作為基礎URL
+// use environment variable or default value as base URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
 
-// 創建axios實例
+// create axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // 允許跨域請求攜帶cookie
+  withCredentials: true, // allow cross-domain requests to carry cookies
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// 請求攔截器
+// request interceptor
 api.interceptors.request.use(
   (config) => {
-    // 可以在這裡添加認證令牌等
+    // add authentication token here
     return config;
   },
   (error) => {
@@ -23,25 +23,25 @@ api.interceptors.request.use(
   }
 );
 
-// 響應攔截器
+// response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // 處理統一錯誤，如401未授權等
+    // handle unified errors, such as 401 unauthorized
     if (error.response && error.response.status === 401) {
-      // 處理未授權錯誤，如重定向到登錄頁
-      console.log('未授權，請重新登錄');
-      // 可以在這裡添加重定向邏輯
+      // handle unauthorized error, such as redirecting to login page
+      console.log('Unauthorized, please log in again');
+      // add redirect logic here
     }
     return Promise.reject(error);
   }
 );
 
-// 封裝API方法
+// wrap API methods
 const apiService = {
-  // 認證相關
+  // authentication related
   auth: {
     register: (userData) => api.post('/api/auth/register', userData),
     login: (credentials) => api.post('/api/auth/login', credentials),
@@ -50,7 +50,7 @@ const apiService = {
     createTempUser: (data) => api.post('/api/temp-users', data),
   },
   
-  // 用戶相關
+  // user related
   users: {
     getProfile: () => api.get('/api/users/profile'),
     updateProfile: (data) => api.put('/api/users/profile', data),
@@ -58,12 +58,12 @@ const apiService = {
     deleteAccount: () => api.delete('/api/users/account'),
   },
   
-  // 臨時用戶相關
+  // temporary user related
   tempUsers: {
     delete: (tempId) => api.delete(`/api/temp-users/${tempId}`),
   },
   
-  // 目標相關
+  // goal related
   goals: {
     getAll: (userId) => api.get(`/api/goals/user/${userId}`),
     getById: (id) => api.get(`/api/goals/detail/${id}`),
@@ -75,7 +75,7 @@ const apiService = {
     updateDeclaration: (id, declaration) => api.put(`/api/goals/${id}/declaration`, declaration),
   },
   
-  // 進度相關
+  // progress related
   progress: {
     getAll: (goalId) => api.get(`/api/progress?goalId=${goalId}`),
     getById: (id) => api.get(`/api/progress/${id}`),
