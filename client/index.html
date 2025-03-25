@@ -4,7 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>Focus App - 目標追蹤</title>
+    <!-- 環境變量注入 - 重要：在構建過程中會被替換 -->
+    <script>
+      // 如果沒有在構建過程中被替換，則使用默認配置
+      window.ENV = window.ENV || {
+        VITE_API_URL: "https://focusappdeploy-backend.onrender.com"
+      };
+      console.log('初始環境設置完成:', window.ENV);
+    </script>
   </head>
   <body>
     <div id="root"></div>

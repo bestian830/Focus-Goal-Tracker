@@ -6,6 +6,7 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import GoalDetails from "../components/GoalDetails/GoalDetails";
 import ProgressReport from "../components/ProgressReport/ProgressReport";
+import apiService from "../services/api";
 import "../styles/Home.css";
 import "../styles/ComponentStyles.css";
 
@@ -43,12 +44,7 @@ function Home() {
         if (userId) {
           // For registered users, fetch user data from the API (axios)
           try {
-            const response = await axios.get(
-              `http://localhost:5050/api/auth/me/${userId}`,
-              {
-                withCredentials: true, // Send cookies with the request
-              }
-            );
+            const response = await apiService.auth.getCurrentUser(userId);
 
             if (response.data && response.data.success) {
               setUser({
@@ -99,13 +95,7 @@ function Home() {
           if (tempId) {
             try {
               // 仅清除cookie而不删除账户
-              await axios.post(
-                "http://localhost:5050/api/auth/logout",
-                {},
-                {
-                  withCredentials: true,
-                }
-              );
+              await apiService.auth.logout();
             } catch (error) {
               console.error("临时用户登出API调用失败:", error);
               // 如果出错，仍继续本地清理
@@ -115,13 +105,7 @@ function Home() {
           }
         } else if (user && !user.isGuest) {
           // 对于注册用户，调用登出API
-          await axios.post(
-            "http://localhost:5050/api/auth/logout",
-            {},
-            {
-              withCredentials: true,
-            }
-          );
+          await apiService.auth.logout();
           
           // 清除localStorage中的userId
           localStorage.removeItem("userId");

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import apiService from '../services/api';
 import '../styles/Profile.css';
 
 /**
@@ -68,9 +69,7 @@ function Profile() {
         }
         
         // get the user data
-        const response = await axios.get('http://localhost:5050/api/users/profile', {
-          withCredentials: true
-        });
+        const response = await apiService.users.getProfile();
         
         if (response.data && response.data.success) {
           const userData = response.data.data;
@@ -120,9 +119,7 @@ function Profile() {
     setSuccessMessage('');
     
     try {
-      const response = await axios.put('http://localhost:5050/api/users/profile', formData, {
-        withCredentials: true
-      });
+      const response = await apiService.users.updateProfile(formData);
       
       if (response.data && response.data.success) {
         setProfile(response.data.data);
@@ -152,11 +149,9 @@ function Profile() {
     }
     
     try {
-      const response = await axios.put('http://localhost:5050/api/users/password', {
+      const response = await apiService.users.changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
-      }, {
-        withCredentials: true
       });
       
       if (response.data && response.data.success) {
@@ -184,9 +179,7 @@ function Profile() {
     setSuccessMessage('');
     
     try {
-      const response = await axios.delete('http://localhost:5050/api/users/account', {
-        withCredentials: true
-      });
+      const response = await apiService.users.deleteAccount();
       
       if (response.data && response.data.success) {
         // remove the user ID from the local storage

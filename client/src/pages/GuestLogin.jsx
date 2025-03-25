@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import apiService from '../services/api';
 import '../styles/GuestLogin.css'; // We'll create this file later
 
 /**
@@ -40,9 +41,7 @@ function GuestLogin() {
       // 如果有现有tempId，则传递给后端进行验证
       const requestData = existingTempId ? { existingTempId } : {};
       
-      const response = await axios.post('http://localhost:5050/api/temp-users', requestData, {
-        withCredentials: true // 確保 cookie 被包含在請求中
-      });
+      const response = await apiService.auth.createTempUser(requestData);
       
       // For debugging purposes
       setApiResponse(response.data);
