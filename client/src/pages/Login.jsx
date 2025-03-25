@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import apiService from "../services/api";
 import "../styles/Login.css"; // We'll create this CSS file later
 
 /**
@@ -59,14 +59,8 @@ function Login() {
     setLoading(true);
 
     try {
-      // Call the login API with credentials option
-      const response = await axios.post(
-        "http://localhost:5050/api/auth/login",
-        formData,
-        {
-          withCredentials: true, // Ensure credentials (cookies) are sent
-        }
-      );
+      // 使用封裝的API服務進行登錄
+      const response = await apiService.auth.login(formData);
 
       // Store user ID in localStorage (token has passed the cookie)
       localStorage.setItem("userId", response.data.data.id);
