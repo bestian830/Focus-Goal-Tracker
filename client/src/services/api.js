@@ -1,9 +1,42 @@
 import axios from 'axios';
 
-// use environment variable or default value as base URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+// 定義獲取 API URL 的多種方式
+const getApiUrl = () => {
+  // 首先直接使用硬編碼的生產環境 URL
+  const productionUrl = 'https://focusappdeploy-backend.onrender.com';
+  
+  // 記錄所有可能的來源
+  const sources = {
+    hardcoded: productionUrl,
+    importMeta: import.meta.env.VITE_API_URL,
+    processEnv: typeof process !== 'undefined' && process.env && process.env.VITE_API_URL,
+    windowEnv: window.ENV && window.ENV.VITE_API_URL
+  };
+  
+  console.log('API URL sources:', sources);
+  
+  // 在生產環境中優先使用硬編碼的 URL
+  if (import.meta.env.MODE === 'production') {
+    console.log('生產環境：使用硬編碼的後端URL');
+    return productionUrl;
+  }
+  
+  // 在開發環境中按優先順序使用配置的 URL
+  // 按優先順序返回第一個有效的 URL
+  return sources.importMeta || sources.processEnv || sources.windowEnv || sources.hardcoded;
+};
 
-// create axios instance
+// 獲取 API URL
+const API_URL = getApiUrl();
+
+// 添加偵錯輸出，查看實際使用的 API URL
+console.log("=== API CONFIGURATION ===");
+console.log("Final API URL being used:", API_URL);
+console.log("Environment:", import.meta.env.MODE);
+console.log("Window ENV:", window.ENV);
+console.log("========================");
+
+// create axios instance with CORS credentials
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // allow cross-domain requests to carry cookies
@@ -15,6 +48,8 @@ const api = axios.create({
 // request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Log the full URL of each request for debugging
+    console.log(`Making request to: ${config.baseURL}${config.url}`);
     // add authentication token here
     return config;
   },
@@ -34,6 +69,14 @@ api.interceptors.response.use(
       // handle unauthorized error, such as redirecting to login page
       console.log('Unauthorized, please log in again');
       // add redirect logic here
+    } else {
+      // Log detailed error information for debugging
+      console.error('API Error:', {
+        message: error.message,
+        url: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+        status: error.response ? error.response.status : 'no response',
+        data: error.response ? error.response.data : 'no data'
+      });
     }
     return Promise.reject(error);
   }
