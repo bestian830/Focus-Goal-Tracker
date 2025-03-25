@@ -6,6 +6,7 @@ import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import GoalDetails from "../components/GoalDetails/GoalDetails";
 import ProgressReport from "../components/ProgressReport/ProgressReport";
+import apiService from "../services/api";
 import "../styles/Home.css";
 import "../styles/ComponentStyles.css";
 
@@ -26,47 +27,75 @@ function Home() {
   const [loading, setLoading] = useState(true);
   // State for profile modal
   const [showProfileModal, setShowProfileModal] = useState(false);
+  // State for API connection
+  const [apiConnected, setApiConnected] = useState(true);
 
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
+
+  // 檢查 API 連接狀態
+  useEffect(() => {
+    const checkApiConnection = async () => {
+      try {
+        const isHealthy = await apiService.healthCheck();
+        setApiConnected(isHealthy);
+        console.log("API 健康檢查結果:", isHealthy);
+      } catch (error) {
+        console.error("API 健康檢查失敗:", error);
+        setApiConnected(false);
+      }
+    };
+
+    checkApiConnection();
+  }, []);
 
   // Check if user is logged in (either as guest or registered)
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
+      console.log("=== 開始獲取用戶數據 ===");
 
       try {
         // Check if user ID is stored in local storage
         const userId = localStorage.getItem("userId");
         const tempId = localStorage.getItem("tempId");
 
+        console.log("localStorage 中的用戶信息:", { userId, tempId });
+
+        if (!userId && !tempId) {
+          console.log("未找到用戶信息，顯示歡迎頁面");
+          setLoading(false);
+          return;
+        }
+
         if (userId) {
-          // For registered users, fetch user data from the API (axios)
+          console.log("檢測到註冊用戶ID，開始獲取用戶數據");
           try {
-            const response = await axios.get(
-              `http://localhost:5050/api/auth/me/${userId}`,
-              {
-                withCredentials: true, // Send cookies with the request
-              }
-            );
+            const response = await apiService.auth.getCurrentUser(userId);
 
             if (response.data && response.data.success) {
+              console.log("成功獲取用戶數據:", response.data.data);
               setUser({
                 ...response.data.data,
                 isGuest: false,
               });
             }
           } catch (apiError) {
-            console.error("Error fetching user data from API:", apiError);
-            // If there's an error, we'll fall back to using local storage
-            setUser({
-              id: userId,
-              username: "User",
-              isGuest: false,
-            });
+            console.error("獲取用戶數據失敗:", apiError);
+            if (apiError.response?.status === 401) {
+              console.log("用戶未授權，清除本地存儲");
+              localStorage.removeItem("userId");
+              navigate("/login");
+            } else {
+              setUser({
+                id: userId,
+                username: "User",
+                isGuest: false,
+              });
+            }
           }
         } else if (tempId) {
-          //  For guest users, set user data with temporary ID
+          console.log("檢測到臨時用戶ID:", tempId);
           setUser({
             id: tempId,
             username: "Guest User",
@@ -74,14 +103,14 @@ function Home() {
           });
         }
       } catch (error) {
-        console.error("Error in user data logic:", error);
+        console.error("用戶數據邏輯錯誤:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [navigate]);
 
   /**
    * Handle user logout
@@ -99,13 +128,7 @@ function Home() {
           if (tempId) {
             try {
               // 仅清除cookie而不删除账户
-              await axios.post(
-                "http://localhost:5050/api/auth/logout",
-                {},
-                {
-                  withCredentials: true,
-                }
-              );
+              await apiService.auth.logout();
             } catch (error) {
               console.error("临时用户登出API调用失败:", error);
               // 如果出错，仍继续本地清理
@@ -115,13 +138,7 @@ function Home() {
           }
         } else if (user && !user.isGuest) {
           // 对于注册用户，调用登出API
-          await axios.post(
-            "http://localhost:5050/api/auth/logout",
-            {},
-            {
-              withCredentials: true,
-            }
-          );
+          await apiService.auth.logout();
           
           // 清除localStorage中的userId
           localStorage.removeItem("userId");

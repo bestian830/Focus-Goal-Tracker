@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaTimes } from "react-icons/fa";
 import "../styles/ProfileModal.css";
+import apiService from "../services/api";
 
 /**
  * ProfileModal Component
@@ -89,12 +90,7 @@ function ProfileModal({ isOpen, onClose, user }) {
         }
 
         // for registered user, get user data
-        const response = await axios.get(
-          "http://localhost:5050/api/users/profile",
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await apiService.users.getProfile();
 
         if (response.data && response.data.success) {
           const userData = response.data.data;
@@ -142,13 +138,7 @@ function ProfileModal({ isOpen, onClose, user }) {
     setSuccessMessage("");
 
     try {
-      const response = await axios.put(
-        "http://localhost:5050/api/users/profile",
-        formData,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await apiService.users.updateProfile(formData);
 
       if (response.data && response.data.success) {
         setProfile(response.data.data);
@@ -178,16 +168,10 @@ function ProfileModal({ isOpen, onClose, user }) {
     }
 
     try {
-      const response = await axios.put(
-        "http://localhost:5050/api/users/password",
-        {
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await apiService.users.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
 
       if (response.data && response.data.success) {
         setSuccessMessage("Updated password successfully!");
@@ -224,9 +208,7 @@ function ProfileModal({ isOpen, onClose, user }) {
         // delete temporary user
         const tempId = localStorage.getItem("tempId");
         if (tempId) {
-          await axios.delete(`http://localhost:5050/api/temp-users/${tempId}`, {
-            withCredentials: true,
-          });
+          await apiService.tempUsers.delete(tempId);
 
           // clear local storage
           localStorage.removeItem("tempId");
@@ -241,12 +223,7 @@ function ProfileModal({ isOpen, onClose, user }) {
         }
       } else {
         // delete registered user
-        const response = await axios.delete(
-          "http://localhost:5050/api/users/account",
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await apiService.users.deleteAccount();
 
         if (response.data && response.data.success) {
           // clear local storage

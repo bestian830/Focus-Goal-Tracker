@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import apiService from '../services/api';
 import '../styles/Register.css'; // We'll create this CSS file later
 
 /**
@@ -82,10 +83,7 @@ function Register() {
       }
       
       // Call the registration API
-      const response = await axios.post(
-        'http://localhost:5050/api/auth/register', 
-        registrationData
-      );
+      const response = await apiService.auth.register(registrationData);
       
       // Store user data and token in localStorage
       localStorage.setItem('userId', response.data.data.id);
