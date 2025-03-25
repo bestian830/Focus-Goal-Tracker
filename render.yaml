@@ -16,7 +16,7 @@ services:
     runtime: static
     name: focus-app-frontend
     buildCommand: cd client && npm install && npm run build
-    publishDir: client/dist
+    staticPublishPath: client/dist
     envVars:
       - key: VITE_API_URL
         value: https://focus-app-backend.onrender.com # replace with your backend URL
