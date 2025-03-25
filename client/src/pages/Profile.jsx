@@ -66,9 +66,9 @@ function Profile() {
       setLoading(true);
       setError('');
       
-      // 如果API連接失敗，顯示錯誤信息
+      // if the API connection fails, display the error message
       if (!apiConnected) {
-        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        setError('Connection failed. Please check your network connection or try again later.');
         setLoading(false);
         return;
       }
