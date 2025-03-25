@@ -12,7 +12,8 @@ services:
       - key: JWT_SECRET
         sync: false # manually set this value on Render
 
-  - type: static
+  - type: web
+    runtime: static
     name: focus-app-frontend
     buildCommand: cd client && npm install && npm run build
     publishDir: client/dist
