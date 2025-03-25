@@ -1,7 +1,19 @@
 import axios from 'axios';
 
-// 使用環境變量或默認值作為基礎URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+// 添加調試日誌以了解環境變量設置
+console.log("=== 環境變量調試信息 ===");
+console.log("import.meta.env:", import.meta.env);
+console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
+console.log("MODE:", import.meta.env.MODE);
+console.log("======================");
+
+// 根據環境選擇API URL
+const API_URL = import.meta.env.MODE === 'production' 
+  ? 'https://focusappdeploy-backend.onrender.com'  // 生產環境直接使用硬編碼URL
+  : (import.meta.env.VITE_API_URL || 'http://localhost:5050');  // 開發環境使用環境變量或默認值
+
+// 記錄最終使用的API URL
+console.log("最終使用的API URL:", API_URL);
 
 // 創建axios實例
 const api = axios.create({
