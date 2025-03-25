@@ -5,8 +5,8 @@ node_modules/
 res/
 
 # ignore .env
-.env
+*.env
 
 # ignore .DS_Store
-.DS_Store
+*.DS_Store
 

@@ -1,0 +1,330 @@
+/* 
+* Home.css
+* Styles for the main home page and goal tracker interface
+*/
+
+/* Container layout */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Header styles */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.logged-in-user {
+  display: flex;
+  align-items: center;
+}
+
+.logged-in-user span {
+  margin-right: 1rem;
+}
+
+/* 頭像容器和圖標樣式 */
+.avatar-container {
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 1rem;
+  transition: background-color 0.2s;
+}
+
+.avatar-container:hover {
+  background-color: #d0d0d0;
+}
+
+.avatar-icon {
+  font-size: 1.5rem;
+  color: #555;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 按鈕樣式 */
+.logout-button,
+.login-button,
+.guest-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.logout-button:hover {
+  background-color: #d32f2f;
+}
+
+.login-button {
+  background-color: #2196f3;
+  color: white;
+  margin-right: 0.5rem;
+}
+
+.login-button:hover {
+  background-color: #1976d2;
+}
+
+.guest-button {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+.guest-button:hover {
+  background-color: #757575;
+}
+
+/* Main content area */
+.main-content {
+  padding: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.welcome-message {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-message h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.welcome-message p {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Goals list section */
+.goal-list-section {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.add-goal-button {
+  padding: 0.5rem 1rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-goal-button:hover {
+  background-color: #388e3c;
+}
+
+.goal-placeholder,
+.details-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  color: #888;
+  text-align: center;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+/* Goal details section */
+.goal-details-section {
+  flex: 2;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.goal-details-section h2 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.goal-details-section h3 {
+  font-size: 1.2rem;
+  margin-top: 25px;
+  margin-bottom: 15px;
+  color: #444;
+}
+
+/* Timeline styles */
+.timeline-bar {
+  display: flex;
+  height: 30px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.timeline-day {
+  flex: 1;
+  border-right: 1px solid #ddd;
+}
+
+.timeline-day:last-child {
+  border-right: none;
+}
+
+/* Daily tasks styles */
+.tasks-placeholder {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.task-item {
+  display: block;
+  padding: 0.5rem;
+  cursor: not-allowed;
+}
+
+/* Loading and error states */
+.loading, .error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #cc0000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .goal-list-section {
+    max-width: none;
+  }
+}
+
+/* 標題區域 */
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.welcome-text {
+  font-size: 1.8rem;
+  color: #333;
+  margin: 0;
+}
+
+.user-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.profile-btn:hover {
+  background-color: #1976d2;
+}
+
+.logout-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #d32f2f;
+} 
