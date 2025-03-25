@@ -26,7 +26,6 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  // 增加請求超時時間，處理可能的網絡延遲
   timeout: 10000, // 10秒
 });
 
@@ -35,6 +34,13 @@ api.interceptors.request.use(
   (config) => {
     // 記錄完整的請求 URL，便於調試
     console.log(`發送請求到: ${config.baseURL}${config.url}`);
+    
+    // 檢查是否有 userId
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      config.headers['X-User-Id'] = userId;
+    }
+    
     return config;
   },
   (error) => {
@@ -53,7 +59,8 @@ api.interceptors.response.use(
       console.error("網絡連接錯誤:", {
         message: error.message,
         url: error.config ? `${error.config.baseURL}${error.config.url}` : "未知",
-        baseURL: API_URL
+        baseURL: API_URL,
+        headers: error.config ? error.config.headers : "未知"
       });
       
       // 如果是profile請求，提供更具體的錯誤信息
@@ -62,11 +69,23 @@ api.interceptors.response.use(
         console.error("1. 後端服務未運行");
         console.error("2. API_URL配置不正確:", API_URL);
         console.error("3. 跨域請求問題");
+        console.error("4. Cookie 未正確設置");
+        
+        // 檢查認證狀態
+        const userId = localStorage.getItem('userId');
+        const token = document.cookie.includes('token=');
+        console.error("認證狀態檢查:", {
+          hasUserId: !!userId,
+          hasCookie: token
+        });
       }
     } 
     // 處理授權錯誤
     else if (error.response && error.response.status === 401) {
       console.log("未授權，請重新登錄");
+      // 清除本地存儲並重定向到登錄頁面
+      localStorage.removeItem('userId');
+      window.location.href = '/login';
     }
     // 處理其他錯誤
     else {
