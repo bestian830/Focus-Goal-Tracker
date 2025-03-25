@@ -66,9 +66,13 @@ function Profile() {
       setLoading(true);
       setError('');
       
+      console.log("=== 開始獲取用戶資料 ===");
+      console.log("API連接狀態:", apiConnected);
+      
       // if the API connection fails, display the error message
       if (!apiConnected) {
-        setError('Connection failed. Please check your network connection or try again later.');
+        console.error("API連接失敗");
+        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
         setLoading(false);
         return;
       }
@@ -77,7 +81,7 @@ function Profile() {
         // check if there is a temp user ID
         const tempId = localStorage.getItem('tempId');
         if (tempId) {
-          // temp user cannot access the profile page
+          console.log("檢測到臨時用戶ID:", tempId);
           setError('臨時用戶不能訪問此頁面。請先註冊或登錄。');
           setLoading(false);
           setTimeout(() => navigate('/login'), 2000);
@@ -86,34 +90,47 @@ function Profile() {
         
         // get the user ID
         const userId = localStorage.getItem('userId');
+        console.log("當前用戶ID:", userId);
+        
         if (!userId) {
-          // user is not logged in, redirect to login page
+          console.log("未找到用戶ID，重定向到登錄頁面");
           navigate('/login');
           return;
         }
         
+        console.log("開始請求用戶資料...");
         // get the user data
         const response = await apiService.users.getProfile();
         
         if (response.data && response.data.success) {
+          console.log("成功獲取用戶資料:", response.data.data);
           const userData = response.data.data;
           setProfile(userData);
           setFormData({
             username: userData.username,
             email: userData.email,
           });
+        } else {
+          console.error("API返回數據格式錯誤:", response);
+          setError('獲取用戶資料失敗：服務器返回數據格式錯誤');
         }
       } catch (error) {
-        console.error('Failed to fetch user profile:', error);
+        console.error('獲取用戶資料失敗:', error);
         if (error.code === 'ERR_NETWORK') {
+          console.error("網絡錯誤詳情:", {
+            message: error.message,
+            config: error.config
+          });
           setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
         } else if (error.response && error.response.status === 401) {
+          console.log("未授權訪問，重定向到登錄頁面");
           setError('您需要登錄才能訪問個人資料頁面。');
-          // 重定向到登錄頁面
           setTimeout(() => navigate('/login'), 2000);
         } else if (error.response && error.response.data && error.response.data.error) {
+          console.error("API錯誤響應:", error.response.data.error);
           setError(error.response.data.error.message);
         } else {
+          console.error("未知錯誤:", error);
           setError('獲取用戶資料失敗。請稍後再試。');
         }
       } finally {

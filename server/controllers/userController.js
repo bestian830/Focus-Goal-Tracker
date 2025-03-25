@@ -18,6 +18,33 @@ import bcrypt from 'bcryptjs';
  */
 const getProfile = async (req, res) => {
   try {
+    console.log("=== 獲取用戶資料請求 ===");
+    console.log("用戶類型:", req.user?.userType);
+    console.log("用戶ID:", req.user?.id);
+    console.log("=====================");
+
+    // 檢查用戶認證狀態
+    if (!req.user) {
+      console.error("未找到用戶認證信息");
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: "未授權訪問",
+        },
+      });
+    }
+
+    // 檢查用戶類型
+    if (req.user.userType !== 'registered') {
+      console.error("非註冊用戶嘗試訪問個人資料");
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: "只有註冊用戶可以訪問個人資料",
+        },
+      });
+    }
+
     // 獲取當前用戶的ID
     const userId = req.user.id;
 
@@ -25,14 +52,17 @@ const getProfile = async (req, res) => {
     const user = await User.findById(userId).select('-password');
 
     if (!user) {
+      console.error(`未找到ID為 ${userId} 的用戶`);
       return res.status(404).json({
         success: false,
         error: {
-          message: "User not found",
+          message: "用戶不存在",
         },
       });
     }
 
+    console.log(`成功獲取用戶資料: ${user.username}`);
+    
     // 返回用戶信息
     return res.status(200).json({
       success: true,
@@ -45,11 +75,11 @@ const getProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching user profile:", error);
+    console.error("獲取用戶資料時發生錯誤:", error);
     res.status(500).json({
       success: false,
       error: {
-        message: "Failed to fetch user profile",
+        message: "獲取用戶資料失敗",
         details: error.message,
       },
     });
