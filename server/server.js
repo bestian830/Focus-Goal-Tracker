@@ -59,20 +59,20 @@ app.get("/", (req, res) => {
 // Global error handler middleware
 app.use((err, req, res, next) => {
   console.error(`[ERROR] ${err.stack}`);
-  
+
   // Check if headers have already been sent
   if (res.headersSent) {
     return next(err);
   }
-  
+
   const statusCode = err.statusCode || 500;
-  
+
   res.status(statusCode).json({
     success: false,
     error: {
       message: err.message || "internal server error",
-      ...(process.env.NODE_ENV === "development" && { stack: err.stack })
-    }
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    },
   });
 });
 
@@ -81,8 +81,8 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: {
-      message: "resource not found"
-    }
+      message: "resource not found",
+    },
   });
 });
 
