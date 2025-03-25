@@ -69,6 +69,14 @@ function Profile() {
       console.log("=== 開始獲取用戶資料 ===");
       console.log("API連接狀態:", apiConnected);
       
+      // 檢查 cookie 和本地存儲
+      const hasCookie = document.cookie.includes('token=');
+      const userId = localStorage.getItem('userId');
+      console.log("認證狀態檢查:", {
+        userId: userId,
+        hasCookie: hasCookie
+      });
+      
       // if the API connection fails, display the error message
       if (!apiConnected) {
         console.error("API連接失敗");
@@ -89,13 +97,14 @@ function Profile() {
         }
         
         // get the user ID
-        const userId = localStorage.getItem('userId');
-        console.log("當前用戶ID:", userId);
-        
         if (!userId) {
           console.log("未找到用戶ID，重定向到登錄頁面");
           navigate('/login');
           return;
+        }
+        
+        if (!hasCookie) {
+          console.error("檢測到 userId 但未找到認證 cookie，可能需要重新登錄");
         }
         
         console.log("開始請求用戶資料...");

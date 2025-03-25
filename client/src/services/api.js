@@ -32,11 +32,8 @@ api.interceptors.request.use(
     // 記錄完整的請求 URL，便於調試
     console.log(`發送請求到: ${config.baseURL}${config.url}`);
     
-    // 檢查是否有 userId
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-      config.headers['X-User-Id'] = userId;
-    }
+    // 不再使用 X-User-Id 頭部，完全依賴 JWT cookie 進行認證
+    // JWT cookie 會自動附加到請求中，因為已設置 withCredentials: true
     
     return config;
   },
@@ -129,7 +126,6 @@ const apiService = {
       apiUrl: API_URL,
       mode: import.meta.env.MODE,
       isProd: import.meta.env.PROD,
-      viteApiUrl: import.meta.env.VITE_API_URL,
       allowedOrigins: [
         "http://localhost:5173",
         "https://focusappdeploy-frontend.onrender.com"
@@ -151,7 +147,10 @@ const apiService = {
 
   // 用戶相關
   users: {
-    getProfile: () => api.get("/api/users/profile"),
+    getProfile: () => {
+      console.log("調用 getProfile 方法，API_URL:", API_URL);
+      return api.get("/api/users/profile");
+    },
     updateProfile: (data) => api.put("/api/users/profile", data),
     changePassword: (data) => api.put("/api/users/password", data),
     deleteAccount: () => api.delete("/api/users/account"),

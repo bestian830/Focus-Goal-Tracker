@@ -63,6 +63,13 @@ const verifyToken = (token) => {
  * @param {Number} maxAge - Cookie max age in milliseconds
  */
 const setTokenCookie = (res, token, maxAge) => {
+  // 輸出 cookie 設置信息
+  console.log("設置 JWT cookie：", {
+    環境: process.env.NODE_ENV,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
+  
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // Use secure in production

@@ -45,13 +45,9 @@ app.use(
         callback(new Error('Not allowed by CORS'));
       }
     },
-    credentials: true, // 允許跨域請求攜帶cookie
+    credentials: true, // 允許跨域請求攜帶 cookie
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type", 
-      "Authorization", 
-      "X-User-Id"
-    ],
+    allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["Set-Cookie"],
   })
 );
