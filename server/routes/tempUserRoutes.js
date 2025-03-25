@@ -21,7 +21,7 @@ router.use(rateLimiter({ maxRequests: 200, windowMs: 15 * 60 * 1000 })); // 200 
 
 // POST /api/temp-users - Create a new temporary user
 // Apply specific stricter rate limiter for temp user creation
-router.post("/", tempUserCreationLimiter({ maxCreations: 5, windowMs: 60 * 60 * 1000 }), async (req, res) => {
+router.post("/", tempUserCreationLimiter({ maxCreations: 10, windowMs: 30 * 60 * 1000 }), async (req, res) => {
   try {
     // check if there is already a temp user's token
     const existingToken = req.cookies.token;

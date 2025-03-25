@@ -1,19 +1,22 @@
 import axios from "axios";
 
-// 設置後端 API URL，生產環境中強制使用部署的 URL
+// 設置後端 API URL，確保在不同環境中正確配置
 const PRODUCTION_API_URL = "https://focusappdeploy-backend.onrender.com";
 const DEVELOPMENT_API_URL = "http://localhost:5050";
 
-// 根據環境選擇 API URL
-const API_URL =
-  import.meta.env.MODE === "production"
-    ? PRODUCTION_API_URL
+// 根據環境強制選擇 API URL
+// 1. 檢查主機名，如果不是localhost，直接使用生產URL
+// 2. 否則，使用環境變量或默認開發URL
+const API_URL = 
+  window.location.hostname !== "localhost" 
+    ? PRODUCTION_API_URL  // 非localhost環境，強制使用生產API
     : import.meta.env.VITE_API_URL || DEVELOPMENT_API_URL;
 
-// 添加調試信息，幫助診斷連接問題
+// 輸出配置信息，幫助診斷連接問題
 console.log("=== API 配置信息 ===");
 console.log("運行模式:", import.meta.env.MODE);
 console.log("使用的 API URL:", API_URL);
+console.log("主機名:", window.location.hostname);
 console.log("====================");
 
 // 創建 axios 實例
@@ -23,6 +26,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // 增加請求超時時間，處理可能的網絡延遲
+  timeout: 10000, // 10秒
 });
 
 // 請求攔截器
@@ -43,32 +48,75 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 處理統一錯誤
-    console.error("API 錯誤:", {
-      message: error.message,
-      url: error.config ? `${error.config.baseURL}${error.config.url}` : "未知",
-      status: error.response ? error.response.status : "無響應",
-      data: error.response ? error.response.data : "無數據",
-    });
-
-    if (error.response && error.response.status === 401) {
-      // 處理未授權錯誤
+    // 處理網絡錯誤
+    if (error.code === 'ERR_NETWORK') {
+      console.error("網絡連接錯誤:", {
+        message: error.message,
+        url: error.config ? `${error.config.baseURL}${error.config.url}` : "未知",
+        baseURL: API_URL
+      });
+      
+      // 如果是profile請求，提供更具體的錯誤信息
+      if (error.config && error.config.url && error.config.url.includes('/api/users/profile')) {
+        console.error("獲取用戶資料失敗 - 無法連接到API服務器。可能原因：");
+        console.error("1. 後端服務未運行");
+        console.error("2. API_URL配置不正確:", API_URL);
+        console.error("3. 跨域請求問題");
+      }
+    } 
+    // 處理授權錯誤
+    else if (error.response && error.response.status === 401) {
       console.log("未授權，請重新登錄");
+    }
+    // 處理其他錯誤
+    else {
+      console.error("API 錯誤:", {
+        message: error.message,
+        url: error.config ? `${error.config.baseURL}${error.config.url}` : "未知",
+        status: error.response ? error.response.status : "無響應",
+        data: error.response ? error.response.data : "無數據",
+      });
     }
 
     return Promise.reject(error);
   }
 );
 
+// 健康檢查方法 - 確認API連接
+const checkApiHealth = async () => {
+  try {
+    console.log("執行API健康檢查...");
+    const response = await api.get("/api/health");
+    console.log("API連接正常:", response.data);
+    return true;
+  } catch (error) {
+    console.error("API連接錯誤:", error.message);
+    console.log("嘗試使用的API URL:", API_URL);
+    return false;
+  }
+};
+
+// 初始健康檢查
+setTimeout(() => {
+  checkApiHealth().then(isHealthy => {
+    if (!isHealthy && window.location.hostname !== "localhost") {
+      console.warn("警告: 無法連接到後端API，請確認服務是否正常運行。");
+    }
+  });
+}, 1000);
+
 // 封裝 API 方法
 const apiService = {
+  // 健康檢查
+  healthCheck: checkApiHealth,
+  
   // 認證相關
   auth: {
     register: (userData) => api.post("/api/auth/register", userData),
     login: (credentials) => api.post("/api/auth/login", credentials),
     logout: () => api.post("/api/auth/logout"),
     getCurrentUser: (userId) => api.get(`/api/auth/me/${userId}`),
-    createTempUser: (data) => api.post("/api/temp-users", data),
+    createTempUser: () => api.post("/api/temp-users"),
   },
 
   // 用戶相關

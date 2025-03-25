@@ -55,6 +55,15 @@ app.use("/api/temp-users", tempUserRoutes);
 // User routes - handles user profile management
 app.use("/api/users", userRoutes);
 
+// Health check endpoint - for client to verify API availability
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is running",
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Test API - simple endpoint to verify server is running
 app.get("/", (req, res) => {
   res.send("Hello from Express Server!");

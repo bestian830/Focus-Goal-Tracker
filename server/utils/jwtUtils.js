@@ -80,6 +80,9 @@ const setTokenCookie = (res, token, maxAge) => {
  */
 const clearTokenCookie = (res) => {
   res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Use secure in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     path: '/'
   });
 };
