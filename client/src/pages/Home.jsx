@@ -39,9 +39,9 @@ function Home() {
       try {
         const isHealthy = await apiService.healthCheck();
         setApiConnected(isHealthy);
-        console.log("API 健康檢查結果:", isHealthy);
+        console.log("API health check result:", isHealthy);
       } catch (error) {
-        console.error("API 健康檢查失敗:", error);
+        console.error("API health check failed:", error);
         setApiConnected(false);
       }
     };
@@ -53,37 +53,37 @@ function Home() {
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
-      console.log("=== 開始獲取用戶數據 ===");
+      console.log("=== Start fetching user data ===");
 
       try {
         // Check if user ID is stored in local storage
         const userId = localStorage.getItem("userId");
         const tempId = localStorage.getItem("tempId");
 
-        console.log("localStorage 中的用戶信息:", { userId, tempId });
+        console.log("User information in localStorage:", { userId, tempId });
 
         if (!userId && !tempId) {
-          console.log("未找到用戶信息，顯示歡迎頁面");
+          console.log("No user information found, displaying welcome page");
           setLoading(false);
           return;
         }
 
         if (userId) {
-          console.log("檢測到註冊用戶ID，開始獲取用戶數據");
+          console.log("Detected registered user ID, starting to fetch user data");
           try {
             const response = await apiService.auth.getCurrentUser(userId);
 
             if (response.data && response.data.success) {
-              console.log("成功獲取用戶數據:", response.data.data);
+              console.log("Successfully fetched user data:", response.data.data);
               setUser({
                 ...response.data.data,
                 isGuest: false,
               });
             }
           } catch (apiError) {
-            console.error("獲取用戶數據失敗:", apiError);
+            console.error("Failed to fetch user data:", apiError);
             if (apiError.response?.status === 401) {
-              console.log("用戶未授權，清除本地存儲");
+              console.log("User not authorized, clearing local storage");
               localStorage.removeItem("userId");
               navigate("/login");
             } else {
@@ -95,7 +95,7 @@ function Home() {
             }
           }
         } else if (tempId) {
-          console.log("檢測到臨時用戶ID:", tempId);
+          console.log("Detected temporary user ID:", tempId);
           setUser({
             id: tempId,
             username: "Guest User",
@@ -103,7 +103,7 @@ function Home() {
           });
         }
       } catch (error) {
-        console.error("用戶數據邏輯錯誤:", error);
+        console.error("User data logic error:", error);
       } finally {
         setLoading(false);
       }
@@ -117,45 +117,45 @@ function Home() {
    */
   const handleLogout = async () => {
     try {
-      // 尝试在服务器端清除会话
+      // try to clear session on server
       try {
         if (user && user.isGuest) {
-          // 对于临时用户，我们不实际删除临时账户
-          // 仅清除localStorage和cookies，但保留数据库中的账户
-          // 这允许用户稍后使用相同的tempId返回
+          // for temporary users, we do not actually delete temporary accounts
+          // only clear localStorage and cookies, but keep the account in the database
+          // this allows the user to return later using the same tempId
           const tempId = localStorage.getItem("tempId");
           
           if (tempId) {
             try {
-              // 仅清除cookie而不删除账户
+              // only clear cookies without deleting the account
               await apiService.auth.logout();
             } catch (error) {
-              console.error("临时用户登出API调用失败:", error);
-              // 如果出错，仍继续本地清理
+              console.error("Failed to logout temporary user:", error);
+              // if error, still continue local cleanup
             }
             
-            // 不从localStorage中移除tempId，保留以便潜在的重用
+            // do not remove tempId from localStorage, keep it for potential reuse
           }
         } else if (user && !user.isGuest) {
-          // 对于注册用户，调用登出API
+          // for registered users, call logout API
           await apiService.auth.logout();
           
-          // 清除localStorage中的userId
+          // clear userId in localStorage
           localStorage.removeItem("userId");
         }
       } catch (error) {
-        console.error("API登出失败，继续执行本地登出:", error);
-        // 即使API调用失败，我们也继续进行本地清理
+        console.error("Failed to logout API:", error);
+        // even if API call fails, we still continue local cleanup
         if (user && !user.isGuest) {
           localStorage.removeItem("userId");
         }
       }
 
-      // 重定向到登录页面
+      // redirect to login page
       navigate("/login");
     } catch (error) {
-      console.error("登出过程出错:", error);
-      // 确保在任何情况下都能清理本地存储并导航到登录页面
+      console.error("Logout process error:", error);
+      // ensure local storage is cleaned up in any case and navigate to login page
       if (user && !user.isGuest) {
         localStorage.removeItem("userId");
       }

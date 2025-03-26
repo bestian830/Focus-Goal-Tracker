@@ -5,7 +5,7 @@ export default function TaskItem({ task }) {
 
   const handleToggle = () => {
     setCompleted(!completed);
-    // 实际项目中这里应该有API调用来更新任务状态
+    // in actual project, there should be an API call to update the task status
   };
 
   return (

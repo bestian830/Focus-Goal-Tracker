@@ -6,15 +6,15 @@ export default function GoalDetails() {
   const [goalDetail, setGoalDetail] = useState(null);
 
   useEffect(() => {
-    // 实际逻辑 (后期启用)
+    // actual logic (later enabled)
     /*
-    fetch('/api/goal-detail?id=1') // 动态id后期调整
+    fetch('/api/goal-detail?id=1') // dynamic id later adjusted
       .then(res => res.json())
       .then(data => setGoalDetail(data))
       .catch(err => console.log(err));
     */
 
-    // 假数据
+    // mock data
     const mockGoalDetail = {
       title: 'Learn Advanced JavaScript',
       description: 'Master modern JavaScript concepts and frameworks',
