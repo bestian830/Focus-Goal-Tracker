@@ -52,7 +52,7 @@ app.use(
   })
 );
 
-// 輸出CORS配置信息
+// Log CORS configuration (for debugging)
 console.log("=== CORS Configuration ===");
 console.log("Allowed Origins:", allowedOrigins);
 console.log("=======================");

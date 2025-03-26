@@ -25,22 +25,22 @@ router.post("/", tempUserCreationLimiter({ maxCreations: 10, windowMs: 30 * 60 *
   try {
     // check if there is already a temp user's token
     const existingToken = req.cookies.token;
-    // 检查客户端是否传递了现有的 tempId
+    // check if the client passed an existing tempId
     const clientTempId = req.body.existingTempId;
     
-    // 首先检查客户端传递的 tempId
+    // first check if the client passed an existing tempId
     if (clientTempId) {
-      // 检查这个 tempId 是否存在于数据库中
+      // check if this tempId exists in the database
       const existingTempUser = await TempUser.findOne({ tempId: clientTempId });
       
       if (existingTempUser) {
-        // 如果存在，生成新的 JWT token 并设置 cookie
+        // if exists, generate a new JWT token and set cookie
         const token = generateTempToken(clientTempId);
         setTokenCookie(res, token, 14 * 24 * 60 * 60 * 1000); // 14 days
         
         console.log(`Using existing temp user: ${clientTempId}`);
         
-        // 返回现有临时用户数据
+        // return the existing temp user data
         return res.status(200).json({
           success: true,
           message: "Using existing temp user from client",
@@ -51,7 +51,7 @@ router.post("/", tempUserCreationLimiter({ maxCreations: 10, windowMs: 30 * 60 *
           }
         });
       }
-      // 如果客户端传递的 tempId 不存在，继续检查 token 或创建新用户
+      // if the client passed tempId does not exist, continue to check the token or create a new user
     }
     
     if (existingToken) {
