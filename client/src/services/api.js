@@ -1,40 +1,40 @@
 import axios from "axios";
 
-// 設置後端 API URL
+// set backend API URL
 const PRODUCTION_API_URL = "https://focusappdeploy-backend.onrender.com";
 const DEVELOPMENT_API_URL = "http://localhost:5050";
 
-// 根據環境選擇 API URL - 優化環境檢測邏輯
+// choose API URL based on environment - optimize environment detection logic
 const isProduction =
   import.meta.env.PROD === true || import.meta.env.MODE === "production";
 const API_URL = isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
 
-// 輸出配置信息，幫助診斷連接問題
-console.log("=== API 配置信息 ===");
-console.log("運行模式:", import.meta.env.MODE);
-console.log("是否生產環境:", import.meta.env.PROD);
-console.log("環境檢測結果:", isProduction ? "生產環境" : "開發環境");
-console.log("使用的 API URL:", API_URL);
+// output configuration information, help diagnose connection issues
+console.log("=== API configuration information ===");
+console.log("Running mode:", import.meta.env.MODE);
+console.log("Is production environment:", import.meta.env.PROD);
+console.log("Environment detection result:", isProduction ? "Production environment" : "Development environment");
+console.log("Used API URL:", API_URL);
 console.log("====================");
 
-// 創建 axios 實例
+// create axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // 允許跨域請求攜帶 cookie
+  withCredentials: true, // allow cross-domain requests to carry cookies
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000, // 10秒
+  timeout: 10000, // 10 seconds
 });
 
 // request interceptor
 api.interceptors.request.use(
   (config) => {
-    // 記錄完整的請求 URL，便於調試
-    console.log(`發送請求到: ${config.baseURL}${config.url}`);
+    // record the complete request URL, helpful for debugging
+    console.log(`Sending request to: ${config.baseURL}${config.url}`);
 
-    // 不再使用 X-User-Id 頭部，完全依賴 JWT cookie 進行認證
-    // JWT cookie 會自動附加到請求中，因為已設置 withCredentials: true
+    // no longer use X-User-Id header, rely on JWT cookie for authentication
+    // JWT cookie will be automatically attached to requests because withCredentials: true is set
 
     return config;
   },
@@ -49,54 +49,54 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 處理網絡錯誤
+    // handle network errors
     if (error.code === "ERR_NETWORK") {
-      console.error("網絡連接錯誤:", {
+      console.error("Network connection error:", {
         message: error.message,
         url: error.config
           ? `${error.config.baseURL}${error.config.url}`
-          : "未知",
+          : "Unknown",
         baseURL: API_URL,
-        headers: error.config ? error.config.headers : "未知",
+        headers: error.config ? error.config.headers : "Unknown",
       });
 
-      // 如果是profile請求，提供更具體的錯誤信息
+      // if the request is for profile, provide more specific error information
       if (
         error.config &&
         error.config.url &&
         error.config.url.includes("/api/users/profile")
       ) {
-        console.error("獲取用戶資料失敗 - 無法連接到API服務器。可能原因：");
-        console.error("1. 後端服務未運行");
-        console.error("2. API_URL配置不正確:", API_URL);
-        console.error("3. 跨域請求問題");
-        console.error("4. Cookie 未正確設置");
+        console.error("Failed to get user data - unable to connect to API server. Possible reasons:");
+        console.error("1. Backend service is not running");
+        console.error("2. Incorrect API_URL configuration:", API_URL);
+        console.error("3. Cross-domain request issue");
+        console.error("4. Cookie not set correctly");
 
-        // 檢查認證狀態
+        // check authentication status
         const userId = localStorage.getItem("userId");
         const token = document.cookie.includes("token=");
-        console.error("認證狀態檢查:", {
+        console.error("Authentication status check:", {
           hasUserId: !!userId,
           hasCookie: token,
         });
       }
     }
-    // 處理授權錯誤
+    // handle authorization errors
     else if (error.response && error.response.status === 401) {
-      console.log("未授權，請重新登錄");
-      // 清除本地存儲並重定向到登錄頁面
+      console.log("Unauthorized, please log in again");
+      // clear local storage and redirect to login page
       localStorage.removeItem("userId");
       window.location.href = "/login";
     }
-    // 處理其他錯誤
+    // handle other errors
     else {
-      console.error("API 錯誤:", {
+      console.error("API error:", {
         message: error.message,
         url: error.config
           ? `${error.config.baseURL}${error.config.url}`
-          : "未知",
-        status: error.response ? error.response.status : "無響應",
-        data: error.response ? error.response.data : "無數據",
+          : "Unknown",
+        status: error.response ? error.response.status : "No response",
+        data: error.response ? error.response.data : "No data",
       });
     }
 
@@ -104,32 +104,32 @@ api.interceptors.response.use(
   }
 );
 
-// 健康檢查方法 - 確認API連接
+// health check method - confirm API connection
 const checkApiHealth = async () => {
   try {
-    console.log("執行API健康檢查...");
+    console.log("Executing API health check...");
     const response = await api.get("/api/health");
-    console.log("API連接正常:", response.data);
+    console.log("API connection is healthy:", response.data);
     return true;
   } catch (error) {
-    console.error("API連接錯誤:", error.message);
-    console.log("嘗試使用的API URL:", API_URL);
+    console.error("API connection error:", error.message);
+    console.log("Attempted API URL:", API_URL);
     return false;
   }
 };
 
-// 初始健康檢查
+// initial health check
 setTimeout(() => {
   checkApiHealth().then((isHealthy) => {
     if (!isHealthy && window.location.hostname !== "localhost") {
-      console.warn("警告: 無法連接到後端API，請確認服務是否正常運行。");
+      console.warn("Warning: Unable to connect to backend API, please ensure the service is running properly.");
     }
   });
 }, 1000);
 
-// 封裝 API 方法
+// encapsulate API methods
 const apiService = {
-  // 診斷方法
+  // diagnostic method
   getDiagnostics: () => {
     return {
       apiUrl: API_URL,
@@ -142,10 +142,10 @@ const apiService = {
     };
   },
 
-  // 健康檢查
+  // health check
   healthCheck: checkApiHealth,
 
-  // 認證相關
+  // authentication related
   auth: {
     register: (userData) => api.post("/api/auth/register", userData),
     login: (credentials) => api.post("/api/auth/login", credentials),
@@ -154,10 +154,10 @@ const apiService = {
     createTempUser: () => api.post("/api/temp-users"),
   },
 
-  // 用戶相關
+  // user related
   users: {
     getProfile: () => {
-      console.log("調用 getProfile 方法，API_URL:", API_URL);
+      console.log("Calling getProfile method, API_URL:", API_URL);
       return api.get("/api/users/profile");
     },
     updateProfile: (data) => api.put("/api/users/profile", data),
@@ -170,7 +170,7 @@ const apiService = {
     delete: (tempId) => api.delete(`/api/temp-users/${tempId}`),
   },
 
-  // 目標相關
+  // goal related
   goals: {
     getAll: (userId) => api.get(`/api/goals/user/${userId}`),
     getById: (id) => api.get(`/api/goals/detail/${id}`),
@@ -184,8 +184,6 @@ const apiService = {
     updateDeclaration: (id, declaration) =>
       api.put(`/api/goals/${id}/declaration`, declaration),
   },
-
-  // 進度相關
 
   // progress related
   progress: {
