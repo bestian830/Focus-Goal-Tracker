@@ -142,7 +142,7 @@ const apiService = {
     login: (credentials) => api.post("/api/auth/login", credentials),
     logout: () => api.post("/api/auth/logout"),
     getCurrentUser: (userId) => api.get(`/api/auth/me/${userId}`),
-    createTempUser: () => api.post("/api/temp-users"),
+    createTempUser: (data = {}) => api.post("/api/temp-users", data),
   },
 
   // 用戶相關

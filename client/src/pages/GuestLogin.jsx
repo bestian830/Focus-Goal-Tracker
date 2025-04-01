@@ -36,6 +36,7 @@ function GuestLogin() {
     try {
       // 首先检查 localStorage 中是否已有 tempId
       const existingTempId = localStorage.getItem('tempId');
+      console.log('检查localStorage中的tempId:', existingTempId);
       
       // 无论是否有现有tempId，都发送请求，让后端决定是返回现有用户还是创建新用户
       // 如果有现有tempId，则传递给后端进行验证

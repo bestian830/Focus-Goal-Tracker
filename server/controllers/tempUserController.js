@@ -13,6 +13,8 @@ export const createTempUser = async (req, res) => {
     // 检查客户端是否传递了现有的 tempId
     const clientTempId = req.body.existingTempId;
     
+    console.log(`Request for temp user creation - existingToken: ${existingToken ? 'yes' : 'no'}, clientTempId: ${clientTempId || 'none'}`);
+    
     // 首先检查客户端传递的 tempId
     if (clientTempId) {
       // 检查这个 tempId 是否存在于数据库中
@@ -35,6 +37,8 @@ export const createTempUser = async (req, res) => {
             expiresAt: existingTempUser.expiresAt
           }
         });
+      } else {
+        console.log(`Client provided tempId ${clientTempId} not found in database, will create new temp user`);
       }
       // 如果客户端传递的 tempId 不存在，继续检查 token 或创建新用户
     }

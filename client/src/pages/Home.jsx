@@ -120,7 +120,7 @@ function Home() {
       try {
         if (user && user.isGuest) {
           // 对于临时用户，我们不实际删除临时账户
-          // 仅清除localStorage和cookies，但保留数据库中的账户
+          // 仅清除cookies，但保留localStorage中的tempId
           // 这允许用户稍后使用相同的tempId返回
           const tempId = localStorage.getItem("tempId");
           
@@ -133,7 +133,8 @@ function Home() {
               // 如果出错，仍继续本地清理
             }
             
-            // 不从localStorage中移除tempId，保留以便潜在的重用
+            // 不从localStorage中移除tempId，保留以便用户可以再次使用相同的临时ID
+            console.log("保留临时用户ID以便再次使用:", tempId);
           }
         } else if (user && !user.isGuest) {
           // 对于注册用户，调用登出API
