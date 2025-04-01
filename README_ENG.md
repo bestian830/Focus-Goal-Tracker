@@ -233,6 +233,7 @@ Confirm scripts in `package.json`:
 ```
 
 # Running npm run dev
+
 You should see the following in the console:
 🚀 Server running on port 5050
 🔥 MongoDB Connected: cluster0-shard-00-01.nxsur.mongodb.net
@@ -272,6 +273,7 @@ Modify `package.json` to add concurrent running scripts:
 ```
 
 ###
+
 ```bash
 npm run install-all
 # Ensure client frontend and server backend dependencies are correctly installed.
@@ -475,19 +477,19 @@ Main fields:
 
 **Goal:** Establish basic architecture, implement frontend-backend connection and core data models
 
-- ✅ Initialize React frontend and Express backend projects
-- ✅ Design and implement MongoDB data models (users, goals, progress, reports, temp_users)
-- ✅ Develop basic home page (/), including content visible to anonymous users
-- ✅ Establish routing system
-- ✅ Implement basic CRUD API endpoints
-- ✅ Design basic UI for goal creation and tracking
+- ✅ 1. Initialize React frontend and Express backend projects
+- ✅ 2. Design and implement MongoDB data models (users, goals, progress, reports, temp_users)
+- ✅ 3. Develop basic home page (/), including content visible to anonymous users
+- ✅ 4. Establish routing system
+- ✅ 5. Implement basic CRUD API endpoints
+- ✅ 6. Design basic UI for goal creation and tracking
 
 **Deliverables:**
 
-- ✅ Runnable frontend-backend connected application
-- ✅ Complete data models
-- ✅ Basic CRUD function API endpoints
-- ✅ Simple but functional home page
+- ✅ 7. Runnable frontend-backend connected application
+- ✅ 8. Complete data models
+- ✅ 9. Basic CRUD function API endpoints
+- ✅ 10. Simple but functional home page
 
 ### Iteration 2 (Days 11-20) 🔄
 
@@ -502,6 +504,10 @@ Main fields:
 - 🔄 Preliminary integration of OpenAI API
 - 🔄 Optimize navigation and user experience
 - 🔄 Add error handling and data validation
+- 📝 Implement AI-driven weekly report generation functionality
+- 📝 Complete user authentication and profile page
+- 📝 Add user roles and permissions system
+- 📝 Conduct accessibility optimization
 
 **Deliverables:**
 
@@ -514,11 +520,7 @@ Main fields:
 
 **Goal:** Refine application, add advanced features, ensure application usability and responsive design
 
-- 📝 Complete user authentication and profile page
-- 📝 Implement AI-driven weekly report generation functionality
-- 📝 Add user roles and permissions system
 - 📝 Ensure all pages have responsive design
-- 📝 Conduct accessibility optimization
 - 📝 Perform comprehensive testing and adjustments
 - 📝 Prepare for final deployment
 - 📝 Refine documentation and demonstration materials
@@ -622,4 +624,5 @@ Users might remember _id and try to bypass verification
 
 Concern 2️⃣
 
-localStorage can be deleted, causing users to become new guests 
+localStorage can be deleted, causing users to become new guests
+```
