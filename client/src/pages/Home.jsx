@@ -8,7 +8,6 @@ import GoalDetails from "../components/GoalDetails/GoalDetails";
 import ProgressReport from "../components/ProgressReport/ProgressReport";
 import apiService from "../services/api";
 import "../styles/Home.css";
-import "../styles/ComponentStyles.css";
 
 /**
  * Home Component
