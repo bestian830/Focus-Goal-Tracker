@@ -6,7 +6,8 @@ import {
   getGoalById,
   updateGoal,
   deleteGoal,
-  updateGoalStatus
+  updateGoalStatus,
+  addOrUpdateDailyCard
 } from "../controllers/goalsController.js";
 import { requireAuth, requireOwnership } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/rateLimiter.js';
@@ -23,6 +24,7 @@ import Goal from '../models/Goal.js';
  * - Update a goal
  * - Delete a goal
  * - Update goal status
+ * - Add/update daily card
  */
 
 // Apply rate limiter to all goal routes
@@ -61,5 +63,12 @@ router.put("/:id/status", requireAuth, requireOwnership(async (req) => {
   const goal = await Goal.findById(req.params.id);
   return goal ? goal.userId : null;
 }), updateGoalStatus);
+
+// POST /api/goals/:id/daily-card - Add or update a daily card
+router.post("/:id/daily-card", requireAuth, requireOwnership(async (req) => {
+  // Get the goal from database to check ownership
+  const goal = await Goal.findById(req.params.id);
+  return goal ? goal.userId : null;
+}), addOrUpdateDailyCard);
 
 export default router; 
