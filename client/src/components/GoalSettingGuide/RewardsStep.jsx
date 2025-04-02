@@ -17,10 +17,16 @@ const RewardsStep = ({
   onUltimateRewardChange, 
   onTargetDateChange 
 }) => {
+  // 确保有一个有效的默认日期，如果 targetDate 为 null
+  const handleDateChange = (date) => {
+    console.log("日期选择器值已更改:", date);
+    onTargetDateChange(date);
+  };
+
   return (
     <Box>
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid md={12}>
           <Typography variant="h6" gutterBottom>
             如果我完成每日任务，我会奖励自己
           </Typography>
@@ -33,15 +39,15 @@ const RewardsStep = ({
             fullWidth
             label="每日奖励"
             variant="outlined"
-            value={dailyReward}
+            value={dailyReward || ''}
             onChange={(e) => onDailyRewardChange(e.target.value)}
             placeholder="例如：看30分钟喜欢的剧集、喝一杯优质咖啡..."
             inputProps={{ maxLength: 200 }}
-            helperText={`${dailyReward.length}/200 字符`}
+            helperText={`${(dailyReward || '').length}/200 字符`}
           />
         </Grid>
         
-        <Grid item xs={12}>
+        <Grid md={12}>
           <Typography variant="h6" gutterBottom>
             如果我实现了这个目标，我会给自己的奖励是
           </Typography>
@@ -54,15 +60,15 @@ const RewardsStep = ({
             fullWidth
             label="最终奖励"
             variant="outlined"
-            value={ultimateReward}
+            value={ultimateReward || ''}
             onChange={(e) => onUltimateRewardChange(e.target.value)}
             placeholder="例如：一次周末出游、购买期待已久的物品..."
             inputProps={{ maxLength: 200 }}
-            helperText={`${ultimateReward.length}/200 字符`}
+            helperText={`${(ultimateReward || '').length}/200 字符`}
           />
         </Grid>
         
-        <Grid item xs={12}>
+        <Grid md={12}>
           <Typography variant="h6" gutterBottom>
             我计划在这个日期前实现目标
           </Typography>
@@ -75,9 +81,15 @@ const RewardsStep = ({
             <DatePicker
               label="目标日期"
               value={targetDate}
-              onChange={onTargetDateChange}
+              onChange={handleDateChange}
               disablePast
-              slotProps={{ textField: { fullWidth: true } }}
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  variant: "outlined",
+                  helperText: "选择一个目标完成日期"
+                } 
+              }}
             />
           </LocalizationProvider>
         </Grid>
