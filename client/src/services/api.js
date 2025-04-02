@@ -164,8 +164,10 @@ const apiService = {
   // 目標相關
   goals: {
     getAll: (userId) => api.get(`/api/goals/user/${userId}`),
+    getUserGoals: (userId) => api.get(`/api/goals/${userId}`),
     getById: (id) => api.get(`/api/goals/detail/${id}`),
     create: (goalData) => api.post("/api/goals", goalData),
+    createGoal: (goalData) => api.post("/api/goals", goalData),
     update: (id, goalData) => api.put(`/api/goals/${id}`, goalData),
     delete: (id) => api.delete(`/api/goals/${id}`),
     updateStatus: (id, status) =>
@@ -174,6 +176,8 @@ const apiService = {
       api.post(`/api/goals/${id}/checkpoints`, checkpoint),
     updateDeclaration: (id, declaration) =>
       api.put(`/api/goals/${id}/declaration`, declaration),
+    addOrUpdateDailyCard: (id, cardData) =>
+      api.post(`/api/goals/${id}/daily-card`, cardData),
   },
 
   // 進度相關
