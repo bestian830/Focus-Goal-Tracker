@@ -2,39 +2,89 @@ import { useState, useEffect } from 'react';
 import ProgressTimeline from './ProgressTimeline';
 import DailyTasks from './DailyTasks';
 
-export default function GoalDetails() {
-  const [goalDetail, setGoalDetail] = useState(null);
+export default function GoalDetails({ goals = [] }) {
+  const [selectedGoal, setSelectedGoal] = useState(null);
 
   useEffect(() => {
-    // 实际逻辑 (后期启用)
-    /*
-    fetch('/api/goal-detail?id=1') // 动态id后期调整
-      .then(res => res.json())
-      .then(data => setGoalDetail(data))
-      .catch(err => console.log(err));
-    */
+    // 如果有目标，选择第一个作为默认显示
+    if (goals.length > 0 && !selectedGoal) {
+      setSelectedGoal(goals[0]);
+    }
+  }, [goals, selectedGoal]);
 
-    // 假数据
-    const mockGoalDetail = {
-      title: 'Learn Advanced JavaScript',
-      description: 'Master modern JavaScript concepts and frameworks',
-      progress: 4,
-      tasks: [
-        { id: 1, text: 'Complete ES6 Modules', completed: false },
-        { id: 2, text: 'Practice Promises', completed: true }
-      ]
-    };
-    setGoalDetail(mockGoalDetail);
-  }, []);
+  // 如果没有目标，显示提示信息
+  if (goals.length === 0) {
+    return (
+      <div className="goal-details empty-state">
+        <h3>还没有设定目标</h3>
+        <p>点击"添加目标"按钮开始你的第一个目标</p>
+      </div>
+    );
+  }
 
-  if (!goalDetail) return <div className="goal-details">Loading...</div>;
+  // 如果没有选中的目标，显示加载状态
+  if (!selectedGoal) return <div className="goal-details">Loading...</div>;
+
+  // 构建dailyTasks数据
+  const dailyTasks = selectedGoal.checkpoints
+    ? selectedGoal.checkpoints
+      .filter(cp => cp.isDaily)
+      .map(cp => ({
+        id: cp._id,
+        text: cp.title,
+        completed: cp.isCompleted
+      }))
+    : [];
+
+  // 如果有currentSettings中的dailyTask，也添加到任务列表
+  if (selectedGoal.currentSettings && selectedGoal.currentSettings.dailyTask) {
+    // 查找是否已经有相同的任务
+    const taskExists = dailyTasks.some(task => 
+      task.text === selectedGoal.currentSettings.dailyTask
+    );
+    
+    if (!taskExists) {
+      dailyTasks.push({
+        id: 'daily-' + Date.now(),
+        text: selectedGoal.currentSettings.dailyTask,
+        completed: false // 默认未完成
+      });
+    }
+  }
 
   return (
     <div className="goal-details">
-      <h3>{goalDetail.title}</h3>
-      <p>{goalDetail.description}</p>
-      <ProgressTimeline progress={goalDetail.progress} />
-      <DailyTasks tasks={goalDetail.tasks} />
+      <div className="goals-selector">
+        {goals.map(goal => (
+          <button
+            key={goal._id}
+            className={`goal-tab ${selectedGoal._id === goal._id ? 'active' : ''}`}
+            onClick={() => setSelectedGoal(goal)}
+          >
+            {goal.title}
+          </button>
+        ))}
+      </div>
+      
+      <h3>{selectedGoal.title}</h3>
+      <p>{selectedGoal.description}</p>
+      
+      {selectedGoal.details && selectedGoal.details.visionImage && (
+        <div className="vision-image">
+          <img 
+            src={selectedGoal.details.visionImage} 
+            alt="目标愿景" 
+            style={{ maxWidth: '100%', maxHeight: '200px' }}
+          />
+        </div>
+      )}
+      
+      <ProgressTimeline progress={selectedGoal.checkpoints ? 
+        (selectedGoal.checkpoints.filter(cp => cp.isCompleted).length / 
+         selectedGoal.checkpoints.length) * 100 : 0
+      } />
+      
+      <DailyTasks tasks={dailyTasks} />
     </div>
   );
 }

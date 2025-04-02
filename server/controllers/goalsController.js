@@ -51,7 +51,17 @@ const getAllGoals = async (req, res) => {
  */
 const createGoal = async (req, res) => {
   try {
-    const { userId, title, description, priority, targetDate, declaration, checkpoints } = req.body;
+    const { 
+      userId, 
+      title, 
+      description, 
+      priority, 
+      targetDate, 
+      declaration, 
+      checkpoints,
+      details,
+      currentSettings
+    } = req.body;
     
     // Validate required fields
     if (!userId || !title || !description) {
@@ -87,6 +97,13 @@ const createGoal = async (req, res) => {
     if (targetDate) goalData.targetDate = targetDate;
     if (declaration) goalData.declaration = declaration;
     if (checkpoints) goalData.checkpoints = checkpoints;
+    
+    // Add new fields from the updated schema
+    if (details) goalData.details = details;
+    if (currentSettings) goalData.currentSettings = currentSettings;
+    
+    // Initialize dailyCards with an empty array
+    goalData.dailyCards = [];
     
     // Create new goal
     const goal = await Goal.create(goalData);
@@ -155,7 +172,18 @@ const getGoalById = async (req, res) => {
 const updateGoal = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, priority, targetDate, declaration, checkpoints, status } = req.body;
+    const { 
+      title, 
+      description, 
+      priority, 
+      targetDate, 
+      declaration, 
+      checkpoints, 
+      status,
+      details,
+      currentSettings,
+      dailyCards
+    } = req.body;
     
     // Find goal
     const goal = await Goal.findById(id);
@@ -177,6 +205,11 @@ const updateGoal = async (req, res) => {
     if (declaration) goal.declaration = declaration;
     if (checkpoints) goal.checkpoints = checkpoints;
     if (status) goal.status = status;
+    
+    // Update new fields
+    if (details) goal.details = details;
+    if (currentSettings) goal.currentSettings = currentSettings;
+    if (dailyCards) goal.dailyCards = dailyCards;
     
     // Save updated goal
     await goal.save();
@@ -299,11 +332,99 @@ const updateGoalStatus = async (req, res) => {
   }
 };
 
+/**
+ * Add or update a daily card for a goal
+ * 
+ * @route POST /api/goals/:id/daily-card
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const addOrUpdateDailyCard = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, dailyTask, dailyReward, completed, links } = req.body;
+    
+    // Find goal
+    const goal = await Goal.findById(id);
+    
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: "Goal not found"
+        }
+      });
+    }
+    
+    // Convert date string to Date object
+    const cardDate = date ? new Date(date) : new Date();
+    
+    // Check if a card for this date already exists
+    const existingCardIndex = goal.dailyCards.findIndex(card => 
+      new Date(card.date).toDateString() === cardDate.toDateString()
+    );
+    
+    if (existingCardIndex !== -1) {
+      // Update existing card
+      if (dailyTask) goal.dailyCards[existingCardIndex].dailyTask = dailyTask;
+      if (dailyReward) goal.dailyCards[existingCardIndex].dailyReward = dailyReward;
+      
+      if (completed) {
+        if (!goal.dailyCards[existingCardIndex].completed) {
+          goal.dailyCards[existingCardIndex].completed = {};
+        }
+        if (completed.dailyTask !== undefined) {
+          goal.dailyCards[existingCardIndex].completed.dailyTask = completed.dailyTask;
+        }
+        if (completed.dailyReward !== undefined) {
+          goal.dailyCards[existingCardIndex].completed.dailyReward = completed.dailyReward;
+        }
+      }
+      
+      if (links && links.length > 0) {
+        if (!goal.dailyCards[existingCardIndex].links) {
+          goal.dailyCards[existingCardIndex].links = [];
+        }
+        goal.dailyCards[existingCardIndex].links.push(...links);
+      }
+    } else {
+      // Create new card
+      const newCard = {
+        date: cardDate,
+        dailyTask: dailyTask || goal.currentSettings?.dailyTask || '',
+        dailyReward: dailyReward || goal.currentSettings?.dailyReward || '',
+        completed: completed || { dailyTask: false, dailyReward: false },
+        links: links || []
+      };
+      
+      goal.dailyCards.push(newCard);
+    }
+    
+    // Save updated goal
+    await goal.save();
+    
+    res.status(200).json({
+      success: true,
+      data: goal
+    });
+  } catch (error) {
+    console.error("Error adding/updating daily card:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to add/update daily card",
+        details: error.message
+      }
+    });
+  }
+};
+
 export {
   getAllGoals,
   createGoal,
   getGoalById,
   updateGoal,
   deleteGoal,
-  updateGoalStatus
+  updateGoalStatus,
+  addOrUpdateDailyCard
 }; 
