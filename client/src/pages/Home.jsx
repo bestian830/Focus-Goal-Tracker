@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ProfileModal from "../components/ProfileModal";
+import OnboardingModal from "../components/OnboardingModal";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import GoalDetails from "../components/GoalDetails/GoalDetails";
@@ -28,6 +29,10 @@ function Home() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   // State for API connection
   const [apiConnected, setApiConnected] = useState(true);
+  // State for onboarding modal
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  // State for user goals
+  const [userGoals, setUserGoals] = useState([]);
 
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
@@ -47,6 +52,25 @@ function Home() {
 
     checkApiConnection();
   }, []);
+
+  // 获取用户目标
+  const fetchUserGoals = async (id, isGuest) => {
+    try {
+      if (!id) return;
+
+      const response = await apiService.goals.getUserGoals(id);
+      if (response.data && response.data.success) {
+        setUserGoals(response.data.data);
+
+        // 如果用户没有目标，显示引导流程
+        if (response.data.data.length === 0) {
+          setShowOnboarding(true);
+        }
+      }
+    } catch (error) {
+      console.error("获取用户目标失败:", error);
+    }
+  };
 
   // Check if user is logged in (either as guest or registered)
   useEffect(() => {
@@ -78,6 +102,9 @@ function Home() {
                 ...response.data.data,
                 isGuest: false,
               });
+              
+              // 获取用户目标
+              await fetchUserGoals(userId, false);
             }
           } catch (apiError) {
             console.error("獲取用戶數據失敗:", apiError);
@@ -91,6 +118,9 @@ function Home() {
                 username: "User",
                 isGuest: false,
               });
+              
+              // 获取用户目标
+              await fetchUserGoals(userId, false);
             }
           }
         } else if (tempId) {
@@ -100,6 +130,9 @@ function Home() {
             username: "Guest User",
             isGuest: true,
           });
+          
+          // 获取临时用户目标
+          await fetchUserGoals(tempId, true);
         }
       } catch (error) {
         console.error("用戶數據邏輯錯誤:", error);
@@ -168,6 +201,17 @@ function Home() {
     setShowProfileModal(!showProfileModal);
   };
 
+  // 处理引导完成
+  const handleOnboardingComplete = (newGoal) => {
+    setShowOnboarding(false);
+    setUserGoals([...userGoals, newGoal]);
+  };
+
+  // 关闭引导模态框
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+  };
+
   return (
     <div className="home-container">
       <Header 
@@ -181,7 +225,7 @@ function Home() {
         {user ? (
           <>
             <Sidebar />
-            <GoalDetails />
+            <GoalDetails goals={userGoals} />
             <ProgressReport />
           </>
         ) : (
@@ -200,6 +244,17 @@ function Home() {
           isOpen={showProfileModal} 
           onClose={toggleProfileModal} 
           user={user} 
+        />
+      )}
+
+      {/* Onboarding Modal */}
+      {user && (
+        <OnboardingModal
+          open={showOnboarding}
+          onClose={handleCloseOnboarding}
+          userId={user.id}
+          isGuest={user.isGuest}
+          onComplete={handleOnboardingComplete}
         />
       )}
     </div>
