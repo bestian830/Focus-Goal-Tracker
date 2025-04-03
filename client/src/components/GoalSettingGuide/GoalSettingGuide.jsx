@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Stepper, Step, StepLabel, Button, Typography, Paper, Container } from '@mui/material';
+import { Box, Stepper, Step, StepLabel, Button, Typography, Paper, Container, CircularProgress } from '@mui/material';
 import TitleStep from './TitleStep';
 import MotivationStep from './MotivationStep';
 import ResourcesStep from './ResourcesStep';
@@ -19,7 +19,7 @@ const steps = [
  * 目标设置引导组件
  * 引导用户通过 5 个步骤完成目标设置
  */
-const GoalSettingGuide = ({ onComplete }) => {
+const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
   // 当前步骤
   const [activeStep, setActiveStep] = useState(0);
   
@@ -39,7 +39,9 @@ const GoalSettingGuide = ({ onComplete }) => {
       dailyReward: ''
     },
     description: '',
-    targetDate: null
+    targetDate: null,
+    priority: 'Medium', // 默认优先级
+    status: 'active' // 默认状态
   });
 
   // 验证当前步骤是否可以继续
@@ -188,7 +190,7 @@ const GoalSettingGuide = ({ onComplete }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
           <Button
             variant="outlined"
-            disabled={activeStep === 0}
+            disabled={activeStep === 0 || isSubmitting}
             onClick={handleBack}
           >
             上一步
@@ -196,8 +198,9 @@ const GoalSettingGuide = ({ onComplete }) => {
           
           <Button
             variant="contained"
-            disabled={!validateStep()}
+            disabled={!validateStep() || isSubmitting}
             onClick={handleNext}
+            startIcon={isSubmitting && activeStep === steps.length - 1 ? <CircularProgress size={20} color="inherit" /> : null}
           >
             {activeStep === steps.length - 1 ? '完成' : '下一步'}
           </Button>

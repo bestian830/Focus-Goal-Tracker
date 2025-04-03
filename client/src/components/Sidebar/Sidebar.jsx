@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import GoalCard from "./GoalCard";
 import AddGoalButton from "./AddGoalButton";
+import OnboardingModal from "../OnboardingModal";
 
 export default function Sidebar({ onGoalSelect, goals = [] }) {
   const [sortedGoals, setSortedGoals] = useState([]);
+  const [showGoalModal, setShowGoalModal] = useState(false);
 
   useEffect(() => {
     // 使用传入的真实目标数据
@@ -43,9 +45,42 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
     });
   };
 
+  // 打开目标设置模态框
+  const handleAddGoalClick = () => {
+    setShowGoalModal(true);
+  };
+
+  // 关闭目标设置模态框
+  const handleCloseGoalModal = () => {
+    setShowGoalModal(false);
+  };
+
+  // 处理目标创建完成
+  const handleGoalComplete = (newGoal) => {
+    console.log("New goal created:", newGoal);
+    // 关闭模态框
+    setShowGoalModal(false);
+    // 如果父组件提供了目标选择函数，选择新创建的目标
+    if (onGoalSelect && newGoal && (newGoal._id || newGoal.id)) {
+      onGoalSelect(newGoal._id || newGoal.id);
+    }
+  };
+
+  // 获取用户ID
+  const getUserId = () => {
+    const userId = localStorage.getItem("userId");
+    const tempId = localStorage.getItem("tempId");
+    return userId || tempId;
+  };
+
+  // 检查是否是临时用户
+  const checkIsGuest = () => {
+    return !localStorage.getItem("userId") && !!localStorage.getItem("tempId");
+  };
+
   return (
     <div className="sidebar">
-      <AddGoalButton />
+      <AddGoalButton onAddGoalClick={handleAddGoalClick} />
       {sortedGoals.map((goal) => (
         <div 
           key={goal._id || goal.id} 
@@ -61,6 +96,15 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
           <p>点击上方的"添加目标"按钮创建你的第一个目标！</p>
         </div>
       )}
+
+      {/* 目标设置引导模态框 */}
+      <OnboardingModal
+        open={showGoalModal}
+        onClose={handleCloseGoalModal}
+        userId={getUserId()}
+        isGuest={checkIsGuest()}
+        onComplete={handleGoalComplete}
+      />
     </div>
   );
 }
