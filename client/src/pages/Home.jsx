@@ -33,6 +33,8 @@ function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   // State for user goals
   const [userGoals, setUserGoals] = useState([]);
+  // 选中的目标ID
+  const [selectedGoalId, setSelectedGoalId] = useState(null);
 
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
@@ -43,9 +45,9 @@ function Home() {
       try {
         const isHealthy = await apiService.healthCheck();
         setApiConnected(isHealthy);
-        console.log("API 健康檢查結果:", isHealthy);
+        console.log("API health check result:", isHealthy);
       } catch (error) {
-        console.error("API 健康檢查失敗:", error);
+        console.error("API health check failed:", error);
         setApiConnected(false);
       }
     };
@@ -56,19 +58,49 @@ function Home() {
   // 获取用户目标
   const fetchUserGoals = async (id, isGuest) => {
     try {
-      if (!id) return;
+      if (!id) {
+        console.log("No user ID provided for fetchUserGoals");
+        setShowOnboarding(true);
+        return [];
+      }
 
-      const response = await apiService.goals.getUserGoals(id);
-      if (response.data && response.data.success) {
-        setUserGoals(response.data.data);
-
-        // 如果用户没有目标，显示引导流程
-        if (response.data.data.length === 0) {
+      console.log(`Fetching goals for user ${id}, isGuest: ${isGuest}`);
+      
+      try {
+        const response = await apiService.goals.getUserGoals(id);
+        console.log("User goals API response:", response);
+        
+        if (response.data && response.data.success) {
+          const goals = response.data.data || [];
+          setUserGoals(goals);
+          
+          // 如果用户没有目标，显示引导流程
+          if (goals.length === 0) {
+            console.log("User has no goals, showing onboarding");
+            setShowOnboarding(true);
+          } else {
+            console.log(`User has ${goals.length} goals`);
+            setShowOnboarding(false);
+          }
+          
+          return goals;
+        } else {
+          console.warn("API response success is false:", response);
           setShowOnboarding(true);
+          return [];
         }
+      } catch (apiError) {
+        console.error("Failed to fetch user goals:", apiError);
+        // 如果API调用失败，也显示引导流程
+        setShowOnboarding(true);
+        setUserGoals([]);
+        return [];
       }
     } catch (error) {
-      console.error("获取用户目标失败:", error);
+      console.error("Error in fetchUserGoals:", error);
+      setShowOnboarding(true);
+      setUserGoals([]);
+      return [];
     }
   };
 
@@ -76,28 +108,28 @@ function Home() {
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
-      console.log("=== 開始獲取用戶數據 ===");
+      console.log("=== Start fetching user data ===");
 
       try {
         // Check if user ID is stored in local storage
         const userId = localStorage.getItem("userId");
         const tempId = localStorage.getItem("tempId");
 
-        console.log("localStorage 中的用戶信息:", { userId, tempId });
+        console.log("User information in localStorage:", { userId, tempId });
 
         if (!userId && !tempId) {
-          console.log("未找到用戶信息，顯示歡迎頁面");
+          console.log("No user information found, displaying welcome page");
           setLoading(false);
           return;
         }
 
         if (userId) {
-          console.log("檢測到註冊用戶ID，開始獲取用戶數據");
+          console.log("Detected registered user ID, starting to fetch user data");
           try {
             const response = await apiService.auth.getCurrentUser(userId);
 
             if (response.data && response.data.success) {
-              console.log("成功獲取用戶數據:", response.data.data);
+              console.log("Successfully fetched user data:", response.data.data);
               setUser({
                 ...response.data.data,
                 isGuest: false,
@@ -107,9 +139,9 @@ function Home() {
               await fetchUserGoals(userId, false);
             }
           } catch (apiError) {
-            console.error("獲取用戶數據失敗:", apiError);
+            console.error("Failed to fetch user data:", apiError);
             if (apiError.response?.status === 401) {
-              console.log("用戶未授權，清除本地存儲");
+              console.log("User not authorized, clearing local storage");
               localStorage.removeItem("userId");
               navigate("/login");
             } else {
@@ -124,7 +156,7 @@ function Home() {
             }
           }
         } else if (tempId) {
-          console.log("檢測到臨時用戶ID:", tempId);
+          console.log("Detected temporary user ID:", tempId);
           setUser({
             id: tempId,
             username: "Guest User",
@@ -135,7 +167,7 @@ function Home() {
           await fetchUserGoals(tempId, true);
         }
       } catch (error) {
-        console.error("用戶數據邏輯錯誤:", error);
+        console.error("User data logic error:", error);
       } finally {
         setLoading(false);
       }
@@ -149,7 +181,7 @@ function Home() {
    */
   const handleLogout = async () => {
     try {
-      // 尝试在服务器端清除会话
+      // try to clear session on server
       try {
         if (user && user.isGuest) {
           // 对于临时用户，我们不实际删除临时账户
@@ -159,36 +191,36 @@ function Home() {
           
           if (tempId) {
             try {
-              // 仅清除cookie而不删除账户
+              // only clear cookies without deleting the account
               await apiService.auth.logout();
             } catch (error) {
-              console.error("临时用户登出API调用失败:", error);
-              // 如果出错，仍继续本地清理
+              console.error("Failed to logout temporary user:", error);
+              // if error, still continue local cleanup
             }
             
             // 不从localStorage中移除tempId，保留以便用户可以再次使用相同的临时ID
             console.log("保留临时用户ID以便再次使用:", tempId);
           }
         } else if (user && !user.isGuest) {
-          // 对于注册用户，调用登出API
+          // for registered users, call logout API
           await apiService.auth.logout();
           
-          // 清除localStorage中的userId
+          // clear userId in localStorage
           localStorage.removeItem("userId");
         }
       } catch (error) {
-        console.error("API登出失败，继续执行本地登出:", error);
-        // 即使API调用失败，我们也继续进行本地清理
+        console.error("Failed to logout API:", error);
+        // even if API call fails, we still continue local cleanup
         if (user && !user.isGuest) {
           localStorage.removeItem("userId");
         }
       }
 
-      // 重定向到登录页面
+      // redirect to login page
       navigate("/login");
     } catch (error) {
-      console.error("登出过程出错:", error);
-      // 确保在任何情况下都能清理本地存储并导航到登录页面
+      console.error("Logout process error:", error);
+      // ensure local storage is cleaned up in any case and navigate to login page
       if (user && !user.isGuest) {
         localStorage.removeItem("userId");
       }
@@ -203,13 +235,26 @@ function Home() {
 
   // 处理引导完成
   const handleOnboardingComplete = (newGoal) => {
+    console.log("Onboarding complete, new goal created:", newGoal);
     setShowOnboarding(false);
-    setUserGoals([...userGoals, newGoal]);
+    setUserGoals(prev => [...prev, newGoal]);
+    
+    // 当创建新目标后，选择它
+    if (newGoal && (newGoal._id || newGoal.id)) {
+      setSelectedGoalId(newGoal._id || newGoal.id);
+    }
   };
 
   // 关闭引导模态框
   const handleCloseOnboarding = () => {
+    console.log("Onboarding modal closed");
     setShowOnboarding(false);
+  };
+
+  // 处理从侧边栏选择目标
+  const handleGoalSelect = (goalId) => {
+    console.log("Goal selected:", goalId);
+    setSelectedGoalId(goalId);
   };
 
   return (
@@ -224,8 +269,14 @@ function Home() {
       <div className="main-content">
         {user ? (
           <>
-            <Sidebar />
-            <GoalDetails goals={userGoals} />
+            <Sidebar 
+              onGoalSelect={handleGoalSelect} 
+              goals={userGoals}
+            />
+            <GoalDetails 
+              goals={userGoals} 
+              goalId={selectedGoalId} 
+            />
             <ProgressReport />
           </>
         ) : (
