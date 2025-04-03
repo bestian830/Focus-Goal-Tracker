@@ -46,13 +46,21 @@ const VisionStep = ({ value, onChange }) => {
   
   // 处理跳过上传
   const handleSkip = () => {
-    // 将图片值设为空字符串，表示用户选择不上传图片
-    onChange('');
+    // 添加调试日志
+    console.log('跳过上传图片按钮被点击');
+    console.log('当前图片值:', value);
+    
+    // 将图片值设为null，表示用户选择不上传图片
+    onChange(null);
+    
+    // 再次打印确认值被更新
+    console.log('图片值已设置为null');
   };
   
   // 处理清除图片
   const handleClear = () => {
-    onChange('');
+    // 将图片值设为null，保持与handleSkip一致
+    onChange(null);
   };
   
   return (

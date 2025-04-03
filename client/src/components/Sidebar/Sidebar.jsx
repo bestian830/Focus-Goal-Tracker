@@ -6,7 +6,7 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
   const [sortedGoals, setSortedGoals] = useState([]);
 
   useEffect(() => {
-    // 如果传入了真实目标数据，则使用它们
+    // 使用传入的真实目标数据
     if (goals && goals.length > 0) {
       const sorted = sortGoals(goals);
       setSortedGoals(sorted);
@@ -16,20 +16,9 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
         onGoalSelect(sorted[0]._id || sorted[0].id);
       }
     } else {
-      // 如果没有真实数据，使用 mock 数据（仅用于开发）
-      console.log("No real goals provided, using mock data");
-      const mockGoals = [
-        { id: 1, title: "Learn Advanced JavaScript", priority: "High", dueDate: "2024-04-01" },
-        { id: 2, title: "Complete UI/UX Course", priority: "Medium", dueDate: "2024-03-15" },
-        { id: 3, title: "Learn React", priority: "High", dueDate: "2024-03-10" },
-      ];
-      const sorted = sortGoals(mockGoals);
-      setSortedGoals(sorted);
-      
-      // 默认选择第一个 mock 目标
-      if (sorted.length > 0 && onGoalSelect) {
-        onGoalSelect(sorted[0].id);
-      }
+      // 清空目标列表
+      setSortedGoals([]);
+      console.log("No goals available to display");
     }
   }, [goals, onGoalSelect]);
 

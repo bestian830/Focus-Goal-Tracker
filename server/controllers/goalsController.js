@@ -12,9 +12,36 @@ const getAllGoals = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Validate user existence
-    const user = await User.findById(userId);
-    if (!user) {
+    console.log(`获取目标列表，用户ID: ${userId}`, {
+      是临时ID: typeof userId === 'string' && userId.startsWith('temp_')
+    });
+    
+    let userExists = false;
+    
+    // 检查用户ID是否为临时用户ID (以temp_开头)
+    if (userId && typeof userId === 'string' && userId.startsWith('temp_')) {
+      console.log(`检测到临时用户ID: ${userId}，检查临时用户是否存在`);
+      // 对于临时用户，使用TempUser模型查找
+      const TempUser = await import("../models/TempUser.js").then(module => module.default);
+      const tempUser = await TempUser.findOne({ tempId: userId });
+      
+      if (tempUser) {
+        console.log(`临时用户存在: ${userId}`);
+        userExists = true;
+      } else {
+        console.log(`临时用户不存在: ${userId}`);
+      }
+    } else {
+      // 注册用户，使用User模型查找
+      const user = await User.findById(userId);
+      
+      if (user) {
+        console.log(`注册用户存在: ${userId}`);
+        userExists = true;
+      }
+    }
+    
+    if (!userExists) {
       return res.status(404).json({
         success: false,
         error: {
@@ -25,6 +52,8 @@ const getAllGoals = async (req, res) => {
     
     // Find all goals for the user
     const goals = await Goal.find({ userId }).sort({ createdAt: -1 });
+    
+    console.log(`找到 ${goals.length} 个目标，用户ID: ${userId}`);
     
     res.status(200).json({
       success: true,

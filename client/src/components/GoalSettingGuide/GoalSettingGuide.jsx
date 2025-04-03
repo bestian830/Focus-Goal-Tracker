@@ -60,13 +60,6 @@ const GoalSettingGuide = ({ onComplete }) => {
         // 用户可以选择上传图片或跳过此步骤
         return true;
       case 4: // 奖励步骤
-        // 添加调试日志，查看当前值
-        console.log("验证第五步：", {
-          dailyReward: goalData.details.dailyReward,
-          ultimateReward: goalData.details.ultimateReward,
-          targetDate: goalData.targetDate
-        });
-        
         return (
           goalData.details.dailyReward.trim() !== '' && 
           goalData.details.ultimateReward.trim() !== '' && 
@@ -93,11 +86,6 @@ const GoalSettingGuide = ({ onComplete }) => {
         ...prev,
         [field]: value
       }));
-    }
-    
-    // 当更新与第五步相关的字段时，添加日志
-    if (field === 'details.dailyReward' || field === 'details.ultimateReward' || field === 'targetDate') {
-      console.log(`更新字段 ${field}:`, value);
     }
   };
 

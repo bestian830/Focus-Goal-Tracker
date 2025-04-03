@@ -17,9 +17,8 @@ const RewardsStep = ({
   onUltimateRewardChange, 
   onTargetDateChange 
 }) => {
-  // 确保有一个有效的默认日期，如果 targetDate 为 null
+  // 处理日期变更，不再记录日志减少控制台输出
   const handleDateChange = (date) => {
-    console.log("日期选择器值已更改:", date);
     onTargetDateChange(date);
   };
 
