@@ -117,6 +117,7 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         <GoalSettingGuide 
           onComplete={handleGoalSubmit} 
           isSubmitting={submitting}
+          onCancel={onClose}
         />
       </DialogContent>
     </Dialog>

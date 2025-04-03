@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Stepper, Step, StepLabel, Button, Typography, Paper, Container, CircularProgress } from '@mui/material';
 import TitleStep from './TitleStep';
 import MotivationStep from './MotivationStep';
 import ResourcesStep from './ResourcesStep';
 import VisionStep from './VisionStep';
 import RewardsStep from './RewardsStep';
+
+// localStorage 键名
+const STORAGE_KEY = 'focus_goal_setting_draft';
 
 // 步骤标题
 const steps = [
@@ -15,34 +18,55 @@ const steps = [
   '奖励机制'
 ];
 
+// 初始表单数据
+const initialGoalData = {
+  title: '',
+  details: {
+    motivation: '',
+    resources: '',
+    nextStep: '',
+    visionImage: '',
+    dailyReward: '',
+    ultimateReward: ''
+  },
+  currentSettings: {
+    dailyTask: '',
+    dailyReward: ''
+  },
+  description: '',
+  targetDate: null,
+  priority: 'Medium', // 默认优先级
+  status: 'active' // 默认状态
+};
+
 /**
  * 目标设置引导组件
  * 引导用户通过 5 个步骤完成目标设置
  */
-const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
+const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
   // 当前步骤
   const [activeStep, setActiveStep] = useState(0);
   
   // 目标数据
-  const [goalData, setGoalData] = useState({
-    title: '',
-    details: {
-      motivation: '',
-      resources: '',
-      nextStep: '',
-      visionImage: '',
-      dailyReward: '',
-      ultimateReward: ''
-    },
-    currentSettings: {
-      dailyTask: '',
-      dailyReward: ''
-    },
-    description: '',
-    targetDate: null,
-    priority: 'Medium', // 默认优先级
-    status: 'active' // 默认状态
-  });
+  const [goalData, setGoalData] = useState(initialGoalData);
+
+  // 从 localStorage 加载已保存的数据
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        // 如果有日期字段，需要转换为 Date 对象
+        if (parsedData.targetDate) {
+          parsedData.targetDate = new Date(parsedData.targetDate);
+        }
+        setGoalData(parsedData);
+        console.log('已从 localStorage 恢复表单数据');
+      }
+    } catch (error) {
+      console.error('从 localStorage 恢复数据失败:', error);
+    }
+  }, []);
 
   // 验证当前步骤是否可以继续
   const validateStep = () => {
@@ -74,20 +98,32 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
 
   // 处理数据更新
   const handleDataChange = (field, value) => {
+    let updatedData;
+    
     if (field.includes('.')) {
       const [section, key] = field.split('.');
-      setGoalData(prev => ({
-        ...prev,
+      updatedData = {
+        ...goalData,
         [section]: {
-          ...prev[section],
+          ...goalData[section],
           [key]: value
         }
-      }));
+      };
     } else {
-      setGoalData(prev => ({
-        ...prev,
+      updatedData = {
+        ...goalData,
         [field]: value
-      }));
+      };
+    }
+    
+    setGoalData(updatedData);
+    
+    // 保存到 localStorage
+    try {
+      const dataToSave = {...updatedData};
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('保存数据到 localStorage 失败:', error);
     }
   };
 
@@ -116,6 +152,9 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
       
       // 提交表单
       onComplete(finalData);
+      
+      // 清除 localStorage 中的数据
+      localStorage.removeItem(STORAGE_KEY);
     } else {
       setActiveStep(prev => prev + 1);
     }
@@ -124,6 +163,17 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
   // 上一步
   const handleBack = () => {
     setActiveStep(prev => prev - 1);
+  };
+
+  // 处理取消
+  const handleCancel = () => {
+    // 清除 localStorage 中的数据
+    localStorage.removeItem(STORAGE_KEY);
+    
+    // 调用外部取消处理函数（如果有）
+    if (onCancel) {
+      onCancel();
+    }
   };
 
   // 渲染当前步骤内容
@@ -180,9 +230,14 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
   return (
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
-        <Typography variant="h4" align="center" gutterBottom>
-          宣言制定指引
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" align="center" sx={{ flexGrow: 1 }}>
+            宣言制定指引
+          </Typography>
+          <Button onClick={handleCancel} color="inherit" size="small">
+            取消
+          </Button>
+        </Box>
         
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
           {steps.map((label) => (
