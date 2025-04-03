@@ -4,7 +4,7 @@ import mongoose from "mongoose";
  * Goal Schema - Defines the structure for goal documents in MongoDB
  *
  * Fields:
- * - userId: Reference to the user who created this goal
+ * - userId: ID of the user who created this goal (ObjectId or tempId)
  * - title: Title of the goal
  * - description: Detailed description of the goal
  * - priority: Priority level (High, Medium, Low)
@@ -20,9 +20,9 @@ import mongoose from "mongoose";
 const GoalSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.Mixed,
-      ref: "User",
+      type: String,  // 使用String类型存储用户ID (ObjectId或tempId)
       required: true,
+      index: true,
     },
     title: {
       type: String,

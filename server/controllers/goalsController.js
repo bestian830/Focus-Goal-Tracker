@@ -17,6 +17,7 @@ const getAllGoals = async (req, res) => {
     });
     
     let userExists = false;
+    let queryConditions = [];
     
     // 检查用户ID是否为临时用户ID (以temp_开头)
     if (userId && typeof userId === 'string' && userId.startsWith('temp_')) {
@@ -28,6 +29,18 @@ const getAllGoals = async (req, res) => {
       if (tempUser) {
         console.log(`临时用户存在: ${userId}`);
         userExists = true;
+        
+        // 临时用户情况下，查找是否有已注册用户关联了这个临时ID
+        const registeredUser = await User.findOne({ tempId: userId });
+        if (registeredUser) {
+          console.log(`找到关联的注册用户: ${registeredUser._id}，将同时查询两个用户ID的目标`);
+          queryConditions = [
+            { userId: userId },
+            { userId: registeredUser._id.toString() }
+          ];
+        } else {
+          queryConditions = [{ userId: userId }];
+        }
       } else {
         console.log(`临时用户不存在: ${userId}`);
       }
@@ -38,6 +51,14 @@ const getAllGoals = async (req, res) => {
       if (user) {
         console.log(`注册用户存在: ${userId}`);
         userExists = true;
+        
+        queryConditions = [{ userId: userId.toString() }];
+        
+        // 如果注册用户关联了临时用户ID，也查询与临时ID相关的目标
+        if (user.tempId) {
+          console.log(`注册用户关联了临时ID: ${user.tempId}，将同时查询两个ID的目标`);
+          queryConditions.push({ userId: user.tempId });
+        }
       }
     }
     
@@ -50,8 +71,12 @@ const getAllGoals = async (req, res) => {
       });
     }
     
-    // Find all goals for the user
-    const goals = await Goal.find({ userId }).sort({ createdAt: -1 });
+    // 使用$or构建查询条件，同时查询多个可能的userId
+    const query = queryConditions.length > 1 ? { $or: queryConditions } : queryConditions[0];
+    console.log("查询条件:", JSON.stringify(query));
+    
+    // Find all goals for the user (based on current userId or previously linked tempId)
+    const goals = await Goal.find(query).sort({ createdAt: -1 });
     
     console.log(`找到 ${goals.length} 个目标，用户ID: ${userId}`);
     
@@ -137,7 +162,7 @@ const createGoal = async (req, res) => {
     
     // Create goal object
     const goalData = {
-      userId,
+      userId: userId.toString(),
       title,
       description,
       priority: priority || "Medium",

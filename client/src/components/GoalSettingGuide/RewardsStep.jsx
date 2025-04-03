@@ -25,7 +25,7 @@ const RewardsStep = ({
   return (
     <Box>
       <Grid container spacing={3}>
-        <Grid md={12}>
+        <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             如果我完成每日任务，我会奖励自己
           </Typography>
@@ -46,7 +46,7 @@ const RewardsStep = ({
           />
         </Grid>
         
-        <Grid md={12}>
+        <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             如果我实现了这个目标，我会给自己的奖励是
           </Typography>
@@ -67,7 +67,7 @@ const RewardsStep = ({
           />
         </Grid>
         
-        <Grid md={12}>
+        <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             我计划在这个日期前实现目标
           </Typography>

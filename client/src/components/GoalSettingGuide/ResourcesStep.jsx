@@ -16,7 +16,7 @@ const ResourcesStep = ({
   return (
     <Box>
       <Grid container spacing={3}>
-        <Grid md={12}>
+        <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             这个目标是可行的，因为我有（能力或资源）
           </Typography>
@@ -39,7 +39,7 @@ const ResourcesStep = ({
           />
         </Grid>
         
-        <Grid md={12}>
+        <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             朝向这个目标我现在就可以做的一件事是
           </Typography>
@@ -60,7 +60,7 @@ const ResourcesStep = ({
           />
         </Grid>
         
-        <Grid md={12}>
+        <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             我可以每天跟踪的关于这个目标的一件事是
           </Typography>

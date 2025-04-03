@@ -138,7 +138,21 @@ const apiService = {
   
   // 認證相關
   auth: {
-    register: (userData) => api.post("/api/auth/register", userData),
+    register: (userData) => {
+      console.log(`發送註冊請求，數據:`, {
+        ...userData,
+        password: userData.password ? '******' : undefined
+      });
+      return api.post("/api/auth/register", userData)
+        .then(response => {
+          console.log(`註冊成功，響應:`, response.data);
+          return response;
+        })
+        .catch(error => {
+          console.error(`註冊失敗:`, error.response ? error.response.data : error.message);
+          throw error;
+        });
+    },
     login: (credentials) => api.post("/api/auth/login", credentials),
     logout: () => api.post("/api/auth/logout"),
     getCurrentUser: (userId) => api.get(`/api/auth/me/${userId}`),
@@ -175,10 +189,31 @@ const apiService = {
     getById: (id) => api.get(`/api/goals/detail/${id}`),
     create: (goalData) => api.post("/api/goals", goalData),
     createGoal: (goalData) => {
-      console.log("调用createGoal API，数据:", goalData);
+      // 确保goalData包含有效的userId
+      if (!goalData.userId) {
+        console.error("创建目标错误: 缺少userId");
+        return Promise.reject(new Error("目标数据缺少用户ID"));
+      }
+      
+      const isTemporary = typeof goalData.userId === 'string' && goalData.userId.startsWith('temp_');
+      console.log(`调用createGoal API，数据:`, {
+        ...goalData,
+        userId: goalData.userId,
+        isTemporaryUser: isTemporary
+      });
+      
       return api.post("/api/goals", goalData)
+        .then(response => {
+          console.log(`创建目标成功，响应:`, response.data);
+          return response;
+        })
         .catch(error => {
-          console.error("createGoal错误:", error);
+          console.error(`创建目标失败:`, {
+            error: error.response ? error.response.data : error.message,
+            status: error.response ? error.response.status : '未知',
+            userId: goalData.userId,
+            isTemporaryUser: isTemporary
+          });
           throw error;
         });
     },
