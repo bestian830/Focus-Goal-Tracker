@@ -164,10 +164,24 @@ const apiService = {
   // 目標相關
   goals: {
     getAll: (userId) => api.get(`/api/goals/user/${userId}`),
-    getUserGoals: (userId) => api.get(`/api/goals/${userId}`),
+    getUserGoals: (userId) => {
+      console.log(`API调用getUserGoals，用户ID: ${userId}`, { isTemporary: userId && userId.toString().startsWith('temp_') });
+      return api.get(`/api/goals/${userId}`)
+        .catch(error => {
+          console.error(`getUserGoals错误，用户ID: ${userId}`, error);
+          throw error;
+        });
+    },
     getById: (id) => api.get(`/api/goals/detail/${id}`),
     create: (goalData) => api.post("/api/goals", goalData),
-    createGoal: (goalData) => api.post("/api/goals", goalData),
+    createGoal: (goalData) => {
+      console.log("调用createGoal API，数据:", goalData);
+      return api.post("/api/goals", goalData)
+        .catch(error => {
+          console.error("createGoal错误:", error);
+          throw error;
+        });
+    },
     update: (id, goalData) => api.put(`/api/goals/${id}`, goalData),
     delete: (id) => api.delete(`/api/goals/${id}`),
     updateStatus: (id, status) =>

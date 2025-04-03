@@ -20,7 +20,7 @@ import mongoose from "mongoose";
 const GoalSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: "User",
       required: true,
     },

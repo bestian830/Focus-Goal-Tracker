@@ -14,6 +14,14 @@ const requireAuth = async (req, res, next) => {
     // Get token from cookies
     const token = req.cookies.token;
     
+    // 记录认证请求信息
+    console.log(`Auth check for ${req.method} ${req.originalUrl}`, {
+      hasCookie: !!token,
+      method: req.method,
+      url: req.originalUrl,
+      isGoalsAPI: req.originalUrl.includes('/api/goals')
+    });
+    
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -29,6 +37,14 @@ const requireAuth = async (req, res, next) => {
         error: { message: 'Invalid or expired token. Please log in again.' }
       });
     }
+    
+    // 输出token解码信息用于调试
+    console.log("JWT token decoded:", {
+      userType: decoded.userType,
+      userId: decoded.id || 'none',
+      tempId: decoded.tempId || 'none',
+      exp: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : 'none'
+    });
     
     // Check user type and set req.user accordingly
     if (decoded.userType === 'registered') {
@@ -149,12 +165,35 @@ const requireOwnership = (getResourceUserId) => {
       // Get the resource owner ID using the provided function
       const resourceUserId = await getResourceUserId(req);
       
+      // 添加日志以帮助调试
+      console.log("权限验证:", {
+        操作: req.method + ' ' + req.originalUrl,
+        认证用户类型: req.user.userType,
+        认证用户ID: req.user.userType === 'registered' ? req.user.id : req.user.tempId,
+        资源拥有者ID: resourceUserId,
+        临时用户检测: typeof resourceUserId === 'string' && resourceUserId.startsWith('temp_')
+      });
+      
+      // 检查是否为临时用户ID
+      const isTempId = typeof resourceUserId === 'string' && resourceUserId.startsWith('temp_');
+      
       // Check if the authenticated user is the owner
       if (req.user.userType === 'registered' && req.user.id.toString() === resourceUserId.toString()) {
         next();
       } else if (req.user.userType === 'temp' && req.user.tempId === resourceUserId) {
         next();
+      } else if (isTempId && req.user.userType === 'temp' && req.user.tempId === resourceUserId) {
+        // 添加额外检查临时用户ID的条件
+        next();
       } else {
+        // 日志详细的访问拒绝原因
+        console.log("访问拒绝:", {
+          用户类型: req.user.userType,
+          用户ID: req.user.userType === 'registered' ? req.user.id : req.user.tempId,
+          资源ID: resourceUserId,
+          原因: "用户不是资源拥有者"
+        });
+        
         res.status(403).json({
           success: false,
           error: { message: 'Access denied. You can only access your own data.' }

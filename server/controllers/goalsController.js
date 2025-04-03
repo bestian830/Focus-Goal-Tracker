@@ -73,15 +73,37 @@ const createGoal = async (req, res) => {
       });
     }
     
-    // Validate user existence
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          message: "User not found"
-        }
-      });
+    let user = null;
+    // 检查用户ID是否为临时用户ID (以temp_开头)
+    if (userId && userId.toString().startsWith('temp_')) {
+      console.log(`创建目标：检测到临时用户ID: ${userId}`);
+      // 对于临时用户，使用TempUser模型查找
+      const TempUser = await import("../models/TempUser.js").then(module => module.default);
+      user = await TempUser.findOne({ tempId: userId });
+      
+      if (!user) {
+        console.log(`临时用户不存在: ${userId}`);
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: "Temporary user not found"
+          }
+        });
+      }
+      
+      console.log(`临时用户存在，继续创建目标`);
+    } else {
+      // 注册用户，使用User模型查找
+      user = await User.findById(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: "User not found"
+          }
+        });
+      }
     }
     
     // Create goal object
@@ -105,8 +127,18 @@ const createGoal = async (req, res) => {
     // Initialize dailyCards with an empty array
     goalData.dailyCards = [];
     
+    // 详细记录要创建的目标数据
+    console.log("创建目标数据:", {
+      userId: goalData.userId,
+      title: goalData.title,
+      hasDetails: !!goalData.details,
+      hasSettings: !!goalData.currentSettings
+    });
+    
     // Create new goal
     const goal = await Goal.create(goalData);
+    
+    console.log(`成功创建目标，ID: ${goal._id}`);
     
     res.status(201).json({
       success: true,
