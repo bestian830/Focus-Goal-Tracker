@@ -68,6 +68,31 @@ router.post("/", requireAuth, async (req, res, next) => {
       }
       
       console.log("临时用户身份验证通过，继续创建目标");
+      
+      // 检查临时用户是否存在
+      try {
+        const TempUser = await import("../models/TempUser.js").then(module => module.default);
+        const tempUser = await TempUser.findOne({ tempId: userId });
+        
+        if (!tempUser) {
+          console.log(`临时用户不存在: ${userId}`);
+          return res.status(404).json({
+            success: false,
+            error: {
+              message: "临时用户不存在，请刷新页面重试"
+            }
+          });
+        }
+      } catch (err) {
+        console.error("查询临时用户时出错:", err);
+        return res.status(500).json({
+          success: false,
+          error: {
+            message: "验证临时用户时出错",
+            details: err.message
+          }
+        });
+      }
     }
     
     // 继续执行原始的 createGoal 控制器

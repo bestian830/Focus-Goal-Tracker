@@ -93,6 +93,13 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false }) => {
 
   // 下一步
   const handleNext = () => {
+    // 从愿景页面进入奖励页面时，如果没有选择图片，将visionImage设为null
+    if (activeStep === 3) {
+      if (!goalData.details.visionImage) {
+        handleDataChange('details.visionImage', null);
+      }
+    }
+
     if (activeStep === steps.length - 1) {
       // 生成详细描述（可以根据累积的信息自动生成）
       const generatedDescription = `我想要${goalData.title}，因为${goalData.details.motivation}。`;

@@ -109,15 +109,7 @@ const VisionStep = ({ value, onChange }) => {
             >
               清除图片
             </Button>
-          ) : (
-            <Button
-              variant="outlined"
-              onClick={handleSkip}
-              startIcon={<SkipNextIcon />}
-            >
-              跳过此步骤
-            </Button>
-          )}
+          ) : null}
         </Stack>
         
         {loading && (

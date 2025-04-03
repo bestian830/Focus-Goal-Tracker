@@ -173,20 +173,41 @@ const registerUser = async (req, res) => {
 
     // If tempId is provided, find and migrate temp user data
     if (tempId) {
-      const tempUser = await TempUser.findOne({ tempId });
-      if (tempUser) {
-        // Associate tempId with the new user
-        user.tempId = tempId;
-        await user.save();
-
-        // In a real implementation, you would migrate goals and progress data here
-        console.log(
-          `Temp user data for ${tempId} will be migrated to user ${user._id}`
-        );
-
-        // 成功迁移后删除临时用户
-        await TempUser.findOneAndDelete({ tempId });
-        console.log(`Temp user ${tempId} has been deleted after migration`);
+      console.log(`检测到临时用户ID: ${tempId}，尝试迁移数据`);
+      try {
+        const tempUser = await TempUser.findOne({ tempId });
+        
+        if (tempUser) {
+          // Associate tempId with the new user
+          user.tempId = tempId;
+          await user.save();
+          
+          // 迁移目标数据
+          console.log(`开始迁移临时用户 ${tempId} 的目标数据到注册用户 ${user._id}`);
+          
+          // 导入Goal模型
+          const Goal = await import("../models/Goal.js").then(module => module.default);
+          
+          // 查找所有属于该临时用户的目标
+          const goals = await Goal.find({ userId: tempId });
+          console.log(`找到 ${goals.length} 个需要迁移的目标`);
+          
+          // 更新每个目标的userId为新注册用户的ID
+          for (const goal of goals) {
+            console.log(`迁移目标 ${goal._id} 从 ${tempId} 到 ${user._id}`);
+            goal.userId = user._id;
+            await goal.save();
+          }
+          
+          // 成功迁移后删除临时用户
+          await TempUser.findOneAndDelete({ tempId });
+          console.log(`临时用户 ${tempId} 数据迁移完成并删除`);
+        } else {
+          console.log(`找不到临时用户: ${tempId}`);
+        }
+      } catch (migrationError) {
+        console.error("迁移临时用户数据时出错:", migrationError);
+        // 继续注册流程，不因为迁移错误而中断
       }
     }
 
