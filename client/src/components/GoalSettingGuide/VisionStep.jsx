@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Button, Typography, Card, CardMedia, CircularProgress, Alert } from '@mui/material';
+import { Box, Button, Typography, Card, CardMedia, CircularProgress, Alert, Stack } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 
 /**
  * 愿景设定步骤
- * 第四步：用户上传代表目标愿景的图片
+ * 第四步：用户上传代表目标愿景的图片（可选）
  */
 const VisionStep = ({ value, onChange }) => {
   const [loading, setLoading] = useState(false);
@@ -43,14 +44,26 @@ const VisionStep = ({ value, onChange }) => {
     }
   };
   
+  // 处理跳过上传
+  const handleSkip = () => {
+    // 将图片值设为空字符串，表示用户选择不上传图片
+    onChange('');
+  };
+  
+  // 处理清除图片
+  const handleClear = () => {
+    onChange('');
+  };
+  
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        为这个目标选择一个愿景图片
+        为这个目标选择一个愿景图片（可选）
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
-        选择一张能代表你目标愿景的图片。视觉化你的目标能增强动力，并帮助你保持聚焦。
+        选择一张能代表你目标愿景的图片可以增强动力，并帮助你保持聚焦。
+        这一步是可选的，如果现在没有合适的图片，你可以跳过或稍后添加。
       </Typography>
       
       {error && (
@@ -68,16 +81,36 @@ const VisionStep = ({ value, onChange }) => {
       />
       
       <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <label htmlFor="upload-vision-image">
-          <Button
-            variant="contained"
-            component="span"
-            startIcon={<CloudUploadIcon />}
-            disabled={loading}
-          >
-            {loading ? '上传中...' : '选择图片'}
-          </Button>
-        </label>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <label htmlFor="upload-vision-image">
+            <Button
+              variant="contained"
+              component="span"
+              startIcon={<CloudUploadIcon />}
+              disabled={loading}
+            >
+              {loading ? '上传中...' : '选择图片'}
+            </Button>
+          </label>
+          
+          {value ? (
+            <Button 
+              variant="outlined" 
+              color="secondary"
+              onClick={handleClear}
+            >
+              清除图片
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              onClick={handleSkip}
+              startIcon={<SkipNextIcon />}
+            >
+              跳过此步骤
+            </Button>
+          )}
+        </Stack>
         
         {loading && (
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>

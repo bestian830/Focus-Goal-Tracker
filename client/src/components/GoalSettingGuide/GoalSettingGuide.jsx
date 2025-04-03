@@ -56,7 +56,9 @@ const GoalSettingGuide = ({ onComplete }) => {
           goalData.currentSettings.dailyTask.trim() !== ''
         );
       case 3: // 愿景步骤
-        return goalData.details.visionImage !== '';
+        // 第4步：图片是可选的，所以总是返回true
+        // 用户可以选择上传图片或跳过此步骤
+        return true;
       case 4: // 奖励步骤
         // 添加调试日志，查看当前值
         console.log("验证第五步：", {
