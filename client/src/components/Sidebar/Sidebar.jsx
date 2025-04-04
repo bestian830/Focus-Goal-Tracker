@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Tooltip } from "@mui/material";
 import GoalCard from "./GoalCard";
 import AddGoalButton from "./AddGoalButton";
 import OnboardingModal from "../OnboardingModal";
@@ -6,6 +7,10 @@ import OnboardingModal from "../OnboardingModal";
 export default function Sidebar({ onGoalSelect, goals = [] }) {
   const [sortedGoals, setSortedGoals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  // 判斷是否為臨時用戶
+  const isGuest = checkIsGuest();
+  // 判斷臨時用戶是否已有目標
+  const hasTempUserGoal = isGuest && sortedGoals.length > 0;
 
   useEffect(() => {
     // 使用传入的真实目标数据
@@ -47,6 +52,12 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
 
   // 打开目标设置模态框
   const handleAddGoalClick = () => {
+    // 如果是臨時用户且已有目标，不执行操作
+    if (hasTempUserGoal) {
+      console.log("臨時用户已有目标，无法创建更多目标");
+      return;
+    }
+    
     setShowGoalModal(true);
   };
 
@@ -74,13 +85,30 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
   };
 
   // 检查是否是临时用户
-  const checkIsGuest = () => {
+  function checkIsGuest() {
     return !localStorage.getItem("userId") && !!localStorage.getItem("tempId");
-  };
+  }
+
+  // 渲染添加目标按钮
+  const renderAddGoalButton = () => {
+    // 如果是臨時用户且已有目标，添加提示信息
+    if (hasTempUserGoal) {
+      return (
+        <Tooltip title="臨時用戶僅限創建一個目標。註冊帳戶以解鎖更多功能！" arrow>
+          <span>
+            <AddGoalButton onAddGoalClick={handleAddGoalClick} disabled={true} />
+          </span>
+        </Tooltip>
+      );
+    }
+    
+    // 否则正常显示添加按钮
+    return <AddGoalButton onAddGoalClick={handleAddGoalClick} disabled={false} />;
+  }
 
   return (
     <div className="sidebar">
-      <AddGoalButton onAddGoalClick={handleAddGoalClick} />
+      {renderAddGoalButton()}
       {sortedGoals.map((goal) => (
         <div 
           key={goal._id || goal.id} 
@@ -102,7 +130,7 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
         open={showGoalModal}
         onClose={handleCloseGoalModal}
         userId={getUserId()}
-        isGuest={checkIsGuest()}
+        isGuest={isGuest}
         onComplete={handleGoalComplete}
       />
     </div>

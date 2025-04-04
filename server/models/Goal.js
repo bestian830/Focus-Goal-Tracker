@@ -38,7 +38,7 @@ const GoalSchema = new mongoose.Schema(
     priority: {
       type: String,
       enum: ["High", "Medium", "Low"],
-      default: "Medium",
+      default: "High",
     },
     status: {
       type: String,

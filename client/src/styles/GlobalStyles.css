@@ -281,6 +281,16 @@ body {
   background-color: #0069d9;
 }
 
+.add-goal-btn.disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.add-goal-btn.disabled:hover {
+  background-color: #cccccc;
+}
+
 /* GoalCard组件样式 */
 .goal-card {
   padding: 12px;
