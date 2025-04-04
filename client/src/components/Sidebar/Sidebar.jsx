@@ -7,23 +7,27 @@ import OnboardingModal from "../OnboardingModal";
 export default function Sidebar({ onGoalSelect, goals = [] }) {
   const [sortedGoals, setSortedGoals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
-  // 判斷是否為臨時用戶
+  // Check if user is a temporary user
   const isGuest = checkIsGuest();
-  // 判斷臨時用戶是否已有目標
+  // Count active goals (for registered users)
+  const activeGoalsCount = isGuest ? 0 : sortedGoals.filter(g => g.status === 'active').length;
+  // Check limitations based on user type
   const hasTempUserGoal = isGuest && sortedGoals.length > 0;
+  const hasMaxRegularUserGoals = !isGuest && activeGoalsCount >= 4;
+  const isAddGoalDisabled = hasTempUserGoal || hasMaxRegularUserGoals;
 
   useEffect(() => {
-    // 使用传入的真实目标数据
+    // Use the passed goals data
     if (goals && goals.length > 0) {
       const sorted = sortGoals(goals);
       setSortedGoals(sorted);
       
-      // 如果有目标，默认选择第一个
+      // If there are goals, select the first one by default
       if (sorted.length > 0 && onGoalSelect) {
         onGoalSelect(sorted[0]._id || sorted[0].id);
       }
     } else {
-      // 清空目标列表
+      // Clear goals list
       setSortedGoals([]);
       console.log("No goals available to display");
     }
@@ -34,15 +38,16 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
     
     const priorityMap = { "High": 1, "Medium": 2, "Low": 3 };
     return [...goalList].sort((a, b) => {
-      // 首先按优先级排序
+      // First sort by priority
       const aPriority = a.priority || "Medium";
       const bPriority = b.priority || "Medium";
       
+      // Sort priority by numeral value (1, 2, 3 from top to bottom)
       if (priorityMap[aPriority] !== priorityMap[bPriority]) {
         return priorityMap[aPriority] - priorityMap[bPriority];
       }
       
-      // 然后按截止日期排序
+      // Then sort by target date
       const aDate = a.targetDate || a.dueDate || new Date();
       const bDate = b.targetDate || b.dueDate || new Date();
       
@@ -50,51 +55,59 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
     });
   };
 
-  // 打开目标设置模态框
+  // Open goal setting modal
   const handleAddGoalClick = () => {
-    // 如果是臨時用户且已有目标，不执行操作
-    if (hasTempUserGoal) {
-      console.log("臨時用户已有目标，无法创建更多目标");
+    // If user has reached goal limit, don't proceed
+    if (isAddGoalDisabled) {
+      console.log(`User has reached goal limit: ${isGuest ? "Temporary user (1 goal)" : "Regular user (4 active goals)"}`);
       return;
     }
     
     setShowGoalModal(true);
   };
 
-  // 关闭目标设置模态框
+  // Close goal setting modal
   const handleCloseGoalModal = () => {
     setShowGoalModal(false);
   };
 
-  // 处理目标创建完成
+  // Handle goal creation completion
   const handleGoalComplete = (newGoal) => {
     console.log("New goal created:", newGoal);
-    // 关闭模态框
+    // Close modal
     setShowGoalModal(false);
-    // 如果父组件提供了目标选择函数，选择新创建的目标
+    // If parent component provides a goal selection function, select the newly created goal
     if (onGoalSelect && newGoal && (newGoal._id || newGoal.id)) {
       onGoalSelect(newGoal._id || newGoal.id);
     }
   };
 
-  // 获取用户ID
+  // Get user ID
   const getUserId = () => {
     const userId = localStorage.getItem("userId");
     const tempId = localStorage.getItem("tempId");
     return userId || tempId;
   };
 
-  // 检查是否是临时用户
+  // Check if user is a temporary user
   function checkIsGuest() {
     return !localStorage.getItem("userId") && !!localStorage.getItem("tempId");
   }
 
-  // 渲染添加目标按钮
+  // Render add goal button with appropriate tooltip
   const renderAddGoalButton = () => {
-    // 如果是臨時用户且已有目标，添加提示信息
-    if (hasTempUserGoal) {
+    // If user has reached goal limit, show appropriate tooltip
+    if (isAddGoalDisabled) {
+      let tooltipMessage = "";
+      
+      if (hasTempUserGoal) {
+        tooltipMessage = "Temporary users are limited to one goal. Register for an account to create more!";
+      } else if (hasMaxRegularUserGoals) {
+        tooltipMessage = "You have reached the maximum of 4 active goals. Complete or archive existing goals to create new ones.";
+      }
+      
       return (
-        <Tooltip title="臨時用戶僅限創建一個目標。註冊帳戶以解鎖更多功能！" arrow>
+        <Tooltip title={tooltipMessage} arrow>
           <span>
             <AddGoalButton onAddGoalClick={handleAddGoalClick} disabled={true} />
           </span>
@@ -102,9 +115,26 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
       );
     }
     
-    // 否则正常显示添加按钮
+    // Otherwise show normal add button
     return <AddGoalButton onAddGoalClick={handleAddGoalClick} disabled={false} />;
   }
+
+  // Handle priority change
+  const handlePriorityChange = (goalId, newPriority) => {
+    console.log(`Goal ${goalId} priority changed to ${newPriority}, resorting...`);
+    
+    // Find the goal and update its priority
+    const updatedGoals = sortedGoals.map(goal => {
+      if ((goal._id || goal.id) === goalId) {
+        return { ...goal, priority: newPriority };
+      }
+      return goal;
+    });
+    
+    // Re-sort the goals with the updated priority
+    const newSorted = sortGoals(updatedGoals);
+    setSortedGoals(newSorted);
+  };
 
   return (
     <div className="sidebar">
@@ -115,17 +145,20 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
           onClick={() => onGoalSelect && onGoalSelect(goal._id || goal.id)}
           className="goal-item"
         >
-          <GoalCard goal={goal} />
+          <GoalCard 
+            goal={goal} 
+            onPriorityChange={handlePriorityChange}
+          />
         </div>
       ))}
       {sortedGoals.length === 0 && (
         <div className="no-goals">
-          <p>目前没有目标</p>
-          <p>点击上方的"添加目标"按钮创建你的第一个目标！</p>
+          <p>No goals yet</p>
+          <p>Click the "Add Goal" button above to create your first goal!</p>
         </div>
       )}
 
-      {/* 目标设置引导模态框 */}
+      {/* Goal setting guide modal */}
       <OnboardingModal
         open={showGoalModal}
         onClose={handleCloseGoalModal}

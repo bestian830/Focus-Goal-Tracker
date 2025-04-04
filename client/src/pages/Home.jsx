@@ -257,6 +257,29 @@ function Home() {
     setSelectedGoalId(goalId);
   };
 
+  // Add handleGoalDeleted method to update goals after deletion
+  const handleGoalDeleted = async (deletedGoalId) => {
+    console.log(`Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`);
+    
+    // Remove the deleted goal from state
+    setUserGoals(prevGoals => prevGoals.filter(g => (g._id || g.id) !== deletedGoalId));
+    
+    // If the deleted goal was selected, select another one
+    if (selectedGoalId === deletedGoalId) {
+      if (userGoals.length > 1) {
+        // Find the next goal to select
+        const remainingGoals = userGoals.filter(g => (g._id || g.id) !== deletedGoalId);
+        if (remainingGoals.length > 0) {
+          setSelectedGoalId(remainingGoals[0]._id || remainingGoals[0].id);
+        } else {
+          setSelectedGoalId(null);
+        }
+      } else {
+        setSelectedGoalId(null);
+      }
+    }
+  };
+
   return (
     <div className="home-container">
       <Header 
@@ -275,7 +298,8 @@ function Home() {
             />
             <GoalDetails 
               goals={userGoals} 
-              goalId={selectedGoalId} 
+              goalId={selectedGoalId}
+              onGoalDeleted={handleGoalDeleted} 
             />
             <ProgressReport />
           </>

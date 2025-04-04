@@ -5,56 +5,56 @@ import GoalSettingGuide from './GoalSettingGuide/GoalSettingGuide';
 import apiService from '../services/api';
 
 /**
- * 用户引导模态框
- * 在新用户首次登录或临时用户首次访问时显示目标设置引导
+ * User onboarding modal
+ * Displays goal setting guide for new or temporary users
  */
 const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // 处理目标设置完成
+  // Handle goal submission completion
   const handleGoalSubmit = async (goalData) => {
     setSubmitting(true);
     setError('');
 
     try {
-      // 记录当前用户信息
-      console.log("OnboardingModal - 处理目标提交", { userId, isGuest });
+      // Log current user info
+      console.log("OnboardingModal - Processing goal submission", { userId, isGuest });
 
-      // 确保goalData是有效的对象
+      // Ensure goalData is valid
       if (!goalData || typeof goalData !== 'object') {
-        console.error("无效的目标数据:", goalData);
-        throw new Error("无效的目标数据");
+        console.error("Invalid goal data:", goalData);
+        throw new Error("Invalid goal data");
       }
 
-      // 检查临时用户ID
+      // Check temporary user ID
       let finalUserId = userId;
       if (isGuest) {
-        // 从localStorage再次获取，确保最新
+        // Get from localStorage to ensure latest
         const tempIdFromStorage = localStorage.getItem("tempId");
-        console.log("从localStorage获取的临时用户ID:", tempIdFromStorage);
+        console.log("Temporary user ID from localStorage:", tempIdFromStorage);
         
-        // 如果传入的userId与localStorage中的不一致，使用localStorage中的
+        // If the passed userId differs from localStorage, use localStorage
         if (tempIdFromStorage && tempIdFromStorage.startsWith('temp_') && 
             (!userId || userId !== tempIdFromStorage)) {
-          console.log(`使用localStorage中的tempId替代传入的userId: ${tempIdFromStorage} 替代 ${userId}`);
+          console.log(`Using tempId from localStorage instead of passed userId: ${tempIdFromStorage} instead of ${userId}`);
           finalUserId = tempIdFromStorage;
         }
       }
 
-      // 确保有有效的userId
+      // Ensure valid userId
       if (!finalUserId) {
-        console.error("无法确定用户ID，无法创建目标");
-        throw new Error("无法确定用户ID，请尝试重新登录");
+        console.error("Unable to determine user ID, cannot create goal");
+        throw new Error("Unable to determine user ID. Please try logging in again.");
       }
 
-      // 根据是临时用户还是注册用户设置不同的 userId
+      // Set userId based on user type
       const finalGoalData = {
         ...goalData,
         userId: finalUserId,
       };
 
-      console.log("准备提交的目标数据:", {
+      console.log("Preparing goal data for submission:", {
         userId: finalGoalData.userId,
         title: finalGoalData.title,
         description: finalGoalData.description,
@@ -63,47 +63,62 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         hasSettings: !!finalGoalData.currentSettings
       });
 
-      // 创建新目标
+      // Create new goal
       let response;
       if (isGuest && finalUserId && finalUserId.toString().startsWith('temp_')) {
-        console.log("检测到临时用户，尝试使用tempUsers API...");
+        console.log("Temporary user detected, using tempUsers API...");
         try {
-          // 尝试使用临时用户的专用API
+          // Try using temporary user's dedicated API
           response = await apiService.goals.createGoal(finalGoalData);
-          console.log("临时用户目标创建响应:", response);
+          console.log("Temporary user goal creation response:", response);
         } catch (tempError) {
-          console.error("临时用户API调用失败:", tempError);
+          console.error("Temporary user API call failed:", tempError);
           throw tempError;
         }
       } else {
-        // 常规注册用户
+        // Regular registered user
         response = await apiService.goals.createGoal(finalGoalData);
       }
 
-      // 检查响应是否有效
+      // Check if response is valid
       if (!response || !response.data) {
-        console.error("API返回无效响应:", response);
-        throw new Error("服务器返回无效响应");
+        console.error("API returned invalid response:", response);
+        throw new Error("Server returned invalid response");
       }
 
       if (response.data && response.data.success) {
-        console.log("目标创建成功:", response.data);
-        // 成功创建目标后通知父组件
+        console.log("Goal created successfully:", response.data);
+        // Notify parent component after successful goal creation
         onComplete(response.data.data);
       } else {
-        console.error("API返回成功但响应不符合预期:", response);
-        setError('创建目标时出错，API响应格式不正确。');
+        console.error("API returned success but response format unexpected:", response);
+        setError('Error creating goal. API response format incorrect.');
       }
     } catch (err) {
-      console.error('创建目标时出错:', err);
+      console.error('Error creating goal:', err);
       
-      // 提供更详细的错误信息
-      let errorMessage = '创建目标时出错，请稍后重试。';
+      // Provide more detailed error message
+      let errorMessage = 'Error creating goal. Please try again later.';
+      
+      // Handle specific error cases
       if (err.response) {
-        console.error('错误响应:', err.response.data);
-        errorMessage = err.response.data?.error?.message || errorMessage;
+        console.error('Error response:', err.response.data);
+        
+        // Check for duplicate key error
+        if (err.response.data && err.response.data.error && 
+            (err.response.data.error.includes('duplicate key') || 
+             err.response.data.error.includes('E11000'))) {
+          errorMessage = 'You already have a goal with this title. Please use a different title.';
+        } else {
+          errorMessage = err.response.data?.error?.message || errorMessage;
+        }
       } else if (err.message) {
         errorMessage = err.message;
+        
+        // Additional check for duplicate key in message
+        if (err.message.includes('duplicate key') || err.message.includes('E11000')) {
+          errorMessage = 'You already have a goal with this title. Please use a different title.';
+        }
       }
       
       setError(errorMessage);
@@ -124,7 +139,7 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       <DialogTitle id="onboarding-dialog-title">
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" component="div">
-            {isGuest ? '欢迎使用 Focus' : '开始制定你的第一个目标'}
+            {isGuest ? 'Welcome to Focus' : 'Create Your First Goal'}
           </Typography>
           <IconButton
             edge="end"

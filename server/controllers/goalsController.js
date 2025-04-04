@@ -128,15 +128,19 @@ const createGoal = async (req, res) => {
     }
     
     let user = null;
-    // 检查用户ID是否为临时用户ID (以temp_开头)
+    let isTemporaryUser = false;
+    
+    // Check if user ID is a temporary user ID (starting with temp_)
     if (userId && userId.toString().startsWith('temp_')) {
-      console.log(`创建目标：检测到临时用户ID: ${userId}`);
-      // 对于临时用户，使用TempUser模型查找
+      console.log(`Creating goal: Detected temporary user ID: ${userId}`);
+      isTemporaryUser = true;
+      
+      // For temporary users, use TempUser model to find
       const TempUser = await import("../models/TempUser.js").then(module => module.default);
       user = await TempUser.findOne({ tempId: userId });
       
       if (!user) {
-        console.log(`临时用户不存在: ${userId}`);
+        console.log(`Temporary user not found: ${userId}`);
         return res.status(404).json({
           success: false,
           error: {
@@ -145,9 +149,20 @@ const createGoal = async (req, res) => {
         });
       }
       
-      console.log(`临时用户存在，继续创建目标`);
+      // Check if temporary user already has a goal (limit: 1)
+      const existingGoals = await Goal.find({ userId: userId.toString() });
+      if (existingGoals.length >= 1) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: "Temporary users are limited to one active goal. Please register for a full account to create more goals."
+          }
+        });
+      }
+      
+      console.log(`Temporary user exists, proceeding with goal creation`);
     } else {
-      // 注册用户，使用User模型查找
+      // Registered user, use User model to find
       user = await User.findById(userId);
       
       if (!user) {
@@ -155,6 +170,21 @@ const createGoal = async (req, res) => {
           success: false,
           error: {
             message: "User not found"
+          }
+        });
+      }
+      
+      // Check if registered user already has maximum allowed goals (limit: 4 active goals)
+      const activeGoals = await Goal.find({ 
+        userId: userId.toString(),
+        status: "active"
+      });
+      
+      if (activeGoals.length >= 4) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: "Regular users are limited to four active goals. Please complete or archive existing goals to create new ones."
           }
         });
       }
@@ -181,18 +211,19 @@ const createGoal = async (req, res) => {
     // Initialize dailyCards with an empty array
     goalData.dailyCards = [];
     
-    // 详细记录要创建的目标数据
-    console.log("创建目标数据:", {
+    // Log the goal data being created
+    console.log("Creating goal data:", {
       userId: goalData.userId,
       title: goalData.title,
       hasDetails: !!goalData.details,
-      hasSettings: !!goalData.currentSettings
+      hasSettings: !!goalData.currentSettings,
+      userType: isTemporaryUser ? "temporary" : "registered"
     });
     
     // Create new goal
     const goal = await Goal.create(goalData);
     
-    console.log(`成功创建目标，ID: ${goal._id}`);
+    console.log(`Successfully created goal, ID: ${goal._id}`);
     
     res.status(201).json({
       success: true,
