@@ -16,6 +16,12 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
   const handleGoalSubmit = async (goalData) => {
     setSubmitting(true);
     setError('');
+    
+    console.log("Starting goal submission with data:", {
+      title: goalData.title,
+      userId: userId,
+      isGuest: isGuest
+    });
 
     try {
       // Log current user info
@@ -65,19 +71,43 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
 
       // Create new goal
       let response;
-      if (isGuest && finalUserId && finalUserId.toString().startsWith('temp_')) {
-        console.log("Temporary user detected, using tempUsers API...");
-        try {
-          // Try using temporary user's dedicated API
-          response = await apiService.goals.createGoal(finalGoalData);
-          console.log("Temporary user goal creation response:", response);
-        } catch (tempError) {
-          console.error("Temporary user API call failed:", tempError);
-          throw tempError;
-        }
-      } else {
-        // Regular registered user
+      try {
+        console.log("Calling API to create goal...");
         response = await apiService.goals.createGoal(finalGoalData);
+        console.log("Goal creation API response:", response);
+      } catch (apiError) {
+        console.error("API Error details:", apiError);
+        
+        // Enhanced error logging
+        console.error("API Error full details:", {
+          message: apiError.message,
+          status: apiError.response?.status,
+          statusText: apiError.response?.statusText,
+          data: apiError.response?.data,
+          url: apiError.config?.url,
+          method: apiError.config?.method,
+        });
+        
+        // Check for duplicate title error
+        if (apiError.response && apiError.response.data && 
+            (apiError.response.data.error?.message?.includes("duplicate key") ||
+             apiError.response.data.error?.message?.includes("E11000"))) {
+          throw new Error("You already have a goal with this title. Please use a different title.");
+        }
+        
+        // Check for goal limits
+        if (apiError.response && apiError.response.data && 
+            apiError.response.data.error?.message?.includes("limited to")) {
+          throw new Error(apiError.response.data.error.message);
+        }
+        
+        // If we have a detailed error message from the API, use it
+        if (apiError.response?.data?.error?.message) {
+          throw new Error(apiError.response.data.error.message);
+        }
+        
+        // Otherwise, throw with a generic message
+        throw new Error("Server error. Please try again later.");
       }
 
       // Check if response is valid
@@ -98,30 +128,18 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       console.error('Error creating goal:', err);
       
       // Provide more detailed error message
-      let errorMessage = 'Error creating goal. Please try again later.';
+      let errorMessage = err.message || 'Error creating goal. Please try again later.';
       
-      // Handle specific error cases
+      // Handle specific error cases from server
       if (err.response) {
         console.error('Error response:', err.response.data);
-        
-        // Check for duplicate key error
-        if (err.response.data && err.response.data.error && 
-            (err.response.data.error.includes('duplicate key') || 
-             err.response.data.error.includes('E11000'))) {
-          errorMessage = 'You already have a goal with this title. Please use a different title.';
-        } else {
-          errorMessage = err.response.data?.error?.message || errorMessage;
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
-        
-        // Additional check for duplicate key in message
-        if (err.message.includes('duplicate key') || err.message.includes('E11000')) {
-          errorMessage = 'You already have a goal with this title. Please use a different title.';
-        }
+        errorMessage = err.response.data?.error?.message || errorMessage;
       }
       
       setError(errorMessage);
+      
+      // Log the complete error for debugging
+      console.error('Complete error object:', err);
     } finally {
       setSubmitting(false);
     }

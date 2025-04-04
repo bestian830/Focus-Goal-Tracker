@@ -22,7 +22,7 @@ const GoalSchema = new mongoose.Schema(
     userId: {
       type: String,  // 使用String类型存储用户ID (ObjectId或tempId)
       required: true,
-      index: true,
+      index: true  // 普通非唯一索引
     },
     title: {
       type: String,

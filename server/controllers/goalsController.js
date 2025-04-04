@@ -117,8 +117,13 @@ const createGoal = async (req, res) => {
       currentSettings
     } = req.body;
     
+    console.log(`===== 開始創建目標 =====`);
+    console.log(`用戶ID: ${userId}, 標題: "${title}"`);
+    console.log(`是否為臨時用戶ID: ${userId?.toString().startsWith('temp_') ? 'Yes' : 'No'}`);
+    
     // Validate required fields
     if (!userId || !title || !description) {
+      console.log(`創建目標失敗: 缺少必要字段`);
       return res.status(400).json({
         success: false,
         error: {
@@ -132,15 +137,25 @@ const createGoal = async (req, res) => {
     
     // Check if user ID is a temporary user ID (starting with temp_)
     if (userId && userId.toString().startsWith('temp_')) {
-      console.log(`Creating goal: Detected temporary user ID: ${userId}`);
+      console.log(`檢測到臨時用戶ID: ${userId}`);
       isTemporaryUser = true;
       
       // For temporary users, use TempUser model to find
-      const TempUser = await import("../models/TempUser.js").then(module => module.default);
-      user = await TempUser.findOne({ tempId: userId });
+      try {
+        const TempUser = await import("../models/TempUser.js").then(module => module.default);
+        user = await TempUser.findOne({ tempId: userId });
+      } catch (modelError) {
+        console.error(`加載臨時用戶模型出錯:`, modelError);
+        return res.status(500).json({
+          success: false,
+          error: {
+            message: "Server error: Failed to load user model"
+          }
+        });
+      }
       
       if (!user) {
-        console.log(`Temporary user not found: ${userId}`);
+        console.log(`找不到臨時用戶: ${userId}`);
         return res.status(404).json({
           success: false,
           error: {
@@ -150,22 +165,46 @@ const createGoal = async (req, res) => {
       }
       
       // Check if temporary user already has a goal (limit: 1)
-      const existingGoals = await Goal.find({ userId: userId.toString() });
-      if (existingGoals.length >= 1) {
-        return res.status(400).json({
+      try {
+        const existingGoals = await Goal.find({ userId: userId.toString() });
+        console.log(`臨時用戶已有 ${existingGoals.length} 個目標`);
+        
+        if (existingGoals.length >= 1) {
+          console.log(`臨時用戶目標數量已達上限: ${existingGoals.length}`);
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: "Temporary users are limited to one active goal. Please register for a full account to create more goals."
+            }
+          });
+        }
+      } catch (findError) {
+        console.error(`查詢現有目標時出錯:`, findError);
+        return res.status(500).json({
           success: false,
           error: {
-            message: "Temporary users are limited to one active goal. Please register for a full account to create more goals."
+            message: "Server error: Failed to check existing goals"
           }
         });
       }
       
-      console.log(`Temporary user exists, proceeding with goal creation`);
+      console.log(`臨時用戶存在，開始創建目標`);
     } else {
       // Registered user, use User model to find
-      user = await User.findById(userId);
+      try {
+        user = await User.findById(userId);
+      } catch (findError) {
+        console.error(`查詢用戶時出錯:`, findError);
+        return res.status(500).json({
+          success: false,
+          error: {
+            message: "Server error: Failed to find user"
+          }
+        });
+      }
       
       if (!user) {
+        console.log(`找不到註冊用戶: ${userId}`);
         return res.status(404).json({
           success: false,
           error: {
@@ -175,16 +214,29 @@ const createGoal = async (req, res) => {
       }
       
       // Check if registered user already has maximum allowed goals (limit: 4 active goals)
-      const activeGoals = await Goal.find({ 
-        userId: userId.toString(),
-        status: "active"
-      });
-      
-      if (activeGoals.length >= 4) {
-        return res.status(400).json({
+      try {
+        const activeGoals = await Goal.find({ 
+          userId: userId.toString(),
+          status: "active"
+        });
+        
+        console.log(`註冊用戶已有 ${activeGoals.length} 個活躍目標`);
+        
+        if (activeGoals.length >= 4) {
+          console.log(`註冊用戶活躍目標數量已達上限: ${activeGoals.length}`);
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: "Regular users are limited to four active goals. Please complete or archive existing goals to create new ones."
+            }
+          });
+        }
+      } catch (findError) {
+        console.error(`查詢活躍目標時出錯:`, findError);
+        return res.status(500).json({
           success: false,
           error: {
-            message: "Regular users are limited to four active goals. Please complete or archive existing goals to create new ones."
+            message: "Server error: Failed to check active goals"
           }
         });
       }
@@ -212,23 +264,51 @@ const createGoal = async (req, res) => {
     goalData.dailyCards = [];
     
     // Log the goal data being created
-    console.log("Creating goal data:", {
+    console.log("開始創建目標，數據:", {
       userId: goalData.userId,
       title: goalData.title,
       hasDetails: !!goalData.details,
       hasSettings: !!goalData.currentSettings,
-      userType: isTemporaryUser ? "temporary" : "registered"
+      userType: isTemporaryUser ? "臨時用戶" : "註冊用戶"
     });
     
     // Create new goal
-    const goal = await Goal.create(goalData);
-    
-    console.log(`Successfully created goal, ID: ${goal._id}`);
+    let goal;
+    try {
+      goal = await Goal.create(goalData);
+      console.log(`目標創建成功，ID: ${goal._id}`);
+    } catch (createError) {
+      console.error(`創建目標時出錯:`, createError);
+      
+      // 檢查是否是重複鍵錯誤
+      if (createError.name === 'MongoServerError' && createError.code === 11000) {
+        console.log(`發生重複鍵錯誤:`, createError.keyValue);
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: "A goal with this title already exists. Please use a different title.",
+            code: "DUPLICATE_KEY",
+            details: createError.keyValue
+          }
+        });
+      }
+      
+      // 其他錯誤
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: "Failed to create goal",
+          details: createError.message
+        }
+      });
+    }
     
     res.status(201).json({
       success: true,
       data: goal
     });
+    
+    console.log(`===== 目標創建完成 =====`);
   } catch (error) {
     console.error("Error creating goal:", error);
     res.status(500).json({

@@ -137,43 +137,59 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
     }
 
     if (activeStep === steps.length - 1) {
+      console.log("GoalSettingGuide: Final step, preparing to submit...");
+      
       // 生成详细描述（可以根据累积的信息自动生成）
       const generatedDescription = `我想要${goalData.title}，因为${goalData.details.motivation}。`;
       
       // 验证 targetDate 字段是否有效
       if (!goalData.targetDate || !(goalData.targetDate instanceof Date) || isNaN(goalData.targetDate.getTime())) {
-        console.error("目标日期无效:", goalData.targetDate);
+        console.error("GoalSettingGuide: 目标日期无效:", goalData.targetDate);
         // 如果日期无效，设置为一周后
-        goalData.targetDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        console.log("已设置默认目标日期:", goalData.targetDate);
+        const oneWeekLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        handleDataChange('targetDate', oneWeekLater);
+        console.log("GoalSettingGuide: 已设置默认目标日期:", oneWeekLater);
+        
+        // 注意：handleDataChange 是异步的，我们需要在这里手动设置正确的日期值
+        // 以确保提交时使用更新后的值
+        goalData.targetDate = oneWeekLater;
       } else {
-        console.log("目标日期有效:", goalData.targetDate);
+        console.log("GoalSettingGuide: 目标日期有效:", goalData.targetDate);
       }
       
-      // 更新最终数据
-      const finalData = {
+      // 確保所有必要的字段都有值
+      const finalGoalData = {
         ...goalData,
         description: generatedDescription,
+        priority: goalData.priority || 'Medium',
+        status: 'active',
         currentSettings: {
           ...goalData.currentSettings,
           dailyReward: goalData.details.dailyReward
         }
       };
       
-      console.log("目标设置最终数据:", {
-        title: finalData.title,
-        targetDate: finalData.targetDate,
-        hasMotivation: !!finalData.details.motivation,
-        hasResources: !!finalData.details.resources,
-        hasImage: !!finalData.details.visionImage,
-        hasDailyTask: !!finalData.currentSettings.dailyTask
+      console.log("GoalSettingGuide: 目标设置最终数据:", {
+        title: finalGoalData.title,
+        targetDate: finalGoalData.targetDate,
+        hasMotivation: !!finalGoalData.details.motivation,
+        hasResources: !!finalGoalData.details.resources,
+        hasImage: !!finalGoalData.details.visionImage,
+        hasDailyTask: !!finalGoalData.currentSettings.dailyTask
       });
       
-      // 提交表单
-      onComplete(finalData);
-      
-      // 清除 localStorage 中的数据
-      localStorage.removeItem(STORAGE_KEY);
+      try {
+        // 提交表单
+        console.log("GoalSettingGuide: 调用 onComplete 提交表单...");
+        onComplete(finalGoalData);
+        
+        // 清除 localStorage 中的数据
+        console.log("GoalSettingGuide: 清除本地存储的表单数据");
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.error("GoalSettingGuide: 提交表单时出错:", error);
+        // 这里不需要额外处理，因为错误应该会在 OnboardingModal 组件中被捕获
+      }
     } else {
       setActiveStep(prev => prev + 1);
     }
