@@ -89,8 +89,8 @@ const ProgressSchema = new mongoose.Schema(
   }
 );
 
-// Create compound index for userId + goalId + date to ensure uniqueness per day
-ProgressSchema.index({ userId: 1, goalId: 1, date: 1 }, { unique: true });
+// 注释掉这个索引，避免在 goals 集合中创建相同的索引
+// ProgressSchema.index({ userId: 1, goalId: 1, date: 1 }, { unique: true });
 
 // Create and export the Progress model
 const Progress = mongoose.model("Progress", ProgressSchema);
