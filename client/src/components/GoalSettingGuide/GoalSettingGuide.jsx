@@ -140,6 +140,16 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
       // 生成详细描述（可以根据累积的信息自动生成）
       const generatedDescription = `我想要${goalData.title}，因为${goalData.details.motivation}。`;
       
+      // 验证 targetDate 字段是否有效
+      if (!goalData.targetDate || !(goalData.targetDate instanceof Date) || isNaN(goalData.targetDate.getTime())) {
+        console.error("目标日期无效:", goalData.targetDate);
+        // 如果日期无效，设置为一周后
+        goalData.targetDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        console.log("已设置默认目标日期:", goalData.targetDate);
+      } else {
+        console.log("目标日期有效:", goalData.targetDate);
+      }
+      
       // 更新最终数据
       const finalData = {
         ...goalData,
@@ -149,6 +159,15 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
           dailyReward: goalData.details.dailyReward
         }
       };
+      
+      console.log("目标设置最终数据:", {
+        title: finalData.title,
+        targetDate: finalData.targetDate,
+        hasMotivation: !!finalData.details.motivation,
+        hasResources: !!finalData.details.resources,
+        hasImage: !!finalData.details.visionImage,
+        hasDailyTask: !!finalData.currentSettings.dailyTask
+      });
       
       // 提交表单
       onComplete(finalData);

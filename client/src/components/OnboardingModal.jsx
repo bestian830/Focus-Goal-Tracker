@@ -21,7 +21,14 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       // 记录当前用户信息
       console.log("OnboardingModal - 处理目标提交", { userId, isGuest });
 
+      // 确保goalData是有效的对象
+      if (!goalData || typeof goalData !== 'object') {
+        console.error("无效的目标数据:", goalData);
+        throw new Error("无效的目标数据");
+      }
+
       // 检查临时用户ID
+      let finalUserId = userId;
       if (isGuest) {
         // 从localStorage再次获取，确保最新
         const tempIdFromStorage = localStorage.getItem("tempId");
@@ -31,21 +38,34 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         if (tempIdFromStorage && tempIdFromStorage.startsWith('temp_') && 
             (!userId || userId !== tempIdFromStorage)) {
           console.log(`使用localStorage中的tempId替代传入的userId: ${tempIdFromStorage} 替代 ${userId}`);
-          userId = tempIdFromStorage;
+          finalUserId = tempIdFromStorage;
         }
+      }
+
+      // 确保有有效的userId
+      if (!finalUserId) {
+        console.error("无法确定用户ID，无法创建目标");
+        throw new Error("无法确定用户ID，请尝试重新登录");
       }
 
       // 根据是临时用户还是注册用户设置不同的 userId
       const finalGoalData = {
         ...goalData,
-        userId: userId,
+        userId: finalUserId,
       };
 
-      console.log("准备提交的目标数据:", finalGoalData);
+      console.log("准备提交的目标数据:", {
+        userId: finalGoalData.userId,
+        title: finalGoalData.title,
+        description: finalGoalData.description,
+        targetDate: finalGoalData.targetDate,
+        hasDetails: !!finalGoalData.details,
+        hasSettings: !!finalGoalData.currentSettings
+      });
 
       // 创建新目标
       let response;
-      if (isGuest && userId && userId.toString().startsWith('temp_')) {
+      if (isGuest && finalUserId && finalUserId.toString().startsWith('temp_')) {
         console.log("检测到临时用户，尝试使用tempUsers API...");
         try {
           // 尝试使用临时用户的专用API
@@ -58,6 +78,12 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       } else {
         // 常规注册用户
         response = await apiService.goals.createGoal(finalGoalData);
+      }
+
+      // 检查响应是否有效
+      if (!response || !response.data) {
+        console.error("API返回无效响应:", response);
+        throw new Error("服务器返回无效响应");
       }
 
       if (response.data && response.data.success) {
@@ -76,6 +102,8 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       if (err.response) {
         console.error('错误响应:', err.response.data);
         errorMessage = err.response.data?.error?.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
