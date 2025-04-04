@@ -118,8 +118,22 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
 
       if (response.data && response.data.success) {
         console.log("Goal created successfully:", response.data);
-        // Notify parent component after successful goal creation
-        onComplete(response.data.data);
+        
+        // 確保我們有完整的目標數據
+        const newGoal = response.data.data;
+        
+        if (newGoal && (newGoal._id || newGoal.id)) {
+          console.log("Notifying parent component of successful goal creation:", newGoal._id || newGoal.id);
+          
+          // 新增一個延遲，確保後端處理完成
+          setTimeout(() => {
+            // Notify parent component after successful goal creation
+            onComplete(newGoal);
+          }, 100);
+        } else {
+          console.error("Invalid goal data returned from API:", newGoal);
+          throw new Error("Server returned invalid goal data");
+        }
       } else {
         console.error("API returned success but response format unexpected:", response);
         setError('Error creating goal. API response format incorrect.');

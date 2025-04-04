@@ -174,6 +174,22 @@ function Home() {
     };
 
     fetchUserData();
+
+    // 設置定期刷新機制，每 30 秒從後端獲取一次最新目標數據
+    const refreshInterval = setInterval(() => {
+      if (user) {
+        console.log("Running scheduled refresh of goals data");
+        const userId = user.id || user._id;
+        fetchUserGoals(userId, user?.isGuest || false).catch(err => {
+          console.error("Scheduled refresh failed:", err);
+        });
+      }
+    }, 30000); // 每 30 秒刷新一次
+
+    return () => {
+      // 組件卸載時清除定時器
+      clearInterval(refreshInterval);
+    };
   }, [navigate]);
 
   /**
@@ -234,14 +250,29 @@ function Home() {
   };
 
   // 处理引导完成
-  const handleOnboardingComplete = (newGoal) => {
+  const handleOnboardingComplete = async (newGoal) => {
     console.log("Onboarding complete, new goal created:", newGoal);
     setShowOnboarding(false);
-    setUserGoals(prev => [...prev, newGoal]);
     
-    // 当创建新目标后，选择它
-    if (newGoal && (newGoal._id || newGoal.id)) {
-      setSelectedGoalId(newGoal._id || newGoal.id);
+    // 立即刷新目標列表而不是簡單地添加新目標
+    if (user) {
+      console.log("Refreshing goals list after new goal creation");
+      const userId = user.id || user._id;
+      await fetchUserGoals(userId, user.isGuest);
+      
+      // 選擇新創建的目標
+      if (newGoal && (newGoal._id || newGoal.id)) {
+        setSelectedGoalId(newGoal._id || newGoal.id);
+      }
+    } else {
+      console.warn("User information not available, cannot refresh goals");
+      // 如果沒有用戶信息，至少將新目標添加到列表中
+      setUserGoals(prev => [...prev, newGoal]);
+      
+      // 選擇新創建的目標
+      if (newGoal && (newGoal._id || newGoal.id)) {
+        setSelectedGoalId(newGoal._id || newGoal.id);
+      }
     }
   };
 
@@ -257,26 +288,76 @@ function Home() {
     setSelectedGoalId(goalId);
   };
 
+  // Reset goals state and UI
+  const resetGoals = () => {
+    console.log("Resetting goals state");
+    setUserGoals([]);
+    setSelectedGoalId(null);
+    
+    // 如果用戶沒有目標，顯示引導流程
+    if (user) {
+      console.log("No goals, showing onboarding modal");
+      setShowOnboarding(true);
+    }
+  };
+
   // Add handleGoalDeleted method to update goals after deletion
   const handleGoalDeleted = async (deletedGoalId) => {
     console.log(`Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`);
     
-    // Remove the deleted goal from state
-    setUserGoals(prevGoals => prevGoals.filter(g => (g._id || g.id) !== deletedGoalId));
+    // 暫時移除刪除的目標（用於立即反饋）
+    const updatedGoals = userGoals.filter(g => (g._id || g.id) !== deletedGoalId);
+    setUserGoals(updatedGoals);
     
-    // If the deleted goal was selected, select another one
+    // 檢查是否刪除了最後一個目標
+    const isLastGoal = updatedGoals.length === 0;
+    
+    // 從後端重新獲取完整的目標列表（確保與數據庫同步）
+    if (user) {
+      console.log("Refreshing goals list after deletion");
+      const userId = user.id || user._id;
+      try {
+        const goals = await fetchUserGoals(userId, user.isGuest);
+        console.log("Goals list refreshed successfully after deletion, count:", goals.length);
+        
+        // 如果沒有目標了，重置狀態
+        if (goals.length === 0) {
+          resetGoals();
+          return; // 不繼續執行
+        }
+      } catch (error) {
+        console.error("Failed to refresh goals after deletion:", error);
+        
+        // 如果API調用失敗但我們的本地狀態顯示沒有目標了，仍然重置
+        if (isLastGoal) {
+          resetGoals();
+          return;
+        }
+      }
+    } else if (isLastGoal) {
+      // 如果沒有用戶信息但是刪除了最後一個目標，也需要重置
+      resetGoals();
+      return;
+    }
+    
+    // 如果被刪除的目標是當前選中的目標，選擇另一個目標
     if (selectedGoalId === deletedGoalId) {
-      if (userGoals.length > 1) {
-        // Find the next goal to select
-        const remainingGoals = userGoals.filter(g => (g._id || g.id) !== deletedGoalId);
-        if (remainingGoals.length > 0) {
-          setSelectedGoalId(remainingGoals[0]._id || remainingGoals[0].id);
+      setTimeout(() => {
+        if (userGoals.length > 1) {
+          // 尋找下一個可選擇的目標
+          const remainingGoals = userGoals.filter(g => (g._id || g.id) !== deletedGoalId);
+          if (remainingGoals.length > 0) {
+            console.log("Selecting another goal after deletion:", remainingGoals[0]._id || remainingGoals[0].id);
+            setSelectedGoalId(remainingGoals[0]._id || remainingGoals[0].id);
+          } else {
+            console.log("No goals remaining after deletion, clearing selection");
+            setSelectedGoalId(null);
+          }
         } else {
+          console.log("No goals remaining after deletion, clearing selection");
           setSelectedGoalId(null);
         }
-      } else {
-        setSelectedGoalId(null);
-      }
+      }, 100); // 給予一些時間讓 userGoals 狀態更新
     }
   };
 
