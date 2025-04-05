@@ -14,6 +14,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import ProgressTimeline from "./ProgressTimeline";
 import DailyTasks from "./DailyTasks";
+import WeeklyDailyCards from "./WeeklyDailyCards";
 import apiService from "../../services/api";
 
 // 添加一組鼓勵性名言
@@ -44,6 +45,7 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [dailyCards, setDailyCards] = useState([]);
 
   // 通过 goals 数组选择目标
   useEffect(() => {
@@ -69,6 +71,15 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
       }
     }
   }, [goalId, goals]);
+
+  // 当选中目标变化时，更新每日卡片数据
+  useEffect(() => {
+    if (selectedGoal && selectedGoal.dailyCards) {
+      setDailyCards(selectedGoal.dailyCards);
+    } else {
+      setDailyCards([]);
+    }
+  }, [selectedGoal]);
 
   // Handle opening delete confirmation dialog
   const handleOpenDeleteDialog = () => {
@@ -108,6 +119,20 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
       console.error("Failed to delete goal:", error);
     } finally {
       setIsDeleting(false);
+    }
+  };
+  
+  // 处理DailyCards更新
+  const handleDailyCardsUpdate = (updatedCards) => {
+    // 更新本地状态
+    setDailyCards(updatedCards);
+    
+    // 更新selectedGoal中的dailyCards
+    if (selectedGoal) {
+      setSelectedGoal({
+        ...selectedGoal,
+        dailyCards: updatedCards
+      });
     }
   };
 
@@ -276,6 +301,13 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
               100
             : 0
         }
+      />
+
+      {/* 每周DailyCards显示 */}
+      <WeeklyDailyCards 
+        goal={selectedGoal}
+        dailyCards={dailyCards}
+        onCardsUpdate={handleDailyCardsUpdate}
       />
 
       <DailyTasks tasks={dailyTasks} />

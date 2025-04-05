@@ -1,0 +1,70 @@
+.container {
+  margin: 24px 0;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.weekControls {
+  display: flex;
+  align-items: center;
+}
+
+.weekTitle {
+  margin: 0 8px;
+  text-transform: none;
+  font-size: 0.9rem;
+}
+
+.cardsContainer {
+  display: flex;
+  overflow-x: auto;
+  padding: 8px 0;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  gap: 8px;
+}
+
+/* 隐藏滚动条但保留功能 */
+.cardsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    margin: 16px 0;
+  }
+  
+  .title {
+    font-size: 1.1rem;
+  }
+  
+  .weekTitle {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .weekControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+} 

@@ -7,7 +7,7 @@ dotenv.config();
 
 const router = express.Router();
 
-// 配置 Cloudinary
+// set up  Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -15,34 +15,34 @@ cloudinary.config({
 });
 
 /**
- * 獲取 Cloudinary 上傳簽名
+ * gain Cloudinary upload signature
  * @route GET /api/uploads/signature
- * @access Public - 臨時測試用
+ * @access Public - temporary test use
  */
 router.get('/signature', (req, res) => {
   try {
-    // 測試時使用固定用戶ID，生產環境應使用 requireAuth 中間件
+    // use fixed user ID for testing, in production environment, use requireAuth middleware
     const userId = 'test_user';
-    // 設定上傳目錄，按用戶 ID 分類
+    // set upload folder, classified by user ID
     const folder = `focus_vision_images/${userId}`;
-    // 生成時間戳
+    // generate timestamp
     const timestamp = Math.round(new Date().getTime() / 1000);
 
-    // 生成上傳簽名，並設定限制
+    // generate upload signature, and set limit
     const signature = cloudinary.utils.api_sign_request({
       timestamp,
       folder,
       allowed_formats: 'jpg,jpeg,png,gif,webp',
-      max_file_size: 1000000 // 限制最大為 1MB
+      max_file_size: 1000000 // limit to 1MB
     }, process.env.CLOUDINARY_API_SECRET);
 
-    console.log('生成簽名成功:', {
-      時間戳: timestamp,
-      文件夾: folder,
+    console.log('generate signature successfully:', {
+      timestamp,
+      folder,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME
     });
 
-    // 返回簽名和其他需要的參數
+    // return signature and other needed parameters
     res.json({
       signature,
       timestamp,
@@ -51,11 +51,11 @@ router.get('/signature', (req, res) => {
       apiKey: process.env.CLOUDINARY_API_KEY
     });
   } catch (error) {
-    console.error('生成上傳簽名時出錯:', error);
+    console.error('generate upload signature error:', error);
     res.status(500).json({
       success: false,
       error: {
-        message: '生成上傳簽名失敗',
+        message: 'generate upload signature error',
         details: error.message
       }
     });
@@ -63,14 +63,14 @@ router.get('/signature', (req, res) => {
 });
 
 /**
- * 健康檢查端點，用於測試上傳 API 是否正常運行
+ * health check endpoint, for testing upload API is running
  * @route GET /api/uploads/health
  * @access Public
  */
 router.get('/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Cloudinary 上傳 API 正常運行',
+    message: 'Cloudinary upload API is running',
     cloudinary: {
       configured: !!(process.env.CLOUDINARY_CLOUD_NAME && 
                     process.env.CLOUDINARY_API_KEY && 
@@ -80,41 +80,41 @@ router.get('/health', (req, res) => {
 });
 
 /**
- * 直接上傳圖片至 Cloudinary (伺服器端上傳)
+ * upload image directly to Cloudinary (server-side upload)
  * @route POST /api/uploads/direct
- * @access Public - 測試用
+ * @access Public - for testing
  */
 router.post('/direct', express.raw({ type: 'image/*', limit: '1mb' }), async (req, res) => {
   try {
     if (!req.body || !req.body.length) {
       return res.status(400).json({ 
         success: false, 
-        error: { message: '未收到圖片資料' } 
+        error: { message: 'no image data received' } 
       });
     }
 
-    console.log('接收到直接上傳請求', {
+    console.log('received direct upload request', {
       contentType: req.headers['content-type'],
       dataSize: req.body.length,
     });
 
-    // 將 Buffer 轉為 base64 格式
+    // convert Buffer to base64 format
     const base64Data = `data:${req.headers['content-type']};base64,${req.body.toString('base64')}`;
     
-    // 使用官方方法直接上傳
+    // use official method to upload
     const uploadResult = await cloudinary.uploader.upload(base64Data, {
       folder: 'focus_vision_images/test_user',
       resource_type: 'image',
     });
 
-    console.log('Cloudinary 直接上傳成功:', {
-      公開ID: uploadResult.public_id,
+    console.log('Cloudinary direct upload successfully:', {
+      public_id: uploadResult.public_id,
       URL: uploadResult.secure_url,
-      格式: uploadResult.format,
-      大小: uploadResult.bytes,
+      format: uploadResult.format,
+      size: uploadResult.bytes,
     });
 
-    // 返回結果
+    // return result
     res.json({
       success: true,
       data: {
@@ -125,11 +125,11 @@ router.post('/direct', express.raw({ type: 'image/*', limit: '1mb' }), async (re
       }
     });
   } catch (error) {
-    console.error('直接上傳圖片至 Cloudinary 失敗:', error);
+    console.error('direct upload image to Cloudinary failed:', error);
     res.status(500).json({
       success: false,
       error: {
-        message: '上傳圖片失敗',
+        message: 'upload image failed',
         details: error.message
       }
     });
