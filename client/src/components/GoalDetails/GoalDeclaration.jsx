@@ -265,7 +265,18 @@ Because the path is already beneath my feet—it's really not that complicated. 
         }
       };
       
-      await onSave(goal._id || goal.id, updatedGoal);
+      const result = await onSave(goal._id || goal.id, updatedGoal);
+      
+      // 如果保存成功，立即更新本地数据显示
+      if (result && result.data) {
+        // 临时合并更新的数据以立即显示
+        const updatedContent = updatedGoal.declaration.content;
+        goal.declaration = {
+          ...goal.declaration,
+          content: updatedContent,
+          updatedAt: new Date()
+        };
+      }
       
       setIsEditing(false);
       setSuccess('目标宣言已成功更新');

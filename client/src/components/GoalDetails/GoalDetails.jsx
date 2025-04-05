@@ -44,7 +44,7 @@ const inspirationalQuotes = [
   }
 ];
 
-export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
+export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refreshGoalData: parentRefreshGoalData }) {
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -148,22 +148,50 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
   // 处理关闭目标宣言对话框
   const handleCloseDeclaration = () => {
     setDeclarationOpen(false);
+    
+    // 关闭后刷新目标数据
+    if (selectedGoal) {
+      const goalId = selectedGoal._id || selectedGoal.id;
+      refreshGoalData(goalId);
+    }
+  };
+  
+  // 刷新目标数据
+  const refreshGoalData = async (goalId) => {
+    try {
+      console.log("刷新目标数据:", goalId);
+      
+      // 使用从父组件传递的刷新方法
+      if (parentRefreshGoalData) {
+        const updatedGoal = await parentRefreshGoalData(goalId);
+        if (updatedGoal) {
+          // 直接设置更新后的目标
+          setSelectedGoal(updatedGoal);
+          return;
+        }
+      }
+      
+      // 如果父组件没有提供刷新方法或刷新失败，使用默认的获取方法
+      const response = await apiService.goals.getById(goalId);
+      if (response.data && response.data.data) {
+        console.log("获取到最新目标数据:", response.data.data);
+        // 更新本地状态
+        setSelectedGoal(response.data.data);
+      }
+    } catch (error) {
+      console.error("刷新目标数据失败:", error);
+    }
   };
   
   // 处理保存目标宣言
   const handleSaveDeclaration = async (goalId, updatedGoal) => {
     try {
-      // 首先更新目标的基本信息
-      const baseResponse = await apiService.goals.update(goalId, updatedGoal);
-      
-      // 然后如果有宣言内容，单独更新宣言
-      if (updatedGoal.declaration) {
-        await apiService.goals.updateDeclaration(goalId, updatedGoal.declaration);
-      }
+      // 调用API更新目标数据
+      const response = await apiService.goals.update(goalId, updatedGoal);
       
       // 更新本地状态
-      if (baseResponse.data) {
-        setSelectedGoal(baseResponse.data);
+      if (response.data) {
+        setSelectedGoal(response.data);
       } else {
         // 如果API没有返回完整数据，则合并更新
         setSelectedGoal(prevGoal => ({
@@ -172,7 +200,8 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
         }));
       }
       
-      return true;
+      // 返回完整响应，包括数据
+      return response;
     } catch (error) {
       console.error("保存目标宣言失败:", error);
       throw error;

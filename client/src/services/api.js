@@ -250,8 +250,6 @@ const apiService = {
       api.put(`/api/goals/${id}/status`, { status }),
     addCheckpoint: (id, checkpoint) =>
       api.post(`/api/goals/${id}/checkpoints`, checkpoint),
-    updateDeclaration: (id, declaration) =>
-      api.put(`/api/goals/${id}/declaration`, declaration),
     addOrUpdateDailyCard: (id, cardData) =>
       api.post(`/api/goals/${id}/daily-card`, cardData),
   },

@@ -420,6 +420,38 @@ function Home() {
     }
   };
 
+  // 刷新单个目标数据
+  const refreshSingleGoal = async (goalId) => {
+    try {
+      console.log(`刷新单个目标数据: ${goalId}`);
+      
+      // 调用API获取最新的目标数据
+      const response = await apiService.goals.getById(goalId);
+      
+      if (response.data && response.data.data) {
+        const updatedGoal = response.data.data;
+        console.log("获取到最新目标数据:", updatedGoal);
+        
+        // 更新goals数组中的目标数据
+        setUserGoals(prevGoals => {
+          return prevGoals.map(goal => {
+            const currentGoalId = goal._id || goal.id;
+            if (currentGoalId === goalId) {
+              return updatedGoal;
+            }
+            return goal;
+          });
+        });
+        
+        return updatedGoal;
+      }
+    } catch (error) {
+      console.error("刷新单个目标数据失败:", error);
+    }
+    
+    return null;
+  };
+
   return (
     <div className="home-container">
       <Header 
@@ -443,7 +475,8 @@ function Home() {
             <GoalDetails 
               goals={userGoals} 
               goalId={selectedGoalId}
-              onGoalDeleted={handleGoalDeleted} 
+              onGoalDeleted={handleGoalDeleted}
+              refreshGoalData={refreshSingleGoal} 
             />
             <ProgressReport />
           </>
