@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton, Menu, MenuItem, Tooltip, Typography, Box, Chip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { zhCN } from 'date-fns/locale';
 import apiService from '../../services/api';
 
-export default function GoalCard({ goal, onPriorityChange, onDateClick }) {
+export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
   // 增強的安全檢查，確保 goal 是有效對象
   if (!goal || typeof goal !== 'object') {
     console.error("Invalid goal object received by GoalCard:", goal);
@@ -41,10 +44,22 @@ export default function GoalCard({ goal, onPriorityChange, onDateClick }) {
       setHasLoaded(true);
     }
     
-    // 更新目標日期
+    // 更新目標日期 - 增強日誌記錄以幫助調試
     const newDate = goal.targetDate || goal.dueDate;
-    if (newDate && (!targetDate || new Date(newDate).getTime() !== targetDate.getTime())) {
-      setTargetDate(new Date(newDate));
+    if (newDate) {
+      const newDateObj = new Date(newDate);
+      
+      // 檢查當前日期是否與新日期不同
+      const needsUpdate = !targetDate || (targetDate.getTime() !== newDateObj.getTime());
+      
+      if (needsUpdate) {
+        console.log(`[日期] 目標屬性變化，更新日期狀態`, {
+          目標ID: goal._id || goal.id,
+          新日期: newDateObj.toISOString(),
+          舊日期: targetDate ? targetDate.toISOString() : '無'
+        });
+        setTargetDate(newDateObj);
+      }
     }
   }, [goal.priority, priority, hasLoaded, goal.targetDate, goal.dueDate, targetDate]);
   
@@ -123,33 +138,50 @@ export default function GoalCard({ goal, onPriorityChange, onDateClick }) {
     }
   };
 
-  // 處理日期點擊
-  const handleDateClick = (event) => {
-    event.stopPropagation(); // 防止觸發目標選擇
-    if (onDateClick) {
-      onDateClick(event, targetDate);
+  // 處理日期變更 - 完全像 RewardsStep 那樣實現
+  const handleDateChange = async (newDate) => {
+    if (!newDate) return;
+    
+    const goalId = goal._id || goal.id;
+    if (!goalId) {
+      console.error("Missing goal ID for date change");
+      return;
+    }
+    
+    console.log(`日期變更: ${goalId}, 從 ${targetDate} 到 ${newDate}`);
+    
+    // 更新本地狀態
+    setTargetDate(newDate);
+    
+    // 通知父組件（可選）
+    if (onDateChange) {
+      onDateChange(goalId, newDate);
+    }
+    
+    // 直接通過 API 更新
+    try {
+      const response = await apiService.goals.update(goalId, {
+        targetDate: newDate // 直接傳遞 Date 對象
+      });
+      
+      console.log("日期更新成功:", response.data);
+      
+      // 可選：如果 API 返回更新後的數據，通知父組件
+      if (response.data && response.data.success && response.data.data && onDateChange) {
+        onDateChange(goalId, newDate, response.data.data);
+      }
+    } catch (error) {
+      console.error("日期更新失敗:", error);
+      // 回滾本地狀態（可選）
+      const originalDate = goal.targetDate ? new Date(goal.targetDate) : 
+                           goal.dueDate ? new Date(goal.dueDate) : null;
+      setTargetDate(originalDate);
     }
   };
 
   // 安全獲取標題和狀態
   const goalTitle = goal.title || "Unnamed Goal";
   const goalStatus = goal.status || "active";
-
-  // 格式化日期顯示
-  const formatDate = (date) => {
-    if (!date) return "設定截止日期";
-    
-    try {
-      return new Date(date).toLocaleDateString(undefined, { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return "無效日期";
-    }
-  };
 
   return (
     <div className={`goal-card ${goalStatus === 'active' ? 'active' : ''}`}>
@@ -194,16 +226,22 @@ export default function GoalCard({ goal, onPriorityChange, onDateClick }) {
         </div>
         
         <div className="due-date-container">
-          <Box 
-            className="date-display"
-            onClick={handleDateClick}
-            sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 1 }}
-          >
-            <CalendarTodayIcon fontSize="small" className="date-icon" />
-            <Typography variant="body2">
-              {formatDate(targetDate)}
-            </Typography>
-          </Box>
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={zhCN}>
+            <DatePicker
+              label="目標日期"
+              value={targetDate}
+              onChange={handleDateChange}
+              disablePast
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  variant: "outlined",
+                  size: "small",
+                  helperText: "選擇目標完成日期"
+                }
+              }}
+            />
+          </LocalizationProvider>
         </div>
       </div>
     </div>

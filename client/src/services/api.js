@@ -217,7 +217,34 @@ const apiService = {
           throw error;
         });
     },
-    update: (id, goalData) => api.put(`/api/goals/${id}`, goalData),
+    update: (id, goalData) => {
+      console.log(`[API] 更新目標請求，ID: ${id}，數據:`, goalData);
+      
+      // 特別檢查是否包含目標日期欄位，這個欄位常見問題
+      if (goalData.targetDate) {
+        console.log(`[API] 目標日期更新檢查:`, {
+          原始值: goalData.targetDate,
+          類型: typeof goalData.targetDate,
+          是日期對象: goalData.targetDate instanceof Date,
+          ISO字符串: goalData.targetDate instanceof Date ? goalData.targetDate.toISOString() : goalData.targetDate
+        });
+      }
+      
+      return api.put(`/api/goals/${id}`, goalData)
+        .then(response => {
+          console.log(`[API] 目標更新成功，ID: ${id}`, response.data);
+          return response;
+        })
+        .catch(error => {
+          console.error(`[API] 目標更新失敗，ID: ${id}`, error);
+          console.error(`[API] 錯誤詳情:`, {
+            訊息: error.message,
+            狀態: error.response?.status,
+            響應: error.response?.data
+          });
+          throw error;
+        });
+    },
     delete: (id) => api.delete(`/api/goals/${id}`),
     updateStatus: (id, status) =>
       api.put(`/api/goals/${id}/status`, { status }),

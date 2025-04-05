@@ -467,6 +467,28 @@ h3 {
   display: flex;
   align-items: center;
   position: relative;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* 調整 DatePicker 在 GoalCard 中的樣式 */
+.due-date-container .MuiFormControl-root {
+  width: 100%;
+}
+
+.due-date-container .MuiInputBase-root {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.due-date-container .MuiInputLabel-root {
+  font-size: 0.85rem;
+}
+
+.due-date-container .MuiFormHelperText-root {
+  font-size: 0.7rem;
+  margin-top: 2px;
 }
 
 .date-display {
@@ -511,6 +533,22 @@ h3 {
   border-radius: 8px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   width: 280px;
+  animation: fadeIn 0.1s ease-out;
+  border: 1px solid #e9ecef;
+}
+
+/* 添加卡片内日期选择器样式 */
+.card-date-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 9999;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  margin-top: 5px;
   animation: fadeIn 0.1s ease-out;
   border: 1px solid #e9ecef;
 }

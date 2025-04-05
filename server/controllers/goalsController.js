@@ -369,6 +369,10 @@ const getGoalById = async (req, res) => {
 const updateGoal = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`處理目標更新請求, ID: ${id}`, {
+      requestBody: JSON.stringify(req.body, null, 2)
+    });
+    
     const { 
       title, 
       description, 
@@ -382,10 +386,20 @@ const updateGoal = async (req, res) => {
       dailyCards
     } = req.body;
     
+    // 記錄日期更新，這對診斷很重要
+    if (targetDate) {
+      console.log(`目標日期更新請求: ${targetDate}`, {
+        日期類型: typeof targetDate,
+        是否有效: !isNaN(new Date(targetDate).getTime()),
+        解析結果: new Date(targetDate)
+      });
+    }
+    
     // Find goal
     const goal = await Goal.findById(id);
     
     if (!goal) {
+      console.log(`目標 ${id} 未找到`);
       return res.status(404).json({
         success: false,
         error: {
@@ -394,11 +408,19 @@ const updateGoal = async (req, res) => {
       });
     }
     
+    console.log(`找到要更新的目標: ${goal.title}`, {
+      當前目標日期: goal.targetDate,
+      當前優先級: goal.priority
+    });
+    
     // Update fields
     if (title) goal.title = title;
     if (description) goal.description = description;
     if (priority) goal.priority = priority;
-    if (targetDate) goal.targetDate = targetDate;
+    if (targetDate) {
+      console.log(`更新目標日期: ${targetDate}`);
+      goal.targetDate = targetDate;
+    }
     if (declaration) goal.declaration = declaration;
     if (checkpoints) goal.checkpoints = checkpoints;
     if (status) goal.status = status;
@@ -410,6 +432,10 @@ const updateGoal = async (req, res) => {
     
     // Save updated goal
     await goal.save();
+    console.log(`目標更新成功, ID: ${id}`, {
+      更新後日期: goal.targetDate,
+      更新後優先級: goal.priority
+    });
     
     res.status(200).json({
       success: true,
