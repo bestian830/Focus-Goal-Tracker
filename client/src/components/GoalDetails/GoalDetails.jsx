@@ -363,139 +363,65 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   // 处理保存目标宣言
   const handleSaveDeclaration = async (goalId, updatedGoal) => {
     try {
-      console.log("开始保存宣言数据到API:", {
-        goalId,
-        title: updatedGoal.title,
-        hasDeclaration: !!updatedGoal.declaration,
-        declarationContentLength: updatedGoal.declaration ? (updatedGoal.declaration.content ? updatedGoal.declaration.content.length : 0) : 0,
-        details: updatedGoal.details ? Object.keys(updatedGoal.details) : '无details'
-      });
-      
-      // 增强details处理
-      const safeDetails = {
-        ...(selectedGoal.details || {}),
-        ...(updatedGoal.details || {}),
-        motivation: updatedGoal.details?.motivation || selectedGoal.details?.motivation,
-        resources: updatedGoal.details?.resources || selectedGoal.details?.resources,
-        nextStep: updatedGoal.details?.nextStep || selectedGoal.details?.nextStep,
-        ultimateReward: updatedGoal.details?.ultimateReward || selectedGoal.details?.ultimateReward,
-        visionImage: updatedGoal.details?.visionImage || selectedGoal.details?.visionImage
-      };
-      
-      console.log("处理后的details:", {
-        keys: Object.keys(safeDetails),
-        motivation: safeDetails.motivation ? '有内容' : '无内容',
-        visionImage: safeDetails.visionImage ? '有图片' : '无图片'
-      });
-      
-      // 检查goalId是否为临时ID或新创建的ID
-      const isTemporaryId = !goalId || goalId.includes("temp_") || goalId.includes("new");
-      
-      // 对于临时ID的目标，特殊处理
-      if (isTemporaryId) {
-        console.log("检测到临时/新创建的目标ID，使用本地数据更新而非API调用");
-        // 直接使用提交的数据更新本地状态
-        setSelectedGoal(prevGoal => {
-          const newGoal = {
-            ...prevGoal,
-            title: updatedGoal.title || prevGoal.title,
-            details: safeDetails,
-            currentSettings: {
-              ...(prevGoal.currentSettings || {}),
-              ...(updatedGoal.currentSettings || {})
-            },
-            targetDate: updatedGoal.targetDate || prevGoal.targetDate,
-            declaration: updatedGoal.declaration
-          };
-          
-          console.log("已更新本地临时目标:", {
-            hasDeclaration: !!newGoal.declaration,
-            hasDetails: !!newGoal.details,
-            detailsKeys: newGoal.details ? Object.keys(newGoal.details) : '无details'
-          });
-          
-          return newGoal;
-        });
-        
-        // 返回一个模拟的成功响应
-        return {
-          data: {
-            ...updatedGoal,
-            details: safeDetails,
-            _id: goalId,
-            id: goalId
-          },
-          status: 200
-        };
-      }
-      
-      // 如果不是临时ID，正常调用API
-      try {
-        // 准备完整的更新数据
-        const fullUpdateData = {
-          ...updatedGoal,
-          details: safeDetails
-        };
-        
-        // 调用API更新目标数据
-        const response = await apiService.goals.update(goalId, fullUpdateData);
-        
-        console.log("宣言数据保存成功，API响应:", response?.data ? "有数据" : "无数据");
-        
-        if (response && response.data) {
-          // 如果API返回完整数据，使用API返回的数据
-          console.log("使用API返回的完整数据更新UI");
-          
-          const responseData = response.data;
-          
-          // 确保返回的数据有declaration和details对象
-          if (!responseData.declaration) {
-            console.log("警告：API返回的数据中没有declaration对象，使用本地提交的数据");
-            responseData.declaration = updatedGoal.declaration;
-          }
-          
-          if (!responseData.details) {
-            console.log("警告：API返回的数据中没有details对象，使用本地提交的数据");
-            responseData.details = safeDetails;
-          }
-          
-          setSelectedGoal(responseData);
-        } else {
-          // 如果API没有返回完整数据，则使用我们发送的数据更新本地状态
-          console.log("API没有返回完整数据，使用本地提交的数据更新UI");
-          setSelectedGoal(prevGoal => ({
-            ...prevGoal,
-            title: updatedGoal.title || prevGoal.title,
-            details: safeDetails,
-            currentSettings: {
-              ...(prevGoal.currentSettings || {}),
-              ...(updatedGoal.currentSettings || {})
-            },
-            targetDate: updatedGoal.targetDate || prevGoal.targetDate,
-            declaration: updatedGoal.declaration
-          }));
+      console.log("開始保存宣言數據:", { 
+        原始goalId: goalId, 
+        updatedGoal: {
+          title: updatedGoal.title,
+          hasDeclaration: !!updatedGoal.declaration
         }
-        
-        // 返回完整响应，包括数据
-        return response;
-      } catch (apiError) {
-        console.error("API保存宣言失败:", apiError);
-        // API失败，但仍使用提交的数据更新本地状态
-        setSelectedGoal(prevGoal => ({
-          ...prevGoal,
-          declaration: updatedGoal.declaration,
-          details: safeDetails,
-          currentSettings: {
-            ...(prevGoal.currentSettings || {}),
-            ...(updatedGoal.currentSettings || {})
-          }
-        }));
-        
-        // 重新抛出错误，让GoalDeclaration组件处理
-        throw apiError;
+      });
+
+      // 增強ID驗證
+      const safeGoalId = goalId || 
+        (selectedGoal?._id) || 
+        (selectedGoal?.id) || 
+        updatedGoal?._id || 
+        updatedGoal?.id;
+
+      if (!safeGoalId) {
+        console.error("無法確定目標ID，更新失敗");
+        throw new Error("Invalid Goal ID");
       }
+
+      console.log("使用安全的目標ID:", safeGoalId);
+
+      // 準備更新數據
+      const fullUpdateData = {
+        ...updatedGoal,
+        _id: safeGoalId  // 確保ID一致
+      };
+
+      // 調用API更新
+      const response = await apiService.goals.update(safeGoalId, fullUpdateData);
+      
+      // 確保返回完整數據
+      const updatedGoalData = response?.data?.data || {
+        ...selectedGoal,
+        ...fullUpdateData
+      };
+
+      // 更新本地狀態
+      setSelectedGoal(prevGoal => ({
+        ...prevGoal,
+        ...updatedGoalData,
+        _id: safeGoalId  // 強制設置ID
+      }));
+
+      // 通知父組件進行全局更新
+      if (parentRefreshGoalData) {
+        try {
+          await parentRefreshGoalData(safeGoalId);
+        } catch (refreshError) {
+          console.warn("父組件更新失敗", refreshError);
+        }
+      }
+
+      return {
+        data: updatedGoalData,
+        status: 200
+      };
     } catch (error) {
-      console.error("保存目标宣言失败:", error);
+      console.error("保存宣言失敗:", error);
       throw error;
     }
   };
