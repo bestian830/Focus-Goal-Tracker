@@ -19,6 +19,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ImageIcon from '@mui/icons-material/Image';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 
@@ -86,6 +87,8 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [imagePreview, setImagePreview] = useState('');
+  const [imagePreviewDialog, setImagePreviewDialog] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [editedData, setEditedData] = useState({
     title: '',
     motivation: '',
@@ -205,7 +208,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
   // 格式化宣言内容，加粗显示变量
   const formatDeclarationContent = (content) => {
     if (!content) {
-      console.log("警告: 宣言内容为空");
+      console.log("警告: 宣言内容为空，将使用默认模板");
+      // 使用空字符串不会走到这里，因为我们在渲染时已经提供了默认内容
       return (
         <Box className={styles.emptyState}>
           <Typography variant="body1" sx={{ mb: 2 }}>
@@ -256,7 +260,10 @@ Because the path is already beneath my feet—it's really not that complicated. 
     
     try {
       // 检查是否包含Vision Image段落
-      const hasVisionParagraph = content.includes('I clearly see this image');
+      const hasVisionParagraph = content.includes('I clearly see this image') || 
+                                content.includes('When I close my eyes') || 
+                                content.includes('當我閉上眼睛') ||
+                                content.includes('[尚未設定願景圖像]');
       const visionImageExists = goal?.details?.visionImage;
       
       // 分段处理宣言内容（确保内容有足够的长度才分段）
@@ -314,11 +321,14 @@ Because the path is already beneath my feet—it's really not that complicated. 
             if (!paragraph.trim()) return null;
             
             // 检查是否为Vision Image段落
-            if (paragraph.includes('I clearly see this image') || paragraph.includes('When I close my eyes')) {
+            if (paragraph.includes('I clearly see this image') || 
+                paragraph.includes('When I close my eyes') || 
+                paragraph.includes('當我閉上眼睛') ||
+                paragraph.includes('[尚未設定願景圖像]')) {
               return (
                 <div key={index} className={styles.visionParagraph}>
                   <Typography className={styles.paragraph} variant="body1">
-                    When I close my eyes, I clearly see this image:
+                    {paragraph.includes('當我閉上眼睛') ? '當我閉上眼睛，我清晰地看到這個畫面：' : 'When I close my eyes, I clearly see this image:'}
                   </Typography>
                   
                   {visionImageExists ? (
@@ -335,13 +345,35 @@ Because the path is already beneath my feet—it's really not that complicated. 
                       </Typography>
                     </Box>
                   ) : (
-                    <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-                      [尚未设置愿景图像]
-                    </Typography>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center',
+                      border: '1px dashed #ccc',
+                      borderRadius: 1,
+                      py: 2,
+                      px: 3,
+                      mb: 2
+                    }}>
+                      <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary', mb: 1 }}>
+                        [尚未设置愿景图像]
+                      </Typography>
+                      <Button 
+                        variant="outlined" 
+                        color="primary" 
+                        size="small"
+                        onClick={() => setIsEditing(true)} 
+                        startIcon={<AddPhotoAlternateIcon />}
+                      >
+                        添加愿景图像
+                      </Button>
+                    </Box>
                   )}
                   
                   <Typography className={styles.paragraph} variant="body1">
-                    It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
+                    {paragraph.includes('推動我前進的驅動力') ? 
+                      '這不僅僅是我期望結果的願景，更是推動我前進的驅動力。' : 
+                      "It's not just a vision of my desired outcome; it's the driving force that moves me forward today."}
                   </Typography>
                 </div>
               );
@@ -582,15 +614,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
     );
   };
   
-  // 打开大图预览
-  const [imagePreviewDialog, setImagePreviewDialog] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState('');
-
-  const handleImageClick = (url) => {
-    setPreviewImageUrl(url);
+  // 处理图片点击预览
+  const handleImageClick = (imageUrl) => {
+    if (!imageUrl) return;
+    
+    setPreviewImageUrl(imageUrl);
     setImagePreviewDialog(true);
   };
-
+  
+  // 关闭图片预览
   const handleCloseImagePreview = () => {
     setImagePreviewDialog(false);
   };
@@ -812,27 +844,21 @@ Because the path is already beneath my feet—it's really not that complicated. 
           ) : isEditing ? (
             renderEditableDeclaration()
           ) : (
-            /* 移除多余的div嵌套，直接渲染内容 */
-            goal?.declaration?.content ? (
-              formatDeclarationContent(goal.declaration.content)
-            ) : (
-              <Box className={styles.emptyState}>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  您的目标还没有正式的宣言。
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                  宣言能帮助您更好地理解目标意义和保持动力。点击下方按钮创建您的目标宣言。
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  onClick={() => setIsEditing(true)}
-                  startIcon={<EditIcon />}
-                >
-                  创建目标宣言
-                </Button>
-              </Box>
-            )
+            // 修改渲染逻辑，确保始终显示内容，即使是空内容也会调用 formatDeclarationContent
+            formatDeclarationContent(goal.declaration?.content || `# ${goal.title || '我的目标'}
+
+我是 User，我踏上這條路是因為：這是一個對我意義深遠的追求，來自內心最真誠的渴望。
+
+我相信我有能力實現它，因為我已經準備好了。這是我的信心和力量之源。
+
+我不需要等待"完全準備好"。現在就是開始的最佳時刻。接下來，我將邁出第一步，讓動力帶領我前進。
+
+我明白，只要我每天堅持，一點一滴，我就會逐漸接近我渴望實現的目標。
+
+當我閉上眼睛，我清晰地看到這個畫面：
+[尚未設定願景圖像]
+
+這不僅僅是我期望結果的願景，更是推動我前進的驅動力。`)
           )}
         </div>
         
