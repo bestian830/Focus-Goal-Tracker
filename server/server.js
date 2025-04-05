@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import tempUserRoutes from "./routes/tempUserRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import uploadsRoutes from "./routes/uploads.js"; // 添加上傳路由
 // add other routes import as needed
 
 // import directly for routes that are immediately used
@@ -78,6 +79,9 @@ app.use("/api/temp-users", tempUserRoutes);
 
 // User routes - handles user profile management
 app.use("/api/users", userRoutes);
+
+// Uploads routes - handles file uploads to Cloudinary
+app.use("/api/uploads", uploadsRoutes);
 
 // Health check endpoint - for client to verify API availability
 app.get("/api/health", (req, res) => {

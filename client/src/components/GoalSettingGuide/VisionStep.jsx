@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Typography, Card, CardMedia, CircularProgress, Alert, Stack } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+import apiService from '../../services/api';
 
 /**
  * 愿景设定步骤
@@ -32,9 +33,9 @@ const VisionStep = ({ value, onChange }) => {
       return;
     }
     
-    // 检查文件大小（最大 5MB）
-    if (file.size > 5 * 1024 * 1024) {
-      setError('图片大小不能超过 5MB');
+    // 检查文件大小（最大 1MB）
+    if (file.size > 1 * 1024 * 1024) {
+      setError('图片大小不能超过 1MB');
       console.error('文件太大:', `${(file.size / 1024 / 1024).toFixed(2)}MB`);
       return;
     }
@@ -43,19 +44,38 @@ const VisionStep = ({ value, onChange }) => {
     setError('');
     
     try {
-      // 模拟与 Cloudinary 的集成
-      console.log('开始处理图片...');
+      console.log('开始上传图片到 Cloudinary...');
       
-      // 创建本地 URL
-      const imageUrl = URL.createObjectURL(file);
-      console.log('创建了本地图片URL:', imageUrl);
+      // 获取 Cloudinary 上传签名
+      const signatureRes = await apiService.get('/api/uploads/signature');
+      const { signature, timestamp, folder, cloudName, apiKey } = signatureRes.data;
       
-      // 在这里我们只是使用本地URL，实际项目中应该上传到 Cloudinary
-      // 这里的本地URL只会在当前会话中有效，刷新页面后会失效
-      // 但由于我们将整个目标数据提交到数据库，现在只需使用临时URL
-      onChange(imageUrl);
+      // 创建表单数据
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('signature', signature);
+      formData.append('timestamp', timestamp);
+      formData.append('api_key', apiKey);
+      formData.append('folder', folder);
       
-      console.log('图片处理完成');
+      // 上传到 Cloudinary
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!uploadRes.ok) {
+        throw new Error(`上传失败: ${uploadRes.statusText}`);
+      }
+      
+      const uploadData = await uploadRes.json();
+      console.log('图片上传成功:', uploadData);
+      
+      // 获取并使用优化的 URL
+      const optimizedUrl = `https://res.cloudinary.com/${cloudName}/image/upload/q_auto,f_auto,w_800/${uploadData.public_id}`;
+      onChange(optimizedUrl);
+      
+      console.log('图片处理完成，优化后的URL:', optimizedUrl);
     } catch (err) {
       console.error('上传图片时出错:', err);
       setError('上传图片时出错，请重试');
@@ -67,15 +87,6 @@ const VisionStep = ({ value, onChange }) => {
   // 处理清除图片
   const handleClear = () => {
     console.log('清除图片按钮被点击');
-    // 释放之前创建的本地URL
-    if (value && value.startsWith('blob:')) {
-      try {
-        URL.revokeObjectURL(value);
-        console.log('已释放本地图片URL');
-      } catch (e) {
-        console.error('释放图片URL时出错:', e);
-      }
-    }
     // 将图片值设为null
     onChange(null);
     console.log('图片值已设置为null');

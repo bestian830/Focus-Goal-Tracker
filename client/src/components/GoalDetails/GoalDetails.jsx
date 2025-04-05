@@ -8,11 +8,37 @@ import {
   Button,
   IconButton,
   Box,
+  Typography,
+  Fade,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ProgressTimeline from "./ProgressTimeline";
 import DailyTasks from "./DailyTasks";
 import apiService from "../../services/api";
+
+// 添加一組鼓勵性名言
+const inspirationalQuotes = [
+  {
+    text: "目標的存在不僅是為了達成，更是為了指引方向。",
+    author: "布魯斯·李"
+  },
+  {
+    text: "成功不是最終目標，而是朝著既定方向不斷前進的過程。",
+    author: "溫斯頓·邱吉爾"
+  },
+  {
+    text: "你不需要看到整個樓梯，只需要踏出第一步。",
+    author: "馬丁·路德·金"
+  },
+  {
+    text: "堅持理想，不要因為遇到暫時的困難而放棄。",
+    author: "居里夫人"
+  },
+  {
+    text: "每一個你不想起床的日子，都是一個改變生活的機會。",
+    author: "梅拉尼·罗宾斯"
+  }
+];
 
 export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
   const [selectedGoal, setSelectedGoal] = useState(null);
@@ -127,6 +153,11 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
     }
   }
 
+  const getRandomQuote = () => {
+    const randomIndex = Math.floor(Math.random() * inspirationalQuotes.length);
+    return inspirationalQuotes[randomIndex];
+  };
+
   return (
     <div className="goal-details">
       <Box
@@ -174,15 +205,66 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
 
       <p>{selectedGoal.description}</p>
 
-      {selectedGoal.details && selectedGoal.details.visionImage && (
-        <div className="vision-image">
-          <img
-            src={selectedGoal.details.visionImage}
-            alt="目标愿景"
-            style={{ maxWidth: "100%", maxHeight: "200px" }}
-          />
-        </div>
-      )}
+      {/* Vision Image 與鼓勵名言 */}
+      <Box className="vision-section" sx={{ my: 3, textAlign: 'center' }}>
+        {selectedGoal.details && selectedGoal.details.visionImage ? (
+          <Fade in={true} timeout={800}>
+            <Box>
+              <img
+                src={selectedGoal.details.visionImage}
+                alt="目標願景"
+                style={{ 
+                  maxWidth: "100%", 
+                  maxHeight: "250px", 
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)" 
+                }}
+              />
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mt: 2, 
+                  fontStyle: 'italic', 
+                  color: 'text.secondary',
+                  maxWidth: "80%",
+                  mx: 'auto'
+                }}
+              >
+                "{getRandomQuote().text}"
+                <Typography component="span" variant="body2" sx={{ display: 'block', mt: 0.5 }}>
+                  — {getRandomQuote().author}
+                </Typography>
+              </Typography>
+            </Box>
+          </Fade>
+        ) : (
+          <Fade in={true} timeout={800}>
+            <Box sx={{ 
+              py: 4, 
+              px: 3, 
+              bgcolor: 'background.paper', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              maxWidth: "90%",
+              mx: 'auto'
+            }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontStyle: 'italic', 
+                  color: 'text.primary',
+                  mb: 1
+                }}
+              >
+                "{getRandomQuote().text}"
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                — {getRandomQuote().author}
+              </Typography>
+            </Box>
+          </Fade>
+        )}
+      </Box>
 
       <ProgressTimeline
         progress={
