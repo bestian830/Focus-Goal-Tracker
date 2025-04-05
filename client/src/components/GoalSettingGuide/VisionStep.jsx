@@ -3,6 +3,7 @@ import { Box, Button, Typography, Card, CardMedia, CircularProgress, Alert, Stac
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import apiService from '../../services/api';
+import axios from 'axios';
 
 /**
  * 愿景设定步骤
@@ -47,7 +48,10 @@ const VisionStep = ({ value, onChange }) => {
       console.log('开始上传图片到 Cloudinary...');
       
       // 获取 Cloudinary 上传签名
-      const signatureRes = await apiService.get('/api/uploads/signature');
+      const signatureRes = await axios.get('/api/uploads/signature', { 
+        baseURL: apiService.getDiagnostics().apiUrl,
+        withCredentials: true 
+      });
       const { signature, timestamp, folder, cloudName, apiKey } = signatureRes.data;
       
       // 创建表单数据
