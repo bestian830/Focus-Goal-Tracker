@@ -101,13 +101,28 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   useEffect(() => {
     try {
       if (goal) {
-        console.log("GoalDeclaration组件收到新的目标数据:", goal);
+        console.log("GoalDeclaration组件收到新的目标数据:", {
+          id: goal._id || goal.id,
+          title: goal.title,
+          hasDeclaration: !!goal.declaration,
+          declarationContent: goal.declaration ? (goal.declaration.content ? `${goal.declaration.content.substring(0, 30)}...` : '空内容') : '无declaration对象',
+          updatedAt: goal.declaration ? goal.declaration.updatedAt : '无更新时间'
+        });
         
-        // 记录当前宣言状态，便于调试
-        console.log("当前宣言状态:", goal.declaration);
+        // 详细记录当前目标的宣言状态
+        console.log("当前宣言对象结构:", {
+          exists: !!goal.declaration,
+          type: goal.declaration ? typeof goal.declaration : 'undefined',
+          hasContent: goal.declaration ? !!goal.declaration.content : false,
+          contentType: goal.declaration && goal.declaration.content ? typeof goal.declaration.content : 'undefined',
+          contentLength: goal.declaration && goal.declaration.content ? goal.declaration.content.length : 0
+        });
         
-        // 重置编辑模式 - 默认总是进入查看模式
-        setIsEditing(false);
+        // 如果宣言对象存在且有内容，重置编辑模式为查看模式
+        if (goal.declaration && goal.declaration.content) {
+          console.log("检测到宣言内容，设置为查看模式");
+          setIsEditing(false);
+        }
         
         // 从目标对象中获取数据用于编辑模式
         setEditedData({
@@ -188,7 +203,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
   
   // 格式化宣言内容，加粗显示变量
   const formatDeclarationContent = (content) => {
-    if (!content) return null;
+    if (!content) {
+      console.log("警告: 宣言内容为空");
+      return null;
+    }
+    
+    console.log("处理宣言内容格式化:", {
+      contentLength: content.length,
+      contentFirstChars: content.substring(0, 30) + '...'
+    });
     
     try {
       // 检查是否包含Vision Image段落
@@ -277,7 +300,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
         );
       });
     } catch (error) {
-      console.error("格式化宣言内容失败:", error);
+      console.error("格式化宣言内容失败:", error, "原始内容:", content);
       // 如果分段失败，至少显示原始内容
       return (
         <Typography className={styles.paragraph} variant="body1">
@@ -482,11 +505,42 @@ Because the path is already beneath my feet—it's really not that complicated. 
         throw new Error('无效的目标ID');
       }
       
+      console.log("准备保存的宣言内容:", {
+        content: updatedGoal.declaration.content.substring(0, 100) + "...",
+        length: updatedGoal.declaration.content.length
+      });
+      
       try {
         console.log("调用API保存宣言数据...");
         const result = await onSave(goalId, updatedGoal);
         
         console.log("宣言保存成功，API返回结果:", result);
+        
+        // 关键改进：立即在本地更新宣言内容显示，而不等待重新加载
+        // 创建一个有新宣言内容的本地对象
+        const localUpdatedGoal = {
+          ...goal,
+          declaration: {
+            content: updatedGoal.declaration.content,
+            updatedAt: new Date()
+          },
+          details: {
+            ...(goal.details || {}),
+            motivation: editedData.motivation,
+            resources: editedData.resources,
+            nextStep: editedData.nextStep,
+            ultimateReward: editedData.ultimateReward,
+            visionImage: editedData.visionImage
+          },
+          currentSettings: {
+            ...(goal.currentSettings || {}),
+            dailyTask: editedData.dailyTask,
+            dailyReward: editedData.dailyReward
+          }
+        };
+        
+        // 强制更新本地goal对象，这是一个hack但有效
+        Object.assign(goal, localUpdatedGoal);
         
         // 退出编辑模式
         setIsEditing(false);
@@ -590,7 +644,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
           </Box>
         )}
         
-        {/* 宣言内容 */}
+        {/* 宣言内容 - 修复DOM结构 */}
         <div className={styles.contentContainer}>
           {!goal ? (
             <Box className={styles.emptyState}>
@@ -601,28 +655,27 @@ Because the path is already beneath my feet—it's really not that complicated. 
           ) : isEditing ? (
             renderEditableDeclaration()
           ) : (
-            <div className={styles.declaration}>
-              {goal?.declaration?.content ? (
-                formatDeclarationContent(goal.declaration.content)
-              ) : (
-                <Box className={styles.emptyState}>
-                  <Typography variant="body1" sx={{ mb: 2 }}>
-                    您的目标还没有正式的宣言。
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                    宣言能帮助您更好地理解目标意义和保持动力。点击下方按钮创建您的目标宣言。
-                  </Typography>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={() => setIsEditing(true)}
-                    startIcon={<EditIcon />}
-                  >
-                    创建目标宣言
-                  </Button>
-                </Box>
-              )}
-            </div>
+            /* 移除多余的div嵌套，直接渲染内容 */
+            goal?.declaration?.content ? (
+              formatDeclarationContent(goal.declaration.content)
+            ) : (
+              <Box className={styles.emptyState}>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  您的目标还没有正式的宣言。
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                  宣言能帮助您更好地理解目标意义和保持动力。点击下方按钮创建您的目标宣言。
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={() => setIsEditing(true)}
+                  startIcon={<EditIcon />}
+                >
+                  创建目标宣言
+                </Button>
+              </Box>
+            )
           )}
         </div>
         

@@ -184,12 +184,93 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
           const response = await apiService.goals.getById(goalId);
           if (response && response.data && response.data.data) {
             console.log("直接从API获取到最新目标数据:", response.data.data);
+            
+            // 获取到的最新目标数据
+            const freshGoal = response.data.data;
+            
+            // 详细记录API返回的数据结构
+            console.log("API返回的目标数据结构:", {
+              hasId: !!freshGoal._id,
+              hasTitle: !!freshGoal.title,
+              hasDeclaration: !!freshGoal.declaration,
+              declarationType: freshGoal.declaration ? typeof freshGoal.declaration : 'undefined',
+              hasDeclarationContent: freshGoal.declaration && freshGoal.declaration.content ? true : false,
+              declarationContentType: freshGoal.declaration ? typeof freshGoal.declaration.content : 'undefined'
+            });
+            
+            // 特别处理：确保declaration对象存在
+            if (!freshGoal.declaration) {
+              console.log("API返回的目标数据中没有declaration对象，创建一个空对象");
+              freshGoal.declaration = {
+                content: "",
+                updatedAt: new Date()
+              };
+            } else if (typeof freshGoal.declaration !== 'object') {
+              console.log("API返回的declaration不是对象，转换为对象", {
+                originalType: typeof freshGoal.declaration,
+                originalValue: String(freshGoal.declaration)
+              });
+              // 如果declaration不是对象（可能是字符串或其他类型），转换为对象
+              const tempContent = String(freshGoal.declaration);
+              freshGoal.declaration = { 
+                content: tempContent, 
+                updatedAt: new Date() 
+              };
+            }
+            
+            // 确保declaration有content属性，即使是空字符串
+            if (freshGoal.declaration && !freshGoal.declaration.content) {
+              console.log("API返回的目标有declaration对象但无content属性，设置空字符串");
+              freshGoal.declaration.content = "";
+              freshGoal.declaration.updatedAt = new Date();
+            }
+            
+            // 打印最终处理后的declaration内容摘要
+            console.log("处理后的declaration内容:", 
+              freshGoal.declaration.content 
+                ? `${freshGoal.declaration.content.substring(0, 30)}... (长度:${freshGoal.declaration.content.length})` 
+                : '空内容'
+            );
+            
             // 更新本地状态
-            setSelectedGoal(response.data.data);
+            setSelectedGoal(freshGoal);
           }
         } catch (apiError) {
           console.error(`从API获取目标详情失败，使用本地数据, ID: ${goalId}`, apiError);
-          // 如果API请求失败，使用本地数据
+          // 如果API请求失败，使用本地数据，并确保数据结构完整
+          if (selectedGoal) {
+            // 检查和修复本地selectedGoal的declaration对象
+            if (!selectedGoal.declaration) {
+              console.log("本地目标数据中没有declaration对象，创建一个空对象");
+              setSelectedGoal(prev => ({
+                ...prev,
+                declaration: {
+                  content: "",
+                  updatedAt: new Date()
+                }
+              }));
+            } else if (typeof selectedGoal.declaration !== 'object') {
+              console.log("本地数据的declaration不是对象，需要转换");
+              const tempContent = String(selectedGoal.declaration);
+              setSelectedGoal(prev => ({
+                ...prev,
+                declaration: {
+                  content: tempContent,
+                  updatedAt: new Date()
+                }
+              }));
+            } else if (!selectedGoal.declaration.content) {
+              console.log("本地数据的declaration没有content属性，添加空字符串");
+              setSelectedGoal(prev => ({
+                ...prev,
+                declaration: {
+                  ...prev.declaration,
+                  content: "",
+                  updatedAt: new Date()
+                }
+              }));
+            }
+          }
         }
         
         // 直接打开对话框，让GoalDeclaration组件处理显示逻辑
@@ -202,6 +283,7 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
         setIsLoadingDeclaration(false);
       }
     } else {
+      console.log("没有选中的目标，直接打开空宣言对话框");
       setDeclarationOpen(true);
     }
   };
@@ -215,9 +297,14 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
       try {
         const goalId = selectedGoal._id || selectedGoal.id;
         console.log("关闭宣言对话框后刷新目标数据:", goalId);
-        await refreshGoalData(goalId);
+        
+        // 不再等待刷新完成才执行UI操作
+        refreshGoalData(goalId).catch(error => {
+          console.error("后台刷新目标数据失败:", error);
+          // 这里可以考虑添加一个轻量级的通知，但不阻塞UI
+        });
       } catch (error) {
-        console.error("关闭对话框后刷新数据失败:", error);
+        console.error("关闭对话框后处理失败:", error);
       }
     }
   };
@@ -267,18 +354,73 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   // 处理保存目标宣言
   const handleSaveDeclaration = async (goalId, updatedGoal) => {
     try {
+      console.log("开始保存宣言数据到API:", {
+        goalId,
+        title: updatedGoal.title,
+        hasDeclaration: !!updatedGoal.declaration,
+        declarationContentLength: updatedGoal.declaration ? (updatedGoal.declaration.content ? updatedGoal.declaration.content.length : 0) : 0
+      });
+      
+      // 记录提交前的数据结构
+      if (updatedGoal.declaration) {
+        console.log("提交的宣言结构:", {
+          type: typeof updatedGoal.declaration,
+          hasContent: !!updatedGoal.declaration.content,
+          contentType: typeof updatedGoal.declaration.content,
+          contentPreview: updatedGoal.declaration.content 
+            ? updatedGoal.declaration.content.substring(0, 50) + "..." 
+            : "空内容"
+        });
+      }
+      
       // 调用API更新目标数据
       const response = await apiService.goals.update(goalId, updatedGoal);
       
-      // 更新本地状态
-      if (response.data) {
-        setSelectedGoal(response.data);
+      // 无论API返回什么，立即更新本地状态确保UI立即反映变化
+      console.log("宣言数据保存成功，API响应:", response?.data ? "有数据" : "无数据");
+      
+      if (response && response.data) {
+        // 如果API返回完整数据，使用API返回的数据
+        console.log("使用API返回的完整数据更新UI");
+        
+        // 验证API返回的数据结构
+        const responseData = response.data;
+        
+        // 确保返回的数据有declaration对象
+        if (!responseData.declaration) {
+          console.log("警告：API返回的数据中没有declaration对象，使用本地提交的数据");
+          responseData.declaration = updatedGoal.declaration;
+        }
+        
+        setSelectedGoal(responseData);
       } else {
-        // 如果API没有返回完整数据，则合并更新
-        setSelectedGoal(prevGoal => ({
-          ...prevGoal,
-          ...updatedGoal
-        }));
+        // 如果API没有返回完整数据，则使用我们发送的数据更新本地状态
+        console.log("API没有返回完整数据，使用本地提交的数据更新UI");
+        setSelectedGoal(prevGoal => {
+          // 创建一个全新的对象，确保React检测到状态变化
+          const newGoal = {
+            ...prevGoal,
+            title: updatedGoal.title || prevGoal.title,
+            details: {
+              ...(prevGoal.details || {}),
+              ...(updatedGoal.details || {})
+            },
+            currentSettings: {
+              ...(prevGoal.currentSettings || {}),
+              ...(updatedGoal.currentSettings || {})
+            },
+            targetDate: updatedGoal.targetDate || prevGoal.targetDate,
+            declaration: updatedGoal.declaration
+          };
+          
+          console.log("创建的新目标对象:", {
+            id: newGoal._id || newGoal.id,
+            hasDeclaration: !!newGoal.declaration,
+            declarationContentLength: newGoal.declaration ? (newGoal.declaration.content ? newGoal.declaration.content.length : 0) : 0
+          });
+          
+          return newGoal;
+        });
       }
       
       // 返回完整响应，包括数据

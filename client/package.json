@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev-clear": "vite --force --clearScreen",
     "build": "vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -53,6 +53,16 @@
   overflow-y: auto;
 }
 
+.contentContainer > .paragraph:first-child {
+  margin-top: 0;
+}
+
+.contentContainer > .title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
 .declaration {
   line-height: 1.6;
 }
@@ -133,12 +143,17 @@ textarea.editInput {
 }
 
 .variableValue {
-  font-weight: bold;
+  font-weight: 700;
   color: #2962ff;
   background-color: rgba(41, 98, 255, 0.08);
   padding: 0 4px;
   border-radius: 3px;
   display: inline-block;
+  transition: background-color 0.2s ease;
+}
+
+.variableValue:hover {
+  background-color: rgba(41, 98, 255, 0.15);
 }
 
 /* 愿景图像相关样式 */
@@ -224,6 +239,12 @@ textarea.editInput {
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.declarationImage:hover {
+  transform: scale(1.05);
+  cursor: pointer;
 }
 
 /* 响应式设计 */
