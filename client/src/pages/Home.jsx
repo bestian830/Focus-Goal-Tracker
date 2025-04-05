@@ -301,12 +301,79 @@ function Home() {
     }
   };
 
+  // 添加處理優先級變更的函數
+  const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
+    console.log(`Home handling priority change for goal ${goalId} to ${newPriority}`);
+    
+    // 如果有更新後的目標對象，則使用它直接更新狀態
+    if (updatedGoal) {
+      console.log("Updated goal received from API:", updatedGoal);
+      
+      setUserGoals(prevGoals => {
+        return prevGoals.map(goal => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            // 保留現有屬性，但更新優先級和其他API返回的字段
+            return { ...goal, ...updatedGoal };
+          }
+          return goal;
+        });
+      });
+    } else {
+      // 如果沒有更新後的目標對象，則僅更新優先級
+      setUserGoals(prevGoals => {
+        return prevGoals.map(goal => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            return { ...goal, priority: newPriority };
+          }
+          return goal;
+        });
+      });
+    }
+  };
+
+  // 添加處理目標日期變更的函數
+  const handleDateChange = (goalId, newDate, updatedGoal) => {
+    console.log(`Home handling date change for goal ${goalId} to ${newDate}`);
+    
+    // 如果有更新後的目標對象，則使用它直接更新狀態
+    if (updatedGoal) {
+      console.log("Updated goal with new date received from API:", updatedGoal);
+      
+      setUserGoals(prevGoals => {
+        return prevGoals.map(goal => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            // 保留現有屬性，但更新目標日期和其他API返回的字段
+            return { ...goal, ...updatedGoal };
+          }
+          return goal;
+        });
+      });
+    } else {
+      // 如果沒有更新後的目標對象，則僅更新目標日期
+      setUserGoals(prevGoals => {
+        return prevGoals.map(goal => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            return { ...goal, targetDate: newDate };
+          }
+          return goal;
+        });
+      });
+    }
+  };
+
   // Add handleGoalDeleted method to update goals after deletion
   const handleGoalDeleted = async (deletedGoalId) => {
     console.log(`Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`);
     
     // 暫時移除刪除的目標（用於立即反饋）
-    const updatedGoals = userGoals.filter(g => (g._id || g.id) !== deletedGoalId);
+    const updatedGoals = userGoals.filter(g => {
+      const goalId = g._id || g.id;
+      return goalId !== deletedGoalId;
+    });
     setUserGoals(updatedGoals);
     
     // 檢查是否刪除了最後一個目標
@@ -342,54 +409,14 @@ function Home() {
     
     // 如果被刪除的目標是當前選中的目標，選擇另一個目標
     if (selectedGoalId === deletedGoalId) {
-      setTimeout(() => {
-        if (userGoals.length > 1) {
-          // 尋找下一個可選擇的目標
-          const remainingGoals = userGoals.filter(g => (g._id || g.id) !== deletedGoalId);
-          if (remainingGoals.length > 0) {
-            console.log("Selecting another goal after deletion:", remainingGoals[0]._id || remainingGoals[0].id);
-            setSelectedGoalId(remainingGoals[0]._id || remainingGoals[0].id);
-          } else {
-            console.log("No goals remaining after deletion, clearing selection");
-            setSelectedGoalId(null);
-          }
-        } else {
-          console.log("No goals remaining after deletion, clearing selection");
-          setSelectedGoalId(null);
-        }
-      }, 100); // 給予一些時間讓 userGoals 狀態更新
-    }
-  };
-
-  // 添加處理優先級變更的函數
-  const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
-    console.log(`Home handling priority change for goal ${goalId} to ${newPriority}`);
-    
-    // 如果有更新後的目標對象，則使用它直接更新狀態
-    if (updatedGoal) {
-      console.log("Updated goal received from API:", updatedGoal);
-      
-      setUserGoals(prevGoals => {
-        return prevGoals.map(goal => {
-          const currentGoalId = goal._id || goal.id;
-          if (currentGoalId === goalId) {
-            // 保留現有屬性，但更新優先級和其他API返回的字段
-            return { ...goal, ...updatedGoal };
-          }
-          return goal;
-        });
-      });
-    } else {
-      // 如果沒有更新後的目標對象，則僅更新優先級
-      setUserGoals(prevGoals => {
-        return prevGoals.map(goal => {
-          const currentGoalId = goal._id || goal.id;
-          if (currentGoalId === goalId) {
-            return { ...goal, priority: newPriority };
-          }
-          return goal;
-        });
-      });
+      // 立即選擇另一個目標，不需要等待
+      if (updatedGoals.length > 0) {
+        console.log("Selecting another goal after deletion:", updatedGoals[0]._id || updatedGoals[0].id);
+        setSelectedGoalId(updatedGoals[0]._id || updatedGoals[0].id);
+      } else {
+        console.log("No goals remaining after deletion, clearing selection");
+        setSelectedGoalId(null);
+      }
     }
   };
 
@@ -410,6 +437,7 @@ function Home() {
               onGoalSelect={handleGoalSelect} 
               onAddGoalClick={() => setShowOnboarding(true)}
               onPriorityChange={handlePriorityChange}
+              onDateChange={handleDateChange}
               activeGoalId={selectedGoalId}
             />
             <GoalDetails 

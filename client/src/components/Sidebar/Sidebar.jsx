@@ -4,7 +4,14 @@ import GoalCard from "./GoalCard";
 import AddGoalButton from "./AddGoalButton";
 import OnboardingModal from "../OnboardingModal";
 
-export default function Sidebar({ onGoalSelect, goals = [], onAddGoalClick, onPriorityChange, activeGoalId }) {
+export default function Sidebar({ 
+  onGoalSelect, 
+  goals = [], 
+  onAddGoalClick, 
+  onPriorityChange, 
+  onDateChange,
+  activeGoalId 
+}) {
   const [sortedGoals, setSortedGoals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
   // Check if user is a temporary user
@@ -210,6 +217,31 @@ export default function Sidebar({ onGoalSelect, goals = [], onAddGoalClick, onPr
     }
   };
 
+  // 處理日期變更
+  const handleDateChange = (goalId, newDate, updatedGoal) => {
+    console.log(`Sidebar handling date change for goal ${goalId} to ${newDate}`);
+    
+    // 優先使用父組件提供的 onDateChange 函數
+    if (onDateChange) {
+      onDateChange(goalId, newDate, updatedGoal);
+    }
+    
+    // 僅在沒有獲得更新的目標數據時進行本地排序
+    if (!updatedGoal) {
+      // 本地日期更新，保持排序一致性
+      const updatedGoals = sortedGoals.map(goal => {
+        if ((goal._id && goal._id === goalId) || (goal.id && goal.id === goalId)) {
+          return { ...goal, targetDate: newDate };
+        }
+        return goal;
+      });
+      
+      // 重新排序目標
+      const newSorted = sortGoals(updatedGoals);
+      setSortedGoals(newSorted);
+    }
+  };
+
   return (
     <div className="sidebar">
       {renderAddGoalButton()}
@@ -236,6 +268,7 @@ export default function Sidebar({ onGoalSelect, goals = [], onAddGoalClick, onPr
                 <GoalCard 
                   goal={goal} 
                   onPriorityChange={handlePriorityChange}
+                  onDateChange={handleDateChange}
                 />
               </div>
             );
