@@ -138,7 +138,8 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
         }}
       >
         <div>
-          {goals.length > 0 && (
+          {/* 移除目標選擇器按鈕 - 開始 */}
+          {/* {goals.length > 0 && (
             <div className="goals-selector">
               {goals.map((goal) => (
                 <button
@@ -154,7 +155,8 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
                 </button>
               ))}
             </div>
-          )}
+          )} */}
+          {/* 移除目標選擇器按鈕 - 結束 */}
 
           <h3>{selectedGoal.title}</h3>
         </div>
