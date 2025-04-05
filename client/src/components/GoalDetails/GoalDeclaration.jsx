@@ -101,7 +101,12 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   useEffect(() => {
     try {
       if (goal) {
-        // 当对话框打开时，确保内容已经准备好
+        console.log("GoalDeclaration组件收到新的目标数据:", goal);
+        
+        // 记录当前宣言状态，便于调试
+        console.log("当前宣言状态:", goal.declaration);
+        
+        // 当对话框打开时，从目标对象中获取数据
         setEditedData({
           title: goal.title || '',
           motivation: goal.details?.motivation || '',
@@ -114,10 +119,18 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
           visionImage: goal.details?.visionImage || null
         });
         
-        // 如果目标没有宣言内容，但有基础数据，且对话框刚打开
-        if (goal && !goal.declaration?.content && isOpen) {
-          // 显示提示用户需要生成宣言
-          console.log("目标还没有宣言内容，显示创建提示");
+        // 当对话框打开时，如果没有宣言内容但有编辑数据，自动进入编辑模式
+        if (isOpen && !goal.declaration?.content) {
+          // 如果没有现有宣言但有足够的编辑数据，自动进入编辑模式
+          const hasSufficientData = goal.details?.motivation && 
+                                   goal.details?.resources && 
+                                   goal.details?.nextStep && 
+                                   goal.currentSettings?.dailyTask;
+          
+          if (hasSufficientData) {
+            console.log("检测到有足够的目标数据但无宣言，自动进入编辑模式");
+            setIsEditing(true);
+          }
         }
       }
     } catch (error) {
@@ -449,6 +462,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
       setIsSaving(true);
       setError('');
       
+      console.log("开始保存宣言数据...");
+      
       // 准备更新数据
       const updatedGoal = {
         title: editedData.title,
@@ -479,25 +494,34 @@ Because the path is already beneath my feet—it's really not that complicated. 
       }
       
       try {
+        console.log("调用API保存宣言数据...");
         const result = await onSave(goalId, updatedGoal);
         
         // 如果保存成功，立即更新本地数据显示
         if (result && result.data) {
-          // 临时合并更新的数据以立即显示
-          const updatedContent = updatedGoal.declaration.content;
-          // 安全地更新goal对象
-          if (goal.declaration) {
-            goal.declaration = {
-              ...goal.declaration,
-              content: updatedContent,
+          console.log("宣言数据保存成功，更新本地状态:", result.data);
+          
+          // 创建一个新的对象来避免直接修改props
+          const updatedGoalWithDeclaration = {
+            ...goal,
+            declaration: {
+              content: updatedGoal.declaration.content,
               updatedAt: new Date()
-            };
-          } else {
-            goal.declaration = {
-              content: updatedContent,
-              updatedAt: new Date()
-            };
-          }
+            },
+            details: {
+              ...(goal.details || {}),
+              ...updatedGoal.details
+            },
+            currentSettings: {
+              ...(goal.currentSettings || {}),
+              ...updatedGoal.currentSettings
+            },
+            targetDate: updatedGoal.targetDate,
+            title: updatedGoal.title
+          };
+          
+          // 在React状态更新前先打印一下，确认数据正确
+          console.log("更新后的本地目标数据:", updatedGoalWithDeclaration);
         }
         
         setIsEditing(false);
@@ -615,9 +639,23 @@ Because the path is already beneath my feet—it's really not that complicated. 
                 formatDeclarationContent(goal.declaration.content)
               ) : (
                 <Box className={styles.emptyState}>
-                  <Typography variant="body1">
-                    这个目标还没有正式的宣言。点击编辑按钮可以生成宣言。
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    您的目标还没有宣言内容。
                   </Typography>
+                  <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                    宣言能帮助您更好地理解目标意义和保持动力。系统会根据您已填写的目标信息自动生成宣言内容。
+                  </Typography>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={() => {
+                      console.log("开始创建宣言，进入编辑模式");
+                      setIsEditing(true);
+                    }}
+                    startIcon={<EditIcon />}
+                  >
+                    立即创建宣言
+                  </Button>
                 </Box>
               )}
             </div>

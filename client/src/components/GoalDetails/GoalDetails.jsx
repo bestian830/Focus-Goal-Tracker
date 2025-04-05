@@ -11,6 +11,7 @@ import {
   Typography,
   Fade,
   Tooltip,
+  CircularProgress,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
@@ -50,6 +51,7 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   const [isDeleting, setIsDeleting] = useState(false);
   const [dailyCards, setDailyCards] = useState([]);
   const [declarationOpen, setDeclarationOpen] = useState(false);
+  const [isLoadingDeclaration, setIsLoadingDeclaration] = useState(false);
 
   // 通过 goals 数组选择目标
   useEffect(() => {
@@ -169,8 +171,59 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   };
 
   // 处理打开目标宣言对话框
-  const handleOpenDeclaration = () => {
-    setDeclarationOpen(true);
+  const handleOpenDeclaration = async () => {
+    // 在打开对话框之前，确保有最新的目标数据
+    if (selectedGoal) {
+      try {
+        setIsLoadingDeclaration(true);
+        const goalId = selectedGoal._id || selectedGoal.id;
+        console.log("打开宣言对话框前刷新目标数据:", goalId);
+        
+        // 直接从API获取最新目标数据，确保获取完整的declaration信息
+        try {
+          const response = await apiService.goals.getById(goalId);
+          if (response && response.data && response.data.data) {
+            console.log("直接从API获取到最新目标数据:", response.data.data);
+            // 更新本地状态
+            setSelectedGoal(response.data.data);
+            
+            // 确保从API获取的目标数据有declaration对象，即使是空的
+            if (!response.data.data.declaration) {
+              setSelectedGoal(prevGoal => ({
+                ...prevGoal,
+                declaration: {
+                  content: "",
+                  updatedAt: new Date()
+                }
+              }));
+            }
+          }
+        } catch (apiError) {
+          console.error(`从API获取目标详情失败，尝试使用本地数据, ID: ${goalId}`, apiError);
+          // 如果API请求失败，使用本地数据并确保declaration对象存在
+          if (!selectedGoal.declaration) {
+            setSelectedGoal(prevGoal => ({
+              ...prevGoal,
+              declaration: {
+                content: "",
+                updatedAt: new Date()
+              }
+            }));
+          }
+        }
+        
+        // 最后打开对话框，此时目标数据应该已更新
+        setDeclarationOpen(true);
+      } catch (error) {
+        console.error("打开宣言对话框前刷新数据失败:", error);
+        // 即使刷新失败，也打开对话框
+        setDeclarationOpen(true);
+      } finally {
+        setIsLoadingDeclaration(false);
+      }
+    } else {
+      setDeclarationOpen(true);
+    }
   };
   
   // 处理关闭目标宣言对话框
@@ -341,8 +394,13 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
               onClick={handleOpenDeclaration}
               aria-label="View goal declaration"
               sx={{ marginTop: "8px", marginRight: "8px" }}
+              disabled={isLoadingDeclaration}
             >
-              <MenuBookIcon />
+              {isLoadingDeclaration ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                <MenuBookIcon />
+              )}
             </IconButton>
           </Tooltip>
           
