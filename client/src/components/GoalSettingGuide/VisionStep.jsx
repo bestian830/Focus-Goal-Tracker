@@ -47,39 +47,86 @@ const VisionStep = ({ value, onChange }) => {
     try {
       console.log('开始上传图片到 Cloudinary...');
       
-      // 获取 Cloudinary 上传签名
-      const signatureRes = await axios.get('/api/uploads/signature', { 
-        baseURL: apiService.getDiagnostics().apiUrl,
-        withCredentials: true 
-      });
-      const { signature, timestamp, folder, cloudName, apiKey } = signatureRes.data;
+      // 嘗試使用服務器端上傳方式 (推薦)
+      const useServerUpload = true; // 設置為 true 使用服務器端上傳
       
-      // 创建表单数据
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('signature', signature);
-      formData.append('timestamp', timestamp);
-      formData.append('api_key', apiKey);
-      formData.append('folder', folder);
-      
-      // 上传到 Cloudinary
-      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!uploadRes.ok) {
-        throw new Error(`上传失败: ${uploadRes.statusText}`);
+      if (useServerUpload) {
+        // 方式二：使用服務器端直接上傳 - 更安全且無需客戶端簽名
+        console.log('使用服務器端直接上傳模式');
+        
+        // 創建表單數據
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // 發送到我們的後端 API
+        const uploadRes = await axios.post('/api/uploads/direct', file, { 
+          baseURL: apiService.getDiagnostics().apiUrl,
+          withCredentials: true,
+          headers: {
+            'Content-Type': file.type
+          }
+        });
+        
+        console.log('圖片上傳成功:', uploadRes.data);
+        
+        // 使用後端提供的優化 URL
+        onChange(uploadRes.data.data.optimized_url);
+        
+        console.log('圖片處理完成，優化後的URL:', uploadRes.data.data.optimized_url);
+      } else {
+        // 方式一：原來的客戶端簽名上傳模式
+        // 获取 Cloudinary 上传签名
+        const signatureRes = await axios.get('/api/uploads/signature', { 
+          baseURL: apiService.getDiagnostics().apiUrl,
+          withCredentials: true 
+        });
+        const { signature, timestamp, folder, cloudName, apiKey } = signatureRes.data;
+        
+        // 创建表单数据
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('signature', signature);
+        formData.append('timestamp', timestamp);
+        formData.append('api_key', apiKey);
+        formData.append('folder', folder);
+        
+        // 上传到 Cloudinary - 添加更多適當的頭信息和跨域設置
+        console.log('準備上傳到 Cloudinary，參數:', {
+          cloudName,
+          fileType: file.type,
+          fileSize: file.size,
+          timestamp,
+          folderPath: folder
+        });
+        
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            // 不要添加 Content-Type 頭，因為 FormData 會自動添加正確的 multipart/form-data 及邊界
+          },
+          mode: 'cors'
+        });
+        
+        if (!uploadRes.ok) {
+          const errorText = await uploadRes.text();
+          console.error('Cloudinary 上傳失敗:', {
+            狀態: uploadRes.status,
+            狀態文本: uploadRes.statusText,
+            響應正文: errorText
+          });
+          throw new Error(`上传失败: ${uploadRes.status} ${uploadRes.statusText} - ${errorText}`);
+        }
+        
+        const uploadData = await uploadRes.json();
+        console.log('图片上传成功:', uploadData);
+        
+        // 获取并使用优化的 URL
+        const optimizedUrl = `https://res.cloudinary.com/${cloudName}/image/upload/q_auto,f_auto,w_800/${uploadData.public_id}`;
+        onChange(optimizedUrl);
+        
+        console.log('图片处理完成，优化后的URL:', optimizedUrl);
       }
-      
-      const uploadData = await uploadRes.json();
-      console.log('图片上传成功:', uploadData);
-      
-      // 获取并使用优化的 URL
-      const optimizedUrl = `https://res.cloudinary.com/${cloudName}/image/upload/q_auto,f_auto,w_800/${uploadData.public_id}`;
-      onChange(optimizedUrl);
-      
-      console.log('图片处理完成，优化后的URL:', optimizedUrl);
     } catch (err) {
       console.error('上传图片时出错:', err);
       setError('上传图片时出错，请重试');
