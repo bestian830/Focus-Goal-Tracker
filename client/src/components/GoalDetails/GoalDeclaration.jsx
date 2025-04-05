@@ -8,13 +8,16 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Fade
+  Fade,
+  TextField,
+  Input
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import ImageIcon from '@mui/icons-material/Image';
 import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 
@@ -81,6 +84,7 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imagePreview, setImagePreview] = useState('');
   const [editedData, setEditedData] = useState({
     title: '',
     motivation: '',
@@ -89,13 +93,15 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     dailyTask: '',
     dailyReward: '',
     ultimateReward: '',
-    targetDate: null
+    targetDate: null,
+    visionImage: null
   });
   
   // 当目标数据改变时，更新编辑数据
   useEffect(() => {
     try {
       if (goal) {
+        // 当对话框打开时，确保内容已经准备好
         setEditedData({
           title: goal.title || '',
           motivation: goal.details?.motivation || '',
@@ -104,8 +110,15 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
           dailyTask: goal.currentSettings?.dailyTask || '',
           dailyReward: goal.currentSettings?.dailyReward || '',
           ultimateReward: goal.details?.ultimateReward || '',
-          targetDate: goal.targetDate ? new Date(goal.targetDate) : new Date()
+          targetDate: goal.targetDate ? new Date(goal.targetDate) : new Date(),
+          visionImage: goal.details?.visionImage || null
         });
+        
+        // 如果目标没有宣言内容，但有基础数据，且对话框刚打开
+        if (goal && !goal.declaration?.content && isOpen) {
+          // 显示提示用户需要生成宣言
+          console.log("目标还没有宣言内容，显示创建提示");
+        }
       }
     } catch (error) {
       console.error("更新编辑数据失败:", error);
@@ -118,10 +131,11 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
         dailyTask: '',
         dailyReward: '',
         ultimateReward: '',
-        targetDate: new Date()
+        targetDate: new Date(),
+        visionImage: null
       });
     }
-  }, [goal]);
+  }, [goal, isOpen]);
   
   // 处理字段更新
   const handleFieldChange = (field, value) => {
@@ -141,12 +155,13 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
       dailyTask,
       dailyReward,
       ultimateReward,
-      targetDate
+      targetDate,
+      visionImage
     } = data;
     
     const username = 'User'; // 可以根据实际情况获取
     const formattedDate = targetDate ? new Date(targetDate).toLocaleDateString() : '';
-    const visionImagePlaceholder = '[Vision Image]';
+    const visionImagePlaceholder = visionImage ? '[Vision Image Attached]' : '[No Vision Image Yet]';
     
     return `${title}
 
@@ -169,16 +184,96 @@ I've set a deadline for myself: ${formattedDate}. I know there might be ups and 
 Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
   };
   
-  // 格式化宣言内容
+  // 格式化宣言内容，加粗显示变量
   const formatDeclarationContent = (content) => {
     if (!content) return null;
     
     try {
-      return content.split('\n\n').map((paragraph, index) => (
-        <Typography key={index} className={styles.paragraph} variant="body1">
-          {paragraph}
-        </Typography>
-      ));
+      // 检查是否包含Vision Image段落
+      const hasVisionParagraph = content.includes('I clearly see this image');
+      const visionImageExists = goal?.details?.visionImage;
+      
+      // 分段处理宣言内容
+      return content.split('\n\n').map((paragraph, index) => {
+        // 检查是否为Vision Image段落
+        if (paragraph.includes('I clearly see this image')) {
+          return (
+            <div key={index} className={styles.visionParagraph}>
+              <Typography className={styles.paragraph} variant="body1">
+                When I close my eyes, I clearly see this image:
+              </Typography>
+              
+              {visionImageExists ? (
+                <Box className={styles.declarationImageContainer}>
+                  <img 
+                    src={goal.details.visionImage} 
+                    alt="目标愿景" 
+                    className={styles.declarationImage} 
+                  />
+                </Box>
+              ) : (
+                <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                  [尚未设置愿景图像]
+                </Typography>
+              )}
+              
+              <Typography className={styles.paragraph} variant="body1">
+                It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
+              </Typography>
+            </div>
+          );
+        }
+        
+        // 检查段落中是否包含变量
+        let formattedParagraph = paragraph;
+        
+        // 处理可能存在的变量字段
+        const variablePatterns = [
+          // 检测模式可能存在的变量，用正则表达式来匹配
+          { regex: /stepping onto this path because (.*?)\./, group: 1 }, // motivation
+          { regex: /I already hold (.*?) in my hands/, group: 1 }, // resources
+          { regex: /Next, I'll (.*?),/, group: 1 }, // nextStep
+          { regex: /I commit to (.*?) each day/, group: 1 }, // dailyTask
+          { regex: /something small and meaningful: (.*?)\./, group: 1 }, // dailyReward
+          { regex: /treating myself to (.*?),/, group: 1 }, // ultimateReward
+          { regex: /deadline for myself: (.*?)\./, group: 1 }, // targetDate
+          { regex: /I clearly see this image: \[(.*?)\]/, group: 1 }, // visionImage
+        ];
+        
+        // 应用变量检测和样式替换
+        variablePatterns.forEach(pattern => {
+          const match = formattedParagraph.match(pattern.regex);
+          if (match && match[pattern.group]) {
+            const variable = match[pattern.group];
+            formattedParagraph = formattedParagraph.replace(
+              match[0],
+              match[0].replace(
+                variable,
+                `<span class="${styles.variableValue}">${variable}</span>`
+              )
+            );
+          }
+        });
+        
+        // 如果包含变量，使用dangerouslySetInnerHTML来显示
+        if (formattedParagraph !== paragraph) {
+          return (
+            <Typography 
+              key={index} 
+              className={styles.paragraph} 
+              variant="body1"
+              dangerouslySetInnerHTML={{ __html: formattedParagraph }}
+            />
+          );
+        }
+        
+        // 否则正常显示
+        return (
+          <Typography key={index} className={styles.paragraph} variant="body1">
+            {paragraph}
+          </Typography>
+        );
+      });
     } catch (error) {
       console.error("格式化宣言内容失败:", error);
       // 如果分段失败，至少显示原始内容
@@ -188,6 +283,30 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </Typography>
       );
     }
+  };
+  
+  // 处理图片上传
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('图片大小不能超过5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+      handleFieldChange('visionImage', reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 移除图片
+  const handleRemoveImage = () => {
+    setImagePreview('');
+    handleFieldChange('visionImage', null);
   };
   
   // 渲染编辑模式的宣言
@@ -245,9 +364,58 @@ Because the path is already beneath my feet—it's really not that complicated. 
           /> each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
         </Typography>
         
-        <Typography className={styles.paragraph} variant="body1">
-          When I close my eyes, I clearly see this image: [Vision Image]. It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
-        </Typography>
+        <div className={styles.visionParagraph}>
+          <Typography className={styles.paragraph} variant="body1">
+            When I close my eyes, I clearly see this image:
+          </Typography>
+          
+          {/* Vision Image上传与预览 */}
+          <Box className={styles.visionImageSection}>
+            {imagePreview || editedData.visionImage ? (
+              <Box className={styles.imagePreviewContainer}>
+                <img 
+                  src={imagePreview || editedData.visionImage} 
+                  alt="愿景图像" 
+                  className={styles.imagePreview} 
+                />
+                <IconButton 
+                  className={styles.removeImageBtn}
+                  onClick={handleRemoveImage}
+                  size="small"
+                >
+                  <CancelIcon />
+                </IconButton>
+              </Box>
+            ) : (
+              <Box className={styles.uploadImageBox}>
+                <Input
+                  type="file"
+                  id="vision-image-upload"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="vision-image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<ImageIcon />}
+                    className={styles.uploadButton}
+                  >
+                    上传愿景图像
+                  </Button>
+                </label>
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                  添加一张能代表你目标愿景的图片
+                </Typography>
+              </Box>
+            )}
+          </Box>
+          
+          <Typography className={styles.paragraph} variant="body1">
+            It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
+          </Typography>
+        </div>
         
         <Typography className={styles.paragraph} variant="body1">
           Every time I complete my daily milestone, I'll reward myself with something small and meaningful: <EditableField 
@@ -290,6 +458,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
           resources: editedData.resources,
           nextStep: editedData.nextStep,
           ultimateReward: editedData.ultimateReward,
+          visionImage: editedData.visionImage
         },
         currentSettings: {
           ...(goal.currentSettings || {}),
