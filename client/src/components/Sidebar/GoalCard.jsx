@@ -78,17 +78,25 @@ export default function GoalCard({ goal, onPriorityChange }) {
       // 先更新本地狀態提供快速反饋
       setPriority(newPriority);
       
-      // 通知父組件優先級已變更
+      // 通知父組件優先級已變更 (先用舊數據進行初步更新)
       if (onPriorityChange) {
         onPriorityChange(goalId, newPriority);
       }
       
       // Update goal priority through API
       try {
-        await apiService.goals.update(goalId, {
+        const response = await apiService.goals.update(goalId, {
           priority: newPriority
         });
-        console.log(`Priority updated successfully to ${newPriority}`);
+        console.log(`Priority updated successfully to ${newPriority}`, response);
+        
+        // 如果 API 返回更新後的數據，再次通知父組件
+        if (response && response.data && response.data.success && response.data.data) {
+          // 通知父組件更新後的目標數據，觸發重新渲染
+          if (onPriorityChange) {
+            onPriorityChange(goalId, newPriority, response.data.data);
+          }
+        }
       } catch (apiError) {
         console.error('API failed to update goal priority:', apiError);
         // 回滾本地狀態
@@ -97,7 +105,6 @@ export default function GoalCard({ goal, onPriorityChange }) {
         if (onPriorityChange) {
           onPriorityChange(goalId, priority);
         }
-        // 不向用戶拋出錯誤，而是靜默處理
       }
     } catch (error) {
       console.error('Failed to update goal priority:', error);

@@ -361,6 +361,38 @@ function Home() {
     }
   };
 
+  // 添加處理優先級變更的函數
+  const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
+    console.log(`Home handling priority change for goal ${goalId} to ${newPriority}`);
+    
+    // 如果有更新後的目標對象，則使用它直接更新狀態
+    if (updatedGoal) {
+      console.log("Updated goal received from API:", updatedGoal);
+      
+      setUserGoals(prevGoals => {
+        return prevGoals.map(goal => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            // 保留現有屬性，但更新優先級和其他API返回的字段
+            return { ...goal, ...updatedGoal };
+          }
+          return goal;
+        });
+      });
+    } else {
+      // 如果沒有更新後的目標對象，則僅更新優先級
+      setUserGoals(prevGoals => {
+        return prevGoals.map(goal => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            return { ...goal, priority: newPriority };
+          }
+          return goal;
+        });
+      });
+    }
+  };
+
   return (
     <div className="home-container">
       <Header 
@@ -374,8 +406,11 @@ function Home() {
         {user ? (
           <>
             <Sidebar 
+              goals={userGoals} 
               onGoalSelect={handleGoalSelect} 
-              goals={userGoals}
+              onAddGoalClick={() => setShowOnboarding(true)}
+              onPriorityChange={handlePriorityChange}
+              activeGoalId={selectedGoalId}
             />
             <GoalDetails 
               goals={userGoals} 

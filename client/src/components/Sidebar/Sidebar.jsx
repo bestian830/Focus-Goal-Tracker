@@ -4,7 +4,7 @@ import GoalCard from "./GoalCard";
 import AddGoalButton from "./AddGoalButton";
 import OnboardingModal from "../OnboardingModal";
 
-export default function Sidebar({ onGoalSelect, goals = [] }) {
+export default function Sidebar({ onGoalSelect, goals = [], onAddGoalClick, onPriorityChange, activeGoalId }) {
   const [sortedGoals, setSortedGoals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
   // Check if user is a temporary user
@@ -20,6 +20,7 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
     // 每次 goals 變化時都輸出詳細日誌
     console.log("Goals prop changed in Sidebar:", goals);
     console.log("Current goals count:", goals?.length || 0);
+    console.log("Active goal ID:", activeGoalId);
     
     // 通過深度比較檢查 goals 是否真的變化了
     const goalsString = JSON.stringify(goals);
@@ -44,7 +45,7 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
           setSortedGoals(sorted);
           
           // 如果有目標且未選擇目標，則自動選擇第一個
-          if (sorted.length > 0 && onGoalSelect) {
+          if (sorted.length > 0 && onGoalSelect && !activeGoalId) {
             const firstGoalId = sorted[0]._id || sorted[0].id;
             console.log("Auto-selecting first goal:", firstGoalId);
             onGoalSelect(firstGoalId);
@@ -64,7 +65,7 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
       console.error("Invalid goals data received:", goals);
       setSortedGoals([]);
     }
-  }, [goals, onGoalSelect]);
+  }, [goals, onGoalSelect, activeGoalId]);
 
   const sortGoals = (goalList) => {
     if (!goalList || goalList.length === 0) {
@@ -112,7 +113,11 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
       return;
     }
     
-    setShowGoalModal(true);
+    if (onAddGoalClick) {
+      onAddGoalClick();
+    } else {
+      setShowGoalModal(true);
+    }
   };
 
   // Close goal setting modal
@@ -181,20 +186,28 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
   }
 
   // Handle priority change
-  const handlePriorityChange = (goalId, newPriority) => {
-    console.log(`Goal ${goalId} priority changed to ${newPriority}, resorting...`);
+  const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
+    console.log(`Sidebar handling priority change for goal ${goalId} to ${newPriority}`);
     
-    // Find the goal and update its priority
-    const updatedGoals = sortedGoals.map(goal => {
-      if ((goal._id || goal.id) === goalId) {
-        return { ...goal, priority: newPriority };
-      }
-      return goal;
-    });
+    // 優先使用父組件提供的 onPriorityChange 函數
+    if (onPriorityChange) {
+      onPriorityChange(goalId, newPriority, updatedGoal);
+    }
     
-    // Re-sort the goals with the updated priority
-    const newSorted = sortGoals(updatedGoals);
-    setSortedGoals(newSorted);
+    // 僅在沒有獲得更新的目標數據時進行本地排序
+    if (!updatedGoal) {
+      // 本地優先級更新，保持排序一致性
+      const updatedGoals = sortedGoals.map(goal => {
+        if ((goal._id && goal._id === goalId) || (goal.id && goal.id === goalId)) {
+          return { ...goal, priority: newPriority };
+        }
+        return goal;
+      });
+      
+      // 重新排序目標
+      const newSorted = sortGoals(updatedGoals);
+      setSortedGoals(newSorted);
+    }
   };
 
   return (
@@ -203,21 +216,30 @@ export default function Sidebar({ onGoalSelect, goals = [] }) {
       
       <div className="goal-list">
         {sortedGoals.length > 0 ? (
-          sortedGoals.map((goal) => (
-            <div 
-              key={goal._id || goal.id || Math.random().toString()} 
-              onClick={() => {
-                console.log("Goal selected:", goal.title);
-                onGoalSelect && onGoalSelect(goal._id || goal.id);
-              }}
-              className="goal-item"
-            >
-              <GoalCard 
-                goal={goal} 
-                onPriorityChange={handlePriorityChange}
-              />
-            </div>
-          ))
+          sortedGoals.map((goal) => {
+            // 獲取目標 ID
+            const goalId = goal._id || goal.id;
+            if (!goalId) {
+              console.error("Goal is missing ID:", goal);
+              return null;
+            }
+            
+            return (
+              <div 
+                key={goalId} 
+                onClick={() => {
+                  console.log("Goal selected:", goal.title);
+                  onGoalSelect && onGoalSelect(goalId);
+                }}
+                className={`goal-item ${goalId === activeGoalId ? 'active' : ''}`}
+              >
+                <GoalCard 
+                  goal={goal} 
+                  onPriorityChange={handlePriorityChange}
+                />
+              </div>
+            );
+          })
         ) : (
           <div className="no-goals">
             <p>No goals yet</p>
