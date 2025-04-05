@@ -10,7 +10,8 @@ import {
   Alert,
   Fade,
   TextField,
-  Input
+  Input,
+  DialogActions
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -205,7 +206,47 @@ Because the path is already beneath my feet—it's really not that complicated. 
   const formatDeclarationContent = (content) => {
     if (!content) {
       console.log("警告: 宣言内容为空");
-      return null;
+      return (
+        <Box className={styles.emptyState}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            您的目标还没有完整的宣言内容。
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => setIsEditing(true)}
+            startIcon={<EditIcon />}
+          >
+            编辑目标宣言
+          </Button>
+        </Box>
+      );
+    }
+    
+    // 安全检查：确保content是字符串
+    if (typeof content !== 'string') {
+      console.error("宣言内容不是字符串:", content);
+      try {
+        content = String(content);
+      } catch (e) {
+        console.error("无法将宣言内容转换为字符串:", e);
+        return (
+          <Box className={styles.emptyState}>
+            <Typography variant="body1" color="error">
+              宣言内容格式无效，请点击编辑按钮重新创建。
+            </Typography>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={() => setIsEditing(true)}
+              startIcon={<EditIcon />}
+              sx={{ mt: 2 }}
+            >
+              编辑目标宣言
+            </Button>
+          </Box>
+        );
+      }
     }
     
     console.log("处理宣言内容格式化:", {
@@ -218,94 +259,172 @@ Because the path is already beneath my feet—it's really not that complicated. 
       const hasVisionParagraph = content.includes('I clearly see this image');
       const visionImageExists = goal?.details?.visionImage;
       
-      // 分段处理宣言内容
-      return content.split('\n\n').map((paragraph, index) => {
-        // 检查是否为Vision Image段落
-        if (paragraph.includes('I clearly see this image')) {
-          return (
-            <div key={index} className={styles.visionParagraph}>
-              <Typography className={styles.paragraph} variant="body1">
-                When I close my eyes, I clearly see this image:
-              </Typography>
-              
-              {visionImageExists ? (
-                <Box className={styles.declarationImageContainer}>
-                  <img 
-                    src={goal.details.visionImage} 
-                    alt="目标愿景" 
-                    className={styles.declarationImage} 
-                  />
-                </Box>
-              ) : (
-                <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-                  [尚未设置愿景图像]
-                </Typography>
-              )}
-              
-              <Typography className={styles.paragraph} variant="body1">
-                It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
-              </Typography>
-            </div>
-          );
-        }
-        
-        // 检查段落中是否包含变量
-        let formattedParagraph = paragraph;
-        
-        // 处理可能存在的变量字段
-        const variablePatterns = [
-          // 检测模式可能存在的变量，用正则表达式来匹配
-          { regex: /stepping onto this path because (.*?)\./, group: 1 }, // motivation
-          { regex: /I already hold (.*?) in my hands/, group: 1 }, // resources
-          { regex: /Next, I'll (.*?),/, group: 1 }, // nextStep
-          { regex: /I commit to (.*?) each day/, group: 1 }, // dailyTask
-          { regex: /something small and meaningful: (.*?)\./, group: 1 }, // dailyReward
-          { regex: /treating myself to (.*?),/, group: 1 }, // ultimateReward
-          { regex: /deadline for myself: (.*?)\./, group: 1 }, // targetDate
-          { regex: /I clearly see this image: \[(.*?)\]/, group: 1 }, // visionImage
-        ];
-        
-        // 应用变量检测和样式替换
-        variablePatterns.forEach(pattern => {
-          const match = formattedParagraph.match(pattern.regex);
-          if (match && match[pattern.group]) {
-            const variable = match[pattern.group];
-            formattedParagraph = formattedParagraph.replace(
-              match[0],
-              match[0].replace(
-                variable,
-                `<span class="${styles.variableValue}">${variable}</span>`
-              )
-            );
-          }
-        });
-        
-        // 如果包含变量，使用dangerouslySetInnerHTML来显示
-        if (formattedParagraph !== paragraph) {
-          return (
-            <Typography 
-              key={index} 
-              className={styles.paragraph} 
-              variant="body1"
-              dangerouslySetInnerHTML={{ __html: formattedParagraph }}
-            />
-          );
-        }
-        
-        // 否则正常显示
+      // 分段处理宣言内容（确保内容有足够的长度才分段）
+      if (content.length < 10) {
+        console.warn("宣言内容过短，不进行分段处理:", content);
         return (
-          <Typography key={index} className={styles.paragraph} variant="body1">
-            {paragraph}
+          <Typography className={styles.paragraph} variant="body1">
+            {content}
+            <Button 
+              variant="text" 
+              color="primary" 
+              onClick={() => setIsEditing(true)}
+              startIcon={<EditIcon />}
+              size="small"
+              sx={{ ml: 2 }}
+            >
+              完善宣言
+            </Button>
           </Typography>
         );
-      });
+      }
+      
+      // 使用正则表达式安全地分割段落，避免因为格式问题导致渲染错误
+      const paragraphs = content.split(/\n\s*\n|\n{2,}/);
+      
+      if (paragraphs.length === 0) {
+        console.warn("分段后没有内容，使用原始内容:", content);
+        return (
+          <Typography className={styles.paragraph} variant="body1">
+            {content}
+          </Typography>
+        );
+      }
+      
+      // 检查标题
+      let title = null;
+      let contentParagraphs = [...paragraphs];
+      
+      // 如果第一段是标题（短且不包含句点）
+      if (paragraphs[0].length < 100 && !paragraphs[0].includes('.')) {
+        title = paragraphs[0];
+        contentParagraphs = paragraphs.slice(1);
+      }
+      
+      return (
+        <>
+          {title && (
+            <Typography variant="h4" className={styles.title}>
+              {title}
+            </Typography>
+          )}
+          
+          {contentParagraphs.map((paragraph, index) => {
+            // 跳过空段落
+            if (!paragraph.trim()) return null;
+            
+            // 检查是否为Vision Image段落
+            if (paragraph.includes('I clearly see this image') || paragraph.includes('When I close my eyes')) {
+              return (
+                <div key={index} className={styles.visionParagraph}>
+                  <Typography className={styles.paragraph} variant="body1">
+                    When I close my eyes, I clearly see this image:
+                  </Typography>
+                  
+                  {visionImageExists ? (
+                    <Box className={styles.declarationImageContainer}>
+                      <img 
+                        src={goal.details.visionImage} 
+                        alt="目标愿景" 
+                        className={styles.declarationImage}
+                        onClick={() => handleImageClick(goal.details.visionImage)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
+                        点击查看大图
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                      [尚未设置愿景图像]
+                    </Typography>
+                  )}
+                  
+                  <Typography className={styles.paragraph} variant="body1">
+                    It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
+                  </Typography>
+                </div>
+              );
+            }
+            
+            // 检查段落中是否包含变量
+            let formattedParagraph = paragraph;
+            
+            // 处理可能存在的变量字段
+            const variablePatterns = [
+              // 检测模式可能存在的变量，用正则表达式来匹配
+              { regex: /stepping onto this path because (.*?)\./, group: 1 }, // motivation
+              { regex: /I already hold (.*?) in my hands/, group: 1 }, // resources
+              { regex: /Next, I'll (.*?),/, group: 1 }, // nextStep
+              { regex: /I commit to (.*?) each day/, group: 1 }, // dailyTask
+              { regex: /something small and meaningful: (.*?)\./, group: 1 }, // dailyReward
+              { regex: /treating myself to (.*?),/, group: 1 }, // ultimateReward
+              { regex: /deadline for myself: (.*?)\./, group: 1 }, // targetDate
+              { regex: /I clearly see this image: \[(.*?)\]/, group: 1 }, // visionImage
+            ];
+            
+            // 应用变量检测和样式替换
+            try {
+              variablePatterns.forEach(pattern => {
+                const match = formattedParagraph.match(pattern.regex);
+                if (match && match[pattern.group]) {
+                  const variable = match[pattern.group];
+                  formattedParagraph = formattedParagraph.replace(
+                    match[0],
+                    match[0].replace(
+                      variable,
+                      `<span class="${styles.variableValue}">${variable}</span>`
+                    )
+                  );
+                }
+              });
+            } catch (regexError) {
+              console.error("正则表达式处理变量失败:", regexError);
+              // 如果正则处理失败，继续使用原段落
+            }
+            
+            // 如果包含变量，使用dangerouslySetInnerHTML来显示
+            if (formattedParagraph !== paragraph) {
+              return (
+                <Typography 
+                  key={index} 
+                  className={styles.paragraph} 
+                  variant="body1"
+                  dangerouslySetInnerHTML={{ __html: formattedParagraph }}
+                />
+              );
+            }
+            
+            // 否则正常显示
+            return (
+              <Typography key={index} className={styles.paragraph} variant="body1">
+                {paragraph}
+              </Typography>
+            );
+          })}
+        </>
+      );
     } catch (error) {
       console.error("格式化宣言内容失败:", error, "原始内容:", content);
       // 如果分段失败，至少显示原始内容
       return (
-        <Typography className={styles.paragraph} variant="body1">
-          {content}
-        </Typography>
+        <>
+          <Typography className={styles.paragraph} variant="body1" color="error">
+            宣言内容显示遇到问题。
+          </Typography>
+          <Typography className={styles.paragraph} variant="body1">
+            {String(content)}
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => setIsEditing(true)}
+            startIcon={<EditIcon />}
+            sx={{ mt: 2 }}
+          >
+            重新编辑宣言
+          </Button>
+        </>
       );
     }
   };
@@ -463,6 +582,19 @@ Because the path is already beneath my feet—it's really not that complicated. 
     );
   };
   
+  // 打开大图预览
+  const [imagePreviewDialog, setImagePreviewDialog] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState('');
+
+  const handleImageClick = (url) => {
+    setPreviewImageUrl(url);
+    setImagePreviewDialog(true);
+  };
+
+  const handleCloseImagePreview = () => {
+    setImagePreviewDialog(false);
+  };
+  
   // 保存宣言
   const handleSave = async () => {
     if (!goal) {
@@ -475,6 +607,12 @@ Because the path is already beneath my feet—it's really not that complicated. 
       setError('');
       
       console.log("开始准备宣言数据...");
+      console.log("当前目标对象:", {
+        id: goal._id || goal.id,
+        hasId: !!(goal._id || goal.id),
+        type: typeof goal,
+        keys: Object.keys(goal)
+      });
       
       // 准备更新数据
       const updatedGoal = {
@@ -500,11 +638,28 @@ Because the path is already beneath my feet—it's really not that complicated. 
       };
       
       // 确保有有效的目标ID
-      const goalId = goal._id || goal.id;
+      let goalId = goal._id || goal.id;
+      
+      // 额外检查：如果没有直接的_id或id属性，尝试从其他可能的地方获取
+      if (!goalId && goal) {
+        console.log("无法直接从goal对象获取ID，尝试深入查找...");
+        // 检查是否在goal的其他属性中包含ID
+        if (goal.goalId) {
+          goalId = goal.goalId;
+          console.log("从goal.goalId找到ID:", goalId);
+        } else if (goal._doc && (goal._doc._id || goal._doc.id)) {
+          // MongoDB有时会将文档放在_doc属性中
+          goalId = goal._doc._id || goal._doc.id;
+          console.log("从goal._doc找到ID:", goalId);
+        }
+      }
+      
       if (!goalId) {
+        console.error("保存失败：找不到有效的目标ID", goal);
         throw new Error('无效的目标ID');
       }
       
+      console.log("找到有效的目标ID:", goalId);
       console.log("准备保存的宣言内容:", {
         content: updatedGoal.declaration.content.substring(0, 100) + "...",
         length: updatedGoal.declaration.content.length
@@ -520,6 +675,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
         // 创建一个有新宣言内容的本地对象
         const localUpdatedGoal = {
           ...goal,
+          _id: goalId, // 确保ID保持一致
+          id: goalId,  // 同时更新两种可能的ID格式
           declaration: {
             content: updatedGoal.declaration.content,
             updatedAt: new Date()
@@ -693,6 +850,31 @@ Because the path is already beneath my feet—it's really not that complicated. 
             </Button>
           )}
         </Box>
+        
+        {/* 图片预览对话框 */}
+        <Dialog
+          open={imagePreviewDialog}
+          onClose={handleCloseImagePreview}
+          maxWidth="lg"
+        >
+          <DialogContent sx={{ p: 1 }}>
+            <img 
+              src={previewImageUrl}
+              alt="愿景图像预览"
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '80vh',
+                display: 'block',
+                margin: '0 auto'
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseImagePreview} color="primary">
+              关闭
+            </Button>
+          </DialogActions>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
