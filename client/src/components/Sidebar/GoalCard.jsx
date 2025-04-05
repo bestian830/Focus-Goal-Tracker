@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton, Menu, MenuItem, Tooltip, Typography, Box, Chip } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import DateRangeIcon from '@mui/icons-material/DateRange';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { zhCN } from 'date-fns/locale';
 import apiService from '../../services/api';
 
-export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
+export default function GoalCard({ goal, onPriorityChange, onDateClick }) {
   // 增強的安全檢查，確保 goal 是有效對象
   if (!goal || typeof goal !== 'object') {
     console.error("Invalid goal object received by GoalCard:", goal);
@@ -29,7 +25,6 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
   });
 
   const [anchorEl, setAnchorEl] = useState(null);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [priority, setPriority] = useState(goal.priority || "Medium");
   const [hasLoaded, setHasLoaded] = useState(false);
   const [targetDate, setTargetDate] = useState(
@@ -127,64 +122,13 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
       console.error('Failed to update goal priority:', error);
     }
   };
-  
-  // 處理日期變更
-  const handleDateChange = async (newDate) => {
-    try {
-      setDatePickerOpen(false);
-      
-      if (!newDate) return;
-      
-      // 確保有 goal id
-      const goalId = goal._id || goal.id;
-      if (!goalId) {
-        console.error("Cannot update date: missing goal ID");
-        return;
-      }
-      
-      console.log(`Updating target date to: ${newDate}`);
-      
-      // 先更新本地狀態提供快速反饋
-      setTargetDate(newDate);
-      
-      // 通知父組件日期已變更(如果有提供處理函數)
-      if (onDateChange) {
-        onDateChange(goalId, newDate);
-      }
-      
-      // 通過 API 更新目標日期
-      try {
-        const response = await apiService.goals.update(goalId, {
-          targetDate: newDate.toISOString()
-        });
-        console.log(`Target date updated successfully to ${newDate}`, response);
-        
-        // 如果 API 返回更新後的數據，再次通知父組件
-        if (response && response.data && response.data.success && response.data.data) {
-          if (onDateChange) {
-            onDateChange(goalId, newDate, response.data.data);
-          }
-        }
-      } catch (apiError) {
-        console.error('API failed to update target date:', apiError);
-        // 回滾本地狀態
-        setTargetDate(goal.targetDate ? new Date(goal.targetDate) : 
-                      goal.dueDate ? new Date(goal.dueDate) : null);
-                      
-        // 通知父組件日期更新失敗
-        if (onDateChange && targetDate) {
-          onDateChange(goalId, targetDate);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to update target date:', error);
-    }
-  };
 
-  // 處理日期選擇器開關
-  const handleDatePickerToggle = (event) => {
+  // 處理日期點擊
+  const handleDateClick = (event) => {
     event.stopPropagation(); // 防止觸發目標選擇
-    setDatePickerOpen(!datePickerOpen);
+    if (onDateClick) {
+      onDateClick(event, targetDate);
+    }
   };
 
   // 安全獲取標題和狀態
@@ -252,7 +196,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
         <div className="due-date-container">
           <Box 
             className="date-display"
-            onClick={handleDatePickerToggle}
+            onClick={handleDateClick}
             sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <CalendarTodayIcon fontSize="small" className="date-icon" />
@@ -260,38 +204,6 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
               {formatDate(targetDate)}
             </Typography>
           </Box>
-          
-          <Tooltip title="編輯完成日期" arrow>
-            <IconButton
-              size="small"
-              className="edit-date-btn"
-              onClick={handleDatePickerToggle}
-              aria-label="編輯完成日期"
-            >
-              <DateRangeIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          
-          {datePickerOpen && (
-            <div className="date-picker-popup" onClick={(e) => e.stopPropagation()}>
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={zhCN}>
-                <DatePicker
-                  label="預期完成日期"
-                  value={targetDate}
-                  onChange={handleDateChange}
-                  disablePast
-                  slotProps={{ 
-                    textField: { 
-                      fullWidth: true,
-                      variant: "outlined",
-                      helperText: "選擇目標完成日期"
-                    } 
-                  }}
-                  sx={{ width: '100%' }}
-                />
-              </LocalizationProvider>
-            </div>
-          )}
         </div>
       </div>
     </div>

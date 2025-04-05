@@ -476,7 +476,7 @@ h3 {
   padding: 4px 8px;
   background-color: #f1f3f5;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
   cursor: pointer;
 }
 
@@ -502,15 +502,25 @@ h3 {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+/* 日期選擇器彈出樣式 */
 .date-picker-popup {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
+  position: fixed;
+  z-index: 9999;
   background-color: #fff;
-  padding: 12px;
+  padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin-top: 8px;
-  width: 240px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  animation: fadeIn 0.1s ease-out;
+  border: 1px solid #e9ecef;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 移除遮罩層 */
+.date-picker-overlay {
+  display: none;
 } 

@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tooltip } from "@mui/material";
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { zhCN } from 'date-fns/locale';
 import GoalCard from "./GoalCard";
 import AddGoalButton from "./AddGoalButton";
 import OnboardingModal from "../OnboardingModal";
+import apiService from "../../services/api";
 
 export default function Sidebar({ 
   onGoalSelect, 
@@ -14,6 +18,15 @@ export default function Sidebar({
 }) {
   const [sortedGoals, setSortedGoals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  // 日期選擇器狀態
+  const [datePickerState, setDatePickerState] = useState({
+    isOpen: false,
+    goalId: null,
+    currentDate: null,
+    position: { top: 0, left: 0 }
+  });
+  const dateDisplayRef = useRef(null);
+  
   // Check if user is a temporary user
   const isGuest = checkIsGuest();
   // Count active goals (for registered users)
@@ -217,30 +230,124 @@ export default function Sidebar({
     }
   };
 
+  // 處理日期選擇器開關
+  const handleDatePickerToggle = (event, goalId, currentDate, isOpen) => {
+    event.stopPropagation();
+    
+    if (isOpen) {
+      // 獲取觸發元素的位置
+      const rect = event.currentTarget.getBoundingClientRect();
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      
+      // 計算日期選擇器的位置
+      setDatePickerState({
+        isOpen: true,
+        goalId,
+        currentDate,
+        position: {
+          top: rect.bottom + scrollTop,
+          left: rect.left
+        }
+      });
+      
+      // 保存引用，用於點擊外部關閉
+      dateDisplayRef.current = event.currentTarget;
+    } else {
+      // 關閉選擇器
+      setDatePickerState(prev => ({
+        ...prev,
+        isOpen: false
+      }));
+    }
+  };
+  
   // 處理日期變更
-  const handleDateChange = (goalId, newDate, updatedGoal) => {
+  const handleDateChange = async (newDate) => {
+    if (!newDate) {
+      // 關閉日期選擇器
+      setDatePickerState(prev => ({
+        ...prev,
+        isOpen: false
+      }));
+      return;
+    }
+    
+    const goalId = datePickerState.goalId;
+    if (!goalId) {
+      console.error("Missing goal ID for date change");
+      return;
+    }
+    
     console.log(`Sidebar handling date change for goal ${goalId} to ${newDate}`);
+    
+    // 關閉日期選擇器
+    setDatePickerState(prev => ({
+      ...prev,
+      isOpen: false
+    }));
     
     // 優先使用父組件提供的 onDateChange 函數
     if (onDateChange) {
-      onDateChange(goalId, newDate, updatedGoal);
+      onDateChange(goalId, newDate);
     }
     
-    // 僅在沒有獲得更新的目標數據時進行本地排序
-    if (!updatedGoal) {
-      // 本地日期更新，保持排序一致性
-      const updatedGoals = sortedGoals.map(goal => {
-        if ((goal._id && goal._id === goalId) || (goal.id && goal.id === goalId)) {
-          return { ...goal, targetDate: newDate };
-        }
-        return goal;
+    // 通過 API 更新目標日期
+    try {
+      const response = await apiService.goals.update(goalId, {
+        targetDate: newDate.toISOString()
       });
+      console.log(`Target date updated successfully to ${newDate}`, response);
       
-      // 重新排序目標
-      const newSorted = sortGoals(updatedGoals);
-      setSortedGoals(newSorted);
+      // 如果 API 返回更新後的數據
+      if (response && response.data && response.data.success && response.data.data) {
+        if (onDateChange) {
+          onDateChange(goalId, newDate, response.data.data);
+        }
+      }
+    } catch (apiError) {
+      console.error('API failed to update target date:', apiError);
+      // 通知父組件日期更新失敗
+      if (onDateChange) {
+        const goal = sortedGoals.find(g => (g._id || g.id) === goalId);
+        if (goal) {
+          const oldDate = goal.targetDate || goal.dueDate;
+          if (oldDate) {
+            onDateChange(goalId, new Date(oldDate));
+          }
+        }
+      }
     }
   };
+  
+  // 處理點擊外部關閉日期選擇器
+  useEffect(() => {
+    if (datePickerState.isOpen) {
+      const handleClickOutside = (event) => {
+        const pickerElement = document.querySelector('.date-picker-popup');
+        
+        // 檢查點擊是否在日期選擇器外部且不是觸發元素
+        if (
+          pickerElement && 
+          !pickerElement.contains(event.target) && 
+          dateDisplayRef.current && 
+          !dateDisplayRef.current.contains(event.target)
+        ) {
+          setDatePickerState(prev => ({
+            ...prev,
+            isOpen: false
+          }));
+        }
+      };
+      
+      // 添加全局點擊事件監聽器
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      // 清理函數
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [datePickerState.isOpen]);
 
   return (
     <div className="sidebar">
@@ -268,7 +375,7 @@ export default function Sidebar({
                 <GoalCard 
                   goal={goal} 
                   onPriorityChange={handlePriorityChange}
-                  onDateChange={handleDateChange}
+                  onDateClick={(event, date) => handleDatePickerToggle(event, goalId, date, true)}
                 />
               </div>
             );
@@ -280,6 +387,36 @@ export default function Sidebar({
           </div>
         )}
       </div>
+      
+      {/* 全局日期選擇器 - 在 DOM 結構中獨立於 goal-item */}
+      {datePickerState.isOpen && (
+        <div 
+          className="date-picker-popup"
+          style={{
+            position: 'absolute',
+            top: `${datePickerState.position.top}px`,
+            left: `${datePickerState.position.left}px`,
+          }}
+        >
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={zhCN}>
+            <DatePicker
+              label="預期完成日期"
+              value={datePickerState.currentDate}
+              onChange={(newDate) => handleDateChange(newDate)}
+              disablePast
+              slotProps={{ 
+                textField: { 
+                  fullWidth: true,
+                  variant: "outlined",
+                  size: "small",
+                  helperText: "選擇目標完成日期"
+                } 
+              }}
+              sx={{ width: '100%' }}
+            />
+          </LocalizationProvider>
+        </div>
+      )}
 
       {/* Goal setting guide modal */}
       <OnboardingModal
