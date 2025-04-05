@@ -186,33 +186,13 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
             console.log("直接从API获取到最新目标数据:", response.data.data);
             // 更新本地状态
             setSelectedGoal(response.data.data);
-            
-            // 确保从API获取的目标数据有declaration对象，即使是空的
-            if (!response.data.data.declaration) {
-              setSelectedGoal(prevGoal => ({
-                ...prevGoal,
-                declaration: {
-                  content: "",
-                  updatedAt: new Date()
-                }
-              }));
-            }
           }
         } catch (apiError) {
-          console.error(`从API获取目标详情失败，尝试使用本地数据, ID: ${goalId}`, apiError);
-          // 如果API请求失败，使用本地数据并确保declaration对象存在
-          if (!selectedGoal.declaration) {
-            setSelectedGoal(prevGoal => ({
-              ...prevGoal,
-              declaration: {
-                content: "",
-                updatedAt: new Date()
-              }
-            }));
-          }
+          console.error(`从API获取目标详情失败，使用本地数据, ID: ${goalId}`, apiError);
+          // 如果API请求失败，使用本地数据
         }
         
-        // 最后打开对话框，此时目标数据应该已更新
+        // 直接打开对话框，让GoalDeclaration组件处理显示逻辑
         setDeclarationOpen(true);
       } catch (error) {
         console.error("打开宣言对话框前刷新数据失败:", error);
@@ -227,13 +207,18 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   };
   
   // 处理关闭目标宣言对话框
-  const handleCloseDeclaration = () => {
+  const handleCloseDeclaration = async () => {
     setDeclarationOpen(false);
     
-    // 关闭后刷新目标数据
+    // 关闭后立即刷新目标数据，确保显示最新数据
     if (selectedGoal) {
-      const goalId = selectedGoal._id || selectedGoal.id;
-      refreshGoalData(goalId);
+      try {
+        const goalId = selectedGoal._id || selectedGoal.id;
+        console.log("关闭宣言对话框后刷新目标数据:", goalId);
+        await refreshGoalData(goalId);
+      } catch (error) {
+        console.error("关闭对话框后刷新数据失败:", error);
+      }
     }
   };
   

@@ -106,7 +106,10 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
         // 记录当前宣言状态，便于调试
         console.log("当前宣言状态:", goal.declaration);
         
-        // 当对话框打开时，从目标对象中获取数据
+        // 重置编辑模式 - 默认总是进入查看模式
+        setIsEditing(false);
+        
+        // 从目标对象中获取数据用于编辑模式
         setEditedData({
           title: goal.title || '',
           motivation: goal.details?.motivation || '',
@@ -118,20 +121,6 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
           targetDate: goal.targetDate ? new Date(goal.targetDate) : new Date(),
           visionImage: goal.details?.visionImage || null
         });
-        
-        // 当对话框打开时，如果没有宣言内容但有编辑数据，自动进入编辑模式
-        if (isOpen && !goal.declaration?.content) {
-          // 如果没有现有宣言但有足够的编辑数据，自动进入编辑模式
-          const hasSufficientData = goal.details?.motivation && 
-                                   goal.details?.resources && 
-                                   goal.details?.nextStep && 
-                                   goal.currentSettings?.dailyTask;
-          
-          if (hasSufficientData) {
-            console.log("检测到有足够的目标数据但无宣言，自动进入编辑模式");
-            setIsEditing(true);
-          }
-        }
       }
     } catch (error) {
       console.error("更新编辑数据失败:", error);
@@ -462,7 +451,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       setIsSaving(true);
       setError('');
       
-      console.log("开始保存宣言数据...");
+      console.log("开始准备宣言数据...");
       
       // 准备更新数据
       const updatedGoal = {
@@ -497,34 +486,12 @@ Because the path is already beneath my feet—it's really not that complicated. 
         console.log("调用API保存宣言数据...");
         const result = await onSave(goalId, updatedGoal);
         
-        // 如果保存成功，立即更新本地数据显示
-        if (result && result.data) {
-          console.log("宣言数据保存成功，更新本地状态:", result.data);
-          
-          // 创建一个新的对象来避免直接修改props
-          const updatedGoalWithDeclaration = {
-            ...goal,
-            declaration: {
-              content: updatedGoal.declaration.content,
-              updatedAt: new Date()
-            },
-            details: {
-              ...(goal.details || {}),
-              ...updatedGoal.details
-            },
-            currentSettings: {
-              ...(goal.currentSettings || {}),
-              ...updatedGoal.currentSettings
-            },
-            targetDate: updatedGoal.targetDate,
-            title: updatedGoal.title
-          };
-          
-          // 在React状态更新前先打印一下，确认数据正确
-          console.log("更新后的本地目标数据:", updatedGoalWithDeclaration);
-        }
+        console.log("宣言保存成功，API返回结果:", result);
         
+        // 退出编辑模式
         setIsEditing(false);
+        
+        // 显示成功消息
         setSuccess('目标宣言已成功更新');
         
         // 3秒后清除成功消息
@@ -640,21 +607,18 @@ Because the path is already beneath my feet—it's really not that complicated. 
               ) : (
                 <Box className={styles.emptyState}>
                   <Typography variant="body1" sx={{ mb: 2 }}>
-                    您的目标还没有宣言内容。
+                    您的目标还没有正式的宣言。
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                    宣言能帮助您更好地理解目标意义和保持动力。系统会根据您已填写的目标信息自动生成宣言内容。
+                    宣言能帮助您更好地理解目标意义和保持动力。点击下方按钮创建您的目标宣言。
                   </Typography>
                   <Button 
                     variant="contained" 
                     color="primary" 
-                    onClick={() => {
-                      console.log("开始创建宣言，进入编辑模式");
-                      setIsEditing(true);
-                    }}
+                    onClick={() => setIsEditing(true)}
                     startIcon={<EditIcon />}
                   >
-                    立即创建宣言
+                    创建目标宣言
                   </Button>
                 </Box>
               )}
