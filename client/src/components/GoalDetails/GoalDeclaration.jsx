@@ -94,16 +94,31 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   
   // 当目标数据改变时，更新编辑数据
   useEffect(() => {
-    if (goal) {
+    try {
+      if (goal) {
+        setEditedData({
+          title: goal.title || '',
+          motivation: goal.details?.motivation || '',
+          resources: goal.details?.resources || '',
+          nextStep: goal.details?.nextStep || '',
+          dailyTask: goal.currentSettings?.dailyTask || '',
+          dailyReward: goal.currentSettings?.dailyReward || '',
+          ultimateReward: goal.details?.ultimateReward || '',
+          targetDate: goal.targetDate ? new Date(goal.targetDate) : new Date()
+        });
+      }
+    } catch (error) {
+      console.error("更新编辑数据失败:", error);
+      // 设置安全的默认值
       setEditedData({
-        title: goal.title || '',
-        motivation: goal.details?.motivation || '',
-        resources: goal.details?.resources || '',
-        nextStep: goal.details?.nextStep || '',
-        dailyTask: goal.currentSettings?.dailyTask || '',
-        dailyReward: goal.currentSettings?.dailyReward || '',
-        ultimateReward: goal.details?.ultimateReward || '',
-        targetDate: goal.targetDate || new Date()
+        title: goal?.title || '',
+        motivation: '',
+        resources: '',
+        nextStep: '',
+        dailyTask: '',
+        dailyReward: '',
+        ultimateReward: '',
+        targetDate: new Date()
       });
     }
   }, [goal]);
@@ -158,15 +173,35 @@ Because the path is already beneath my feet—it's really not that complicated. 
   const formatDeclarationContent = (content) => {
     if (!content) return null;
     
-    return content.split('\n\n').map((paragraph, index) => (
-      <Typography key={index} className={styles.paragraph} variant="body1">
-        {paragraph}
-      </Typography>
-    ));
+    try {
+      return content.split('\n\n').map((paragraph, index) => (
+        <Typography key={index} className={styles.paragraph} variant="body1">
+          {paragraph}
+        </Typography>
+      ));
+    } catch (error) {
+      console.error("格式化宣言内容失败:", error);
+      // 如果分段失败，至少显示原始内容
+      return (
+        <Typography className={styles.paragraph} variant="body1">
+          {content}
+        </Typography>
+      );
+    }
   };
   
   // 渲染编辑模式的宣言
   const renderEditableDeclaration = () => {
+    if (!goal) {
+      return (
+        <Box className={styles.emptyState}>
+          <Typography variant="body1">
+            无法加载目标数据，请稍后再试。
+          </Typography>
+        </Box>
+      );
+    }
+    
     return (
       <div className={styles.declaration}>
         <Typography variant="h4" className={styles.title}>
@@ -237,7 +272,10 @@ Because the path is already beneath my feet—it's really not that complicated. 
   
   // 保存宣言
   const handleSave = async () => {
-    if (!goal) return;
+    if (!goal) {
+      setError('保存失败: 无法获取目标数据');
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -247,14 +285,14 @@ Because the path is already beneath my feet—it's really not that complicated. 
       const updatedGoal = {
         title: editedData.title,
         details: {
-          ...goal.details,
+          ...(goal.details || {}),
           motivation: editedData.motivation,
           resources: editedData.resources,
           nextStep: editedData.nextStep,
           ultimateReward: editedData.ultimateReward,
         },
         currentSettings: {
-          ...goal.currentSettings,
+          ...(goal.currentSettings || {}),
           dailyTask: editedData.dailyTask,
           dailyReward: editedData.dailyReward,
         },
@@ -265,29 +303,48 @@ Because the path is already beneath my feet—it's really not that complicated. 
         }
       };
       
-      const result = await onSave(goal._id || goal.id, updatedGoal);
-      
-      // 如果保存成功，立即更新本地数据显示
-      if (result && result.data) {
-        // 临时合并更新的数据以立即显示
-        const updatedContent = updatedGoal.declaration.content;
-        goal.declaration = {
-          ...goal.declaration,
-          content: updatedContent,
-          updatedAt: new Date()
-        };
+      // 确保有有效的目标ID
+      const goalId = goal._id || goal.id;
+      if (!goalId) {
+        throw new Error('无效的目标ID');
       }
       
-      setIsEditing(false);
-      setSuccess('目标宣言已成功更新');
-      
-      // 3秒后清除成功消息
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
+      try {
+        const result = await onSave(goalId, updatedGoal);
+        
+        // 如果保存成功，立即更新本地数据显示
+        if (result && result.data) {
+          // 临时合并更新的数据以立即显示
+          const updatedContent = updatedGoal.declaration.content;
+          // 安全地更新goal对象
+          if (goal.declaration) {
+            goal.declaration = {
+              ...goal.declaration,
+              content: updatedContent,
+              updatedAt: new Date()
+            };
+          } else {
+            goal.declaration = {
+              content: updatedContent,
+              updatedAt: new Date()
+            };
+          }
+        }
+        
+        setIsEditing(false);
+        setSuccess('目标宣言已成功更新');
+        
+        // 3秒后清除成功消息
+        setTimeout(() => {
+          setSuccess('');
+        }, 3000);
+      } catch (saveError) {
+        console.error('API调用失败:', saveError);
+        throw saveError;
+      }
     } catch (err) {
       console.error('保存宣言失败:', err);
-      setError('保存失败，请重试');
+      setError(`保存失败: ${err.message || '请稍后重试'}`);
     } finally {
       setIsSaving(false);
     }
@@ -375,7 +432,13 @@ Because the path is already beneath my feet—it's really not that complicated. 
         
         {/* 宣言内容 */}
         <div className={styles.contentContainer}>
-          {isEditing ? (
+          {!goal ? (
+            <Box className={styles.emptyState}>
+              <Typography variant="body1">
+                无法加载目标数据，请关闭并重试。
+              </Typography>
+            </Box>
+          ) : isEditing ? (
             renderEditableDeclaration()
           ) : (
             <div className={styles.declaration}>

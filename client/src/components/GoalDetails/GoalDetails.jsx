@@ -66,13 +66,41 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
     console.log("goalId in GoalDetails:", goalId);
     if (!goalId) return;
 
-    // 从 goals 数组中选择
-    if (goals && goals.length > 0) {
-      const goal = goals.find((g) => g._id === goalId || g.id === goalId);
-      if (goal) {
-        console.log("Found goal from goals array:", goal);
-        setSelectedGoal(goal);
+    try {
+      // 从 goals 数组中选择
+      if (goals && goals.length > 0) {
+        const goal = goals.find((g) => g._id === goalId || g.id === goalId);
+        if (goal) {
+          console.log("Found goal from goals array:", goal);
+          setSelectedGoal(goal);
+          return; // 找到目标后直接返回
+        } else {
+          console.log(`在本地goals数组中未找到ID为${goalId}的目标，尝试从API获取`);
+        }
+      } else {
+        console.log("goals数组为空或无效");
       }
+      
+      // 如果在本地goals数组中未找到目标，尝试从API直接获取
+      const fetchGoalDetails = async () => {
+        try {
+          console.log(`尝试从API获取目标详情，ID: ${goalId}`);
+          const response = await apiService.goals.getById(goalId);
+          if (response && response.data && response.data.data) {
+            const apiGoal = response.data.data;
+            console.log("从API获取到目标详情:", apiGoal);
+            setSelectedGoal(apiGoal);
+          } else {
+            console.error("API没有返回有效的目标数据");
+          }
+        } catch (error) {
+          console.error(`从API获取目标详情失败，ID: ${goalId}`, error);
+        }
+      };
+      
+      fetchGoalDetails();
+    } catch (error) {
+      console.error("选择目标时出错:", error);
     }
   }, [goalId, goals]);
 
@@ -161,22 +189,37 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
     try {
       console.log("刷新目标数据:", goalId);
       
+      // 检查goalId是否有效
+      if (!goalId) {
+        console.error("无法刷新目标数据：goalId无效");
+        return;
+      }
+      
       // 使用从父组件传递的刷新方法
       if (parentRefreshGoalData) {
-        const updatedGoal = await parentRefreshGoalData(goalId);
-        if (updatedGoal) {
-          // 直接设置更新后的目标
-          setSelectedGoal(updatedGoal);
-          return;
+        try {
+          const updatedGoal = await parentRefreshGoalData(goalId);
+          if (updatedGoal) {
+            // 直接设置更新后的目标
+            setSelectedGoal(updatedGoal);
+            return;
+          }
+        } catch (refreshError) {
+          console.error("父组件刷新方法失败:", refreshError);
+          // 继续使用默认方法
         }
       }
       
       // 如果父组件没有提供刷新方法或刷新失败，使用默认的获取方法
-      const response = await apiService.goals.getById(goalId);
-      if (response.data && response.data.data) {
-        console.log("获取到最新目标数据:", response.data.data);
-        // 更新本地状态
-        setSelectedGoal(response.data.data);
+      try {
+        const response = await apiService.goals.getById(goalId);
+        if (response.data && response.data.data) {
+          console.log("获取到最新目标数据:", response.data.data);
+          // 更新本地状态
+          setSelectedGoal(response.data.data);
+        }
+      } catch (error) {
+        console.error(`获取目标详情失败，ID: ${goalId}`, error);
       }
     } catch (error) {
       console.error("刷新目标数据失败:", error);

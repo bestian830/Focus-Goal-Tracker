@@ -425,25 +425,42 @@ function Home() {
     try {
       console.log(`刷新单个目标数据: ${goalId}`);
       
-      // 调用API获取最新的目标数据
-      const response = await apiService.goals.getById(goalId);
+      // 检查goalId是否有效
+      if (!goalId) {
+        console.error("无法刷新目标数据：goalId无效");
+        return null;
+      }
       
-      if (response.data && response.data.data) {
-        const updatedGoal = response.data.data;
-        console.log("获取到最新目标数据:", updatedGoal);
+      // 调用API获取最新的目标数据
+      try {
+        const response = await apiService.goals.getById(goalId);
         
-        // 更新goals数组中的目标数据
-        setUserGoals(prevGoals => {
-          return prevGoals.map(goal => {
-            const currentGoalId = goal._id || goal.id;
-            if (currentGoalId === goalId) {
-              return updatedGoal;
-            }
-            return goal;
+        if (response.data && response.data.data) {
+          const updatedGoal = response.data.data;
+          console.log("获取到最新目标数据:", updatedGoal);
+          
+          // 更新goals数组中的目标数据
+          setUserGoals(prevGoals => {
+            return prevGoals.map(goal => {
+              const currentGoalId = goal._id || goal.id;
+              if (currentGoalId === goalId) {
+                return updatedGoal;
+              }
+              return goal;
+            });
           });
-        });
+          
+          return updatedGoal;
+        }
+      } catch (apiError) {
+        console.error(`API调用失败，goalId: ${goalId}`, apiError);
         
-        return updatedGoal;
+        // 尝试从现有数据中返回
+        const existingGoal = userGoals.find(g => (g._id === goalId || g.id === goalId));
+        if (existingGoal) {
+          console.log("返回现有目标数据:", existingGoal);
+          return existingGoal;
+        }
       }
     } catch (error) {
       console.error("刷新单个目标数据失败:", error);
