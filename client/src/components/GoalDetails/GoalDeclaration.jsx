@@ -24,7 +24,7 @@ import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 
 /**
- * 可编辑字段组件 - 允许直接编辑文本
+ * Editable field component - allows direct text editing
  */
 const EditableField = ({ value, onChange, multiline = false }) => {
   const [fieldValue, setFieldValue] = useState(value || '');
@@ -72,14 +72,14 @@ const EditableField = ({ value, onChange, multiline = false }) => {
 };
 
 /**
- * GoalDeclaration - 目标宣言组件
- * 展示和编辑用户的目标宣言
+ * GoalDeclaration - Goal declaration component
+ * Display and edit user's goal declaration
  * 
  * @param {Object} props 
- * @param {Object} props.goal - 目标对象
- * @param {boolean} props.isOpen - 是否显示对话框
- * @param {Function} props.onClose - 关闭回调
- * @param {Function} props.onSave - 保存回调
+ * @param {Object} props.goal - Goal object
+ * @param {boolean} props.isOpen - Whether to display the dialog
+ * @param {Function} props.onClose - Close callback
+ * @param {Function} props.onSave - Save callback
  */
 export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -101,20 +101,20 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     visionImage: null
   });
   
-  // 当目标数据改变时，更新编辑数据
+  // When goal data changes, update the editing data
   useEffect(() => {
     try {
       if (goal) {
-        console.log("GoalDeclaration组件收到新的目标数据:", {
+        console.log("GoalDeclaration component received new goal data:", {
           id: goal._id || goal.id,
           title: goal.title,
           hasDeclaration: !!goal.declaration,
-          declarationContent: goal.declaration ? (goal.declaration.content ? `${goal.declaration.content.substring(0, 30)}...` : '空内容') : '无declaration对象',
-          updatedAt: goal.declaration ? goal.declaration.updatedAt : '无更新时间'
+          declarationContent: goal.declaration ? (goal.declaration.content ? `${goal.declaration.content.substring(0, 30)}...` : 'Empty content') : 'No declaration object',
+          updatedAt: goal.declaration ? goal.declaration.updatedAt : 'No update time'
         });
         
-        // 详细记录当前目标的宣言状态
-        console.log("当前宣言对象结构:", {
+        // Detailed logging of the current declaration status
+        console.log("Current declaration object structure:", {
           exists: !!goal.declaration,
           type: goal.declaration ? typeof goal.declaration : 'undefined',
           hasContent: goal.declaration ? !!goal.declaration.content : false,
@@ -122,13 +122,13 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
           contentLength: goal.declaration && goal.declaration.content ? goal.declaration.content.length : 0
         });
         
-        // 如果宣言对象存在且有内容，重置编辑模式为查看模式
+        // If the declaration object exists and has content, reset to view mode
         if (goal.declaration && goal.declaration.content) {
-          console.log("检测到宣言内容，设置为查看模式");
+          console.log("Declaration content detected, setting to view mode");
           setIsEditing(false);
         }
         
-        // 从目标对象中获取数据用于编辑模式
+        // Get data from the goal object for edit mode
         setEditedData({
           title: goal.title || '',
           motivation: goal.details?.motivation || '',
@@ -142,8 +142,8 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
         });
       }
     } catch (error) {
-      console.error("更新编辑数据失败:", error);
-      // 设置安全的默认值
+      console.error("Failed to update editing data:", error);
+      // Set safe default values
       setEditedData({
         title: goal?.title || '',
         motivation: '',
@@ -158,7 +158,7 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     }
   }, [goal, isOpen]);
   
-  // 处理字段更新
+  // Handle field updates
   const handleFieldChange = (field, value) => {
     setEditedData(prev => ({
       ...prev,
@@ -166,7 +166,7 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     }));
   };
   
-  // 生成宣言文本
+  // Generate declaration text
   const generateDeclarationText = (data) => {
     const {
       title,
@@ -180,7 +180,7 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
       visionImage
     } = data;
     
-    const username = 'User'; // 可以根据实际情况获取
+    const username = 'User'; // Can be obtained as needed
     const formattedDate = targetDate ? new Date(targetDate).toLocaleDateString() : '';
     const visionImagePlaceholder = visionImage ? '[Vision Image Attached]' : '[No Vision Image Yet]';
     
@@ -205,15 +205,15 @@ I've set a deadline for myself: ${formattedDate}. I know there might be ups and 
 Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
   };
   
-  // 格式化宣言内容，加粗显示变量
+  // Format declaration content, highlighting variables
   const formatDeclarationContent = (content) => {
     if (!content) {
-      console.log("警告: 宣言内容为空，将使用默认模板");
-      // 使用空字符串不会走到这里，因为我们在渲染时已经提供了默认内容
+      console.log("Warning: Declaration content is empty, will use default template");
+      // This won't be reached because we provide a default content in rendering
       return (
         <Box className={styles.emptyState}>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            您的目标还没有完整的宣言内容。
+            Your goal doesn't have complete declaration content yet.
           </Typography>
           <Button 
             variant="contained" 
@@ -221,23 +221,23 @@ Because the path is already beneath my feet—it's really not that complicated. 
             onClick={() => setIsEditing(true)}
             startIcon={<EditIcon />}
           >
-            编辑目标宣言
+            Edit Goal Declaration
           </Button>
         </Box>
       );
     }
     
-    // 安全检查：确保content是字符串
+    // Safety check: ensure content is a string
     if (typeof content !== 'string') {
-      console.error("宣言内容不是字符串:", content);
+      console.error("Declaration content is not a string:", content);
       try {
         content = String(content);
       } catch (e) {
-        console.error("无法将宣言内容转换为字符串:", e);
+        console.error("Cannot convert declaration content to string:", e);
         return (
           <Box className={styles.emptyState}>
             <Typography variant="body1" color="error">
-              宣言内容格式无效，请点击编辑按钮重新创建。
+              Invalid declaration content format. Please click edit button to recreate.
             </Typography>
             <Button 
               variant="contained" 
@@ -246,29 +246,29 @@ Because the path is already beneath my feet—it's really not that complicated. 
               startIcon={<EditIcon />}
               sx={{ mt: 2 }}
             >
-              编辑目标宣言
+              Edit Declaration
             </Button>
           </Box>
         );
       }
     }
     
-    console.log("处理宣言内容格式化:", {
+    console.log("Processing declaration content formatting:", {
       contentLength: content.length,
       contentFirstChars: content.substring(0, 30) + '...'
     });
     
     try {
-      // 检查是否包含Vision Image段落
+      // Check if content includes Vision Image paragraph
       const hasVisionParagraph = content.includes('I clearly see this image') || 
                                 content.includes('When I close my eyes') || 
-                                content.includes('當我閉上眼睛') ||
-                                content.includes('[尚未設定願景圖像]');
+                                content.includes('When I close my eyes') ||
+                                content.includes('[No Vision Image Yet]');
       const visionImageExists = goal?.details?.visionImage;
       
-      // 分段处理宣言内容（确保内容有足够的长度才分段）
+      // Process declaration content in paragraphs (only if content is long enough)
       if (content.length < 10) {
-        console.warn("宣言内容过短，不进行分段处理:", content);
+        console.warn("Declaration content too short, not processing paragraphs:", content);
         return (
           <Typography className={styles.paragraph} variant="body1">
             {content}
@@ -280,17 +280,17 @@ Because the path is already beneath my feet—it's really not that complicated. 
               size="small"
               sx={{ ml: 2 }}
             >
-              完善宣言
+              Improve Declaration
             </Button>
           </Typography>
         );
       }
       
-      // 使用正则表达式安全地分割段落，避免因为格式问题导致渲染错误
+      // Use regex to safely split paragraphs, avoiding rendering errors due to formatting issues
       const paragraphs = content.split(/\n\s*\n|\n{2,}/);
       
       if (paragraphs.length === 0) {
-        console.warn("分段后没有内容，使用原始内容:", content);
+        console.warn("No content after splitting, using original content:", content);
         return (
           <Typography className={styles.paragraph} variant="body1">
             {content}
@@ -298,11 +298,11 @@ Because the path is already beneath my feet—it's really not that complicated. 
         );
       }
       
-      // 检查标题
+      // Check for title
       let title = null;
       let contentParagraphs = [...paragraphs];
       
-      // 如果第一段是标题（短且不包含句点）
+      // If first paragraph is a title (short and no periods)
       if (paragraphs[0].length < 100 && !paragraphs[0].includes('.')) {
         title = paragraphs[0];
         contentParagraphs = paragraphs.slice(1);
@@ -317,31 +317,31 @@ Because the path is already beneath my feet—it's really not that complicated. 
           )}
           
           {contentParagraphs.map((paragraph, index) => {
-            // 跳过空段落
+            // Skip empty paragraphs
             if (!paragraph.trim()) return null;
             
-            // 检查是否为Vision Image段落
+            // Check if it's a Vision Image paragraph
             if (paragraph.includes('I clearly see this image') || 
                 paragraph.includes('When I close my eyes') || 
-                paragraph.includes('當我閉上眼睛') ||
-                paragraph.includes('[尚未設定願景圖像]')) {
+                paragraph.includes('When I close my eyes') ||
+                paragraph.includes('[No Vision Image Yet]')) {
               return (
                 <div key={index} className={styles.visionParagraph}>
                   <Typography className={styles.paragraph} variant="body1">
-                    {paragraph.includes('當我閉上眼睛') ? '當我閉上眼睛，我清晰地看到這個畫面：' : 'When I close my eyes, I clearly see this image:'}
+                    When I close my eyes, I clearly see this image:
                   </Typography>
                   
                   {visionImageExists ? (
                     <Box className={styles.declarationImageContainer}>
                       <img 
                         src={goal.details.visionImage} 
-                        alt="目标愿景" 
+                        alt="Goal Vision" 
                         className={styles.declarationImage}
                         onClick={() => handleImageClick(goal.details.visionImage)}
                         style={{ cursor: 'pointer' }}
                       />
                       <Typography variant="caption" color="textSecondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-                        点击查看大图
+                        Click to view full image
                       </Typography>
                     </Box>
                   ) : (
@@ -356,7 +356,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
                       mb: 2
                     }}>
                       <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary', mb: 1 }}>
-                        [尚未设置愿景图像]
+                        [No Vision Image Set]
                       </Typography>
                       <Button 
                         variant="outlined" 
@@ -365,26 +365,24 @@ Because the path is already beneath my feet—it's really not that complicated. 
                         onClick={() => setIsEditing(true)} 
                         startIcon={<AddPhotoAlternateIcon />}
                       >
-                        添加愿景图像
+                        Add Vision Image
                       </Button>
                     </Box>
                   )}
                   
                   <Typography className={styles.paragraph} variant="body1">
-                    {paragraph.includes('推動我前進的驅動力') ? 
-                      '這不僅僅是我期望結果的願景，更是推動我前進的驅動力。' : 
-                      "It's not just a vision of my desired outcome; it's the driving force that moves me forward today."}
+                    It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
                   </Typography>
                 </div>
               );
             }
             
-            // 检查段落中是否包含变量
+            // Check if paragraph contains variables
             let formattedParagraph = paragraph;
             
-            // 处理可能存在的变量字段
+            // Process possible variable fields
             const variablePatterns = [
-              // 检测模式可能存在的变量，用正则表达式来匹配
+              // Detect patterns for variables using regex
               { regex: /stepping onto this path because (.*?)\./, group: 1 }, // motivation
               { regex: /I already hold (.*?) in my hands/, group: 1 }, // resources
               { regex: /Next, I'll (.*?),/, group: 1 }, // nextStep
@@ -395,7 +393,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
               { regex: /I clearly see this image: \[(.*?)\]/, group: 1 }, // visionImage
             ];
             
-            // 应用变量检测和样式替换
+            // Apply variable detection and style replacement
             try {
               variablePatterns.forEach(pattern => {
                 const match = formattedParagraph.match(pattern.regex);
@@ -411,11 +409,11 @@ Because the path is already beneath my feet—it's really not that complicated. 
                 }
               });
             } catch (regexError) {
-              console.error("正则表达式处理变量失败:", regexError);
-              // 如果正则处理失败，继续使用原段落
+              console.error("Regex processing for variables failed:", regexError);
+              // Continue with original paragraph if regex fails
             }
             
-            // 如果包含变量，使用dangerouslySetInnerHTML来显示
+            // If it contains variables, use dangerouslySetInnerHTML to display
             if (formattedParagraph !== paragraph) {
               return (
                 <Typography 
@@ -427,7 +425,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
               );
             }
             
-            // 否则正常显示
+            // Otherwise display normally
             return (
               <Typography key={index} className={styles.paragraph} variant="body1">
                 {paragraph}
@@ -437,12 +435,12 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </>
       );
     } catch (error) {
-      console.error("格式化宣言内容失败:", error, "原始内容:", content);
-      // 如果分段失败，至少显示原始内容
+      console.error("Failed to format declaration content:", error, "Original content:", content);
+      // If paragraph processing fails, at least show original content
       return (
         <>
           <Typography className={styles.paragraph} variant="body1" color="error">
-            宣言内容显示遇到问题。
+            Problem displaying declaration content.
           </Typography>
           <Typography className={styles.paragraph} variant="body1">
             {String(content)}
@@ -454,20 +452,20 @@ Because the path is already beneath my feet—it's really not that complicated. 
             startIcon={<EditIcon />}
             sx={{ mt: 2 }}
           >
-            重新编辑宣言
+            Re-edit Declaration
           </Button>
         </>
       );
     }
   };
   
-  // 处理图片上传
+  // Handle image upload
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('图片大小不能超过5MB');
+      setError('Image size cannot exceed 5MB');
       return;
     }
 
@@ -479,19 +477,19 @@ Because the path is already beneath my feet—it's really not that complicated. 
     reader.readAsDataURL(file);
   };
 
-  // 移除图片
+  // Remove image
   const handleRemoveImage = () => {
     setImagePreview('');
     handleFieldChange('visionImage', null);
   };
   
-  // 渲染编辑模式的宣言
+  // Render editable declaration
   const renderEditableDeclaration = () => {
     if (!goal) {
       return (
         <Box className={styles.emptyState}>
           <Typography variant="body1">
-            无法加载目标数据，请稍后再试。
+            Unable to load goal data, please try again later.
           </Typography>
         </Box>
       );
@@ -545,13 +543,13 @@ Because the path is already beneath my feet—it's really not that complicated. 
             When I close my eyes, I clearly see this image:
           </Typography>
           
-          {/* Vision Image上传与预览 */}
+          {/* Vision Image upload and preview */}
           <Box className={styles.visionImageSection}>
             {imagePreview || editedData.visionImage ? (
               <Box className={styles.imagePreviewContainer}>
                 <img 
                   src={imagePreview || editedData.visionImage} 
-                  alt="愿景图像" 
+                  alt="Vision Image" 
                   className={styles.imagePreview} 
                 />
                 <IconButton 
@@ -578,11 +576,11 @@ Because the path is already beneath my feet—it's really not that complicated. 
                     startIcon={<ImageIcon />}
                     className={styles.uploadButton}
                   >
-                    上传愿景图像
+                    Upload Vision Image
                   </Button>
                 </label>
                 <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                  添加一张能代表你目标愿景的图片
+                  Add an image representing your goal vision
                 </Typography>
               </Box>
             )}
@@ -614,7 +612,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
     );
   };
   
-  // 处理图片点击预览
+  // Handle image click preview
   const handleImageClick = (imageUrl) => {
     if (!imageUrl) return;
     
@@ -622,15 +620,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
     setImagePreviewDialog(true);
   };
   
-  // 关闭图片预览
+  // Close image preview
   const handleCloseImagePreview = () => {
     setImagePreviewDialog(false);
   };
   
-  // 保存宣言
+  // Save declaration
   const handleSave = async () => {
     if (!goal) {
-      setError('保存失败: 无法获取目标数据');
+      setError('Save failed: Unable to get goal data');
       return;
     }
     
@@ -638,15 +636,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
       setIsSaving(true);
       setError('');
       
-      console.log("开始准备宣言数据...");
-      console.log("当前目标对象:", {
+      console.log("Starting preparation of declaration data...");
+      console.log("Current goal object:", {
         id: goal._id || goal.id,
         hasId: !!(goal._id || goal.id),
         type: typeof goal,
         keys: Object.keys(goal)
       });
       
-      // 准备更新数据
+      // Prepare update data
       const updatedGoal = {
         title: editedData.title,
         details: {
@@ -669,46 +667,46 @@ Because the path is already beneath my feet—it's really not that complicated. 
         }
       };
       
-      // 确保有有效的目标ID
+      // Ensure valid goal ID
       let goalId = goal._id || goal.id;
       
-      // 额外检查：如果没有直接的_id或id属性，尝试从其他可能的地方获取
+      // Additional check: If no direct _id or id property, try to get from other possible places
       if (!goalId && goal) {
-        console.log("无法直接从goal对象获取ID，尝试深入查找...");
-        // 检查是否在goal的其他属性中包含ID
+        console.log("Cannot get ID directly from goal object, trying deeper search...");
+        // Check if ID is included in other goal properties
         if (goal.goalId) {
           goalId = goal.goalId;
-          console.log("从goal.goalId找到ID:", goalId);
+          console.log("Found ID from goal.goalId:", goalId);
         } else if (goal._doc && (goal._doc._id || goal._doc.id)) {
-          // MongoDB有时会将文档放在_doc属性中
+          // MongoDB sometimes puts the document in _doc property
           goalId = goal._doc._id || goal._doc.id;
-          console.log("从goal._doc找到ID:", goalId);
+          console.log("Found ID from goal._doc:", goalId);
         }
       }
       
       if (!goalId) {
-        console.error("保存失败：找不到有效的目标ID", goal);
-        throw new Error('无效的目标ID');
+        console.error("Save failed: Cannot find valid goal ID", goal);
+        throw new Error('Invalid goal ID');
       }
       
-      console.log("找到有效的目标ID:", goalId);
-      console.log("准备保存的宣言内容:", {
+      console.log("Found valid goal ID:", goalId);
+      console.log("Preparing to save declaration content:", {
         content: updatedGoal.declaration.content.substring(0, 100) + "...",
         length: updatedGoal.declaration.content.length
       });
       
       try {
-        console.log("调用API保存宣言数据...");
+        console.log("Calling API to save declaration data...");
         const result = await onSave(goalId, updatedGoal);
         
-        console.log("宣言保存成功，API返回结果:", result);
+        console.log("Declaration saved successfully, API result:", result);
         
-        // 关键改进：立即在本地更新宣言内容显示，而不等待重新加载
-        // 创建一个有新宣言内容的本地对象
+        // Key improvement: Immediately update declaration content display locally, without waiting for reload
+        // Create a local object with new declaration content
         const localUpdatedGoal = {
           ...goal,
-          _id: goalId, // 确保ID保持一致
-          id: goalId,  // 同时更新两种可能的ID格式
+          _id: goalId, // Ensure ID remains consistent
+          id: goalId,  // Update both possible ID formats
           declaration: {
             content: updatedGoal.declaration.content,
             updatedAt: new Date()
@@ -728,26 +726,26 @@ Because the path is already beneath my feet—it's really not that complicated. 
           }
         };
         
-        // 强制更新本地goal对象，这是一个hack但有效
+        // Force update local goal object, this is a hack but effective
         Object.assign(goal, localUpdatedGoal);
         
-        // 退出编辑模式
+        // Exit edit mode
         setIsEditing(false);
         
-        // 显示成功消息
-        setSuccess('目标宣言已成功更新');
+        // Show success message
+        setSuccess('Goal declaration successfully updated');
         
-        // 3秒后清除成功消息
+        // Clear success message after 3 seconds
         setTimeout(() => {
           setSuccess('');
         }, 3000);
       } catch (saveError) {
-        console.error('API调用失败:', saveError);
+        console.error('API call failed:', saveError);
         throw saveError;
       }
     } catch (err) {
-      console.error('保存宣言失败:', err);
-      setError(`保存失败: ${err.message || '请稍后重试'}`);
+      console.error('Failed to save declaration:', err);
+      setError(`Save failed: ${err.message || 'Please try again later'}`);
     } finally {
       setIsSaving(false);
     }
@@ -764,7 +762,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       transitionDuration={300}
     >
       <DialogContent className={styles.dialogContent}>
-        {/* 头部按钮 */}
+        {/* Header buttons */}
         <div className={styles.header}>
           <IconButton className={styles.closeButton} onClick={onClose} disabled={isSaving}>
             <CloseIcon />
@@ -802,19 +800,19 @@ Because the path is already beneath my feet—it's really not that complicated. 
           )}
         </div>
         
-        {/* 宣言图标 */}
+        {/* Declaration icon */}
         <div className={styles.declarationIcon}>
           <MenuBookIcon className={styles.bookIcon} />
         </div>
         
-        {/* 错误提示 */}
+        {/* Error alert */}
         {error && (
           <Alert severity="error" className={styles.alert}>
             {error}
           </Alert>
         )}
         
-        {/* 成功提示 */}
+        {/* Success alert */}
         {success && (
           <Fade in={!!success}>
             <Alert severity="success" className={styles.alert}>
@@ -823,46 +821,48 @@ Because the path is already beneath my feet—it's really not that complicated. 
           </Fade>
         )}
         
-        {/* 加载指示器 */}
+        {/* Loading indicator */}
         {isSaving && (
           <Box className={styles.loadingContainer}>
             <CircularProgress size={24} />
             <Typography variant="body2" className={styles.loadingText}>
-              保存中...
+              Saving...
             </Typography>
           </Box>
         )}
         
-        {/* 宣言内容 - 修复DOM结构 */}
+        {/* Declaration content - Fixed DOM structure */}
         <div className={styles.contentContainer}>
           {!goal ? (
             <Box className={styles.emptyState}>
               <Typography variant="body1">
-                无法加载目标数据，请关闭并重试。
+                Unable to load goal data. Please close and try again.
               </Typography>
             </Box>
           ) : isEditing ? (
             renderEditableDeclaration()
           ) : (
-            // 修改渲染逻辑，确保始终显示内容，即使是空内容也会调用 formatDeclarationContent
-            formatDeclarationContent(goal.declaration?.content || `# ${goal.title || '我的目标'}
+            // Modified rendering logic to ensure content is always displayed, even if empty
+            formatDeclarationContent(goal.declaration?.content || `# ${goal.title || 'My Goal'}
 
-我是 User，我踏上這條路是因為：這是一個對我意義深遠的追求，來自內心最真誠的渴望。
+This goal isn't just another item on my list—it's something I genuinely want to achieve.
 
-我相信我有能力實現它，因為我已經準備好了。這是我的信心和力量之源。
+I'm stepping onto this path because this is a deeply meaningful pursuit to me, a desire that comes straight from my heart.
 
-我不需要等待"完全準備好"。現在就是開始的最佳時刻。接下來，我將邁出第一步，讓動力帶領我前進。
+I trust that I have what it takes, because I already have the preparation I need. These are my sources of confidence and strength.
 
-我明白，只要我每天堅持，一點一滴，我就會逐漸接近我渴望實現的目標。
+I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me forward.
 
-當我閉上眼睛，我清晰地看到這個畫面：
-[尚未設定願景圖像]
+I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
 
-這不僅僅是我期望結果的願景，更是推動我前進的驅動力。`)
+When I close my eyes, I clearly see this image:
+[No Vision Image Yet]
+
+It's not just a vision of my desired outcome; it's the driving force that moves me forward today.`)
           )}
         </div>
         
-        {/* 底部按钮 */}
+        {/* Bottom buttons */}
         <Box className={styles.actionButtons}>
           {isEditing && (
             <Button
@@ -872,12 +872,12 @@ Because the path is already beneath my feet—it's really not that complicated. 
               disabled={isSaving}
               startIcon={<CheckCircleIcon />}
             >
-              {isSaving ? '保存中...' : '确认保存'}
+              {isSaving ? 'Saving...' : 'Confirm Save'}
             </Button>
           )}
         </Box>
         
-        {/* 图片预览对话框 */}
+        {/* Image preview dialog */}
         <Dialog
           open={imagePreviewDialog}
           onClose={handleCloseImagePreview}
@@ -886,7 +886,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
           <DialogContent sx={{ p: 1 }}>
             <img 
               src={previewImageUrl}
-              alt="愿景图像预览"
+              alt="Vision Image Preview"
               style={{ 
                 maxWidth: '100%', 
                 maxHeight: '80vh',
@@ -897,7 +897,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseImagePreview} color="primary">
-              关闭
+              Close
             </Button>
           </DialogActions>
         </Dialog>
