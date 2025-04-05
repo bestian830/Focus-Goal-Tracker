@@ -10,11 +10,14 @@ import {
   Box,
   Typography,
   Fade,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ProgressTimeline from "./ProgressTimeline";
 import DailyTasks from "./DailyTasks";
 import WeeklyDailyCards from "./WeeklyDailyCards";
+import GoalDeclaration from "./GoalDeclaration";
 import apiService from "../../services/api";
 
 // 添加一組鼓勵性名言
@@ -46,6 +49,7 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [dailyCards, setDailyCards] = useState([]);
+  const [declarationOpen, setDeclarationOpen] = useState(false);
 
   // 通过 goals 数组选择目标
   useEffect(() => {
@@ -136,6 +140,45 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
     }
   };
 
+  // 处理打开目标宣言对话框
+  const handleOpenDeclaration = () => {
+    setDeclarationOpen(true);
+  };
+  
+  // 处理关闭目标宣言对话框
+  const handleCloseDeclaration = () => {
+    setDeclarationOpen(false);
+  };
+  
+  // 处理保存目标宣言
+  const handleSaveDeclaration = async (goalId, updatedGoal) => {
+    try {
+      // 首先更新目标的基本信息
+      const baseResponse = await apiService.goals.update(goalId, updatedGoal);
+      
+      // 然后如果有宣言内容，单独更新宣言
+      if (updatedGoal.declaration) {
+        await apiService.goals.updateDeclaration(goalId, updatedGoal.declaration);
+      }
+      
+      // 更新本地状态
+      if (baseResponse.data) {
+        setSelectedGoal(baseResponse.data);
+      } else {
+        // 如果API没有返回完整数据，则合并更新
+        setSelectedGoal(prevGoal => ({
+          ...prevGoal,
+          ...updatedGoal
+        }));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("保存目标宣言失败:", error);
+      throw error;
+    }
+  };
+
   // 如果没有目标，显示提示信息
   if (goals.length === 0 && !goalId) {
     return (
@@ -194,7 +237,7 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
         }}
       >
         <div>
-          {/* 移除目標選擇器按鈕 - 開始 */}
+          {/* 移除目標選擇器按鈕 - 开始 */}
           {/* {goals.length > 0 && (
             <div className="goals-selector">
               {goals.map((goal) => (
@@ -212,20 +255,36 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
               ))}
             </div>
           )} */}
-          {/* 移除目標選擇器按鈕 - 結束 */}
+          {/* 移除目標選擇器按鈕 - 结束 */}
 
           <h3>{selectedGoal.title}</h3>
         </div>
 
-        <IconButton
-          color="error"
-          size="small"
-          onClick={handleOpenDeleteDialog}
-          aria-label="Delete goal"
-          sx={{ marginTop: "8px" }}
-        >
-          <DeleteIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* 宣言按钮 */}
+          <Tooltip title="查看目标宣言">
+            <IconButton
+              color="primary"
+              size="small"
+              onClick={handleOpenDeclaration}
+              aria-label="View goal declaration"
+              sx={{ marginTop: "8px", marginRight: "8px" }}
+            >
+              <MenuBookIcon />
+            </IconButton>
+          </Tooltip>
+          
+          {/* 删除按钮 */}
+          <IconButton
+            color="error"
+            size="small"
+            onClick={handleOpenDeleteDialog}
+            aria-label="Delete goal"
+            sx={{ marginTop: "8px" }}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       <p>{selectedGoal.description}</p>
@@ -311,6 +370,14 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted }) {
       />
 
       <DailyTasks tasks={dailyTasks} />
+
+      {/* 目标宣言对话框 */}
+      <GoalDeclaration
+        goal={selectedGoal}
+        isOpen={declarationOpen}
+        onClose={handleCloseDeclaration}
+        onSave={handleSaveDeclaration}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>

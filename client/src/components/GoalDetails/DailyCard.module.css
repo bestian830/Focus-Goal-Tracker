@@ -1,116 +1,72 @@
 .card {
-  width: 150px;
-  min-height: 220px;
+  width: 60px;
+  height: 85px;
   border-radius: 8px;
-  padding: 12px;
+  padding: 8px 4px;
   display: flex;
   flex-direction: column;
-  margin: 0 4px;
-  transition: all 0.3s ease;
+  justify-content: center;
+  align-items: center;
+  margin: 0 2px;
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .todayCard {
   border: 2px solid #1976d2;
-  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.15);
-  transform: translateY(-4px);
+  background-color: rgba(25, 118, 210, 0.05);
 }
 
-.cardHeader {
+.dateDisplay {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
-  position: relative;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  width: 100%;
 }
 
 .weekday {
+  font-size: 1rem;
   font-weight: 600;
   color: #424242;
-}
-
-.date {
-  font-size: 0.75rem;
-  color: #757575;
-}
-
-.todayChip {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  font-size: 0.65rem;
-  height: 20px;
-}
-
-.taskSection, .rewardSection {
-  margin-bottom: 12px;
-}
-
-.taskHeader, .rewardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 4px;
 }
 
-.sectionTitle {
-  font-weight: 500;
-  color: #424242;
+.date {
   font-size: 0.8rem;
-}
-
-.taskText, .rewardText {
-  font-size: 0.75rem;
-  color: #616161;
-  word-break: break-word;
-  min-height: 36px;
-}
-
-.uncheckedIcon {
-  color: #bdbdbd;
-  font-size: 1.2rem;
-}
-
-.checkedIcon {
-  color: #4caf50;
-  font-size: 1.2rem;
-}
-
-.noteInput {
-  margin-top: auto;
-  font-size: 0.75rem;
-}
-
-.noteText {
-  margin-top: auto;
-  font-size: 0.75rem;
   color: #757575;
-  font-style: italic;
-  background-color: #f5f5f5;
-  padding: 8px;
-  border-radius: 4px;
+}
+
+.todayIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #1976d2;
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .card {
-    width: 120px;
-    min-height: 200px;
-  }
-}
-
-@media (max-width: 480px) {
-  .card {
-    width: 100px;
-    min-height: 180px;
-    padding: 8px;
+    width: 50px;
+    height: 75px;
   }
   
-  .taskText, .rewardText {
+  .weekday {
+    font-size: 0.9rem;
+  }
+  
+  .date {
     font-size: 0.7rem;
-    min-height: 32px;
   }
 } 
