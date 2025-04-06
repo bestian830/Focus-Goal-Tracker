@@ -12,8 +12,9 @@ import DailyCardRecord from './DailyCardRecord';
  * @param {Object} props.goal - Goal object
  * @param {Boolean} props.isToday - Whether this card represents today
  * @param {Function} props.onUpdate - Callback for when card data is updated
+ * @param {Function} props.onViewDeclaration - Optional callback for viewing declaration
  */
-export default function DailyCard({ card, goal, isToday, onUpdate }) {
+export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Format the date for display
@@ -47,11 +48,14 @@ export default function DailyCard({ card, goal, isToday, onUpdate }) {
 
   // Handle viewing declaration details
   const handleViewDeclaration = () => {
-    // This would open the declaration view, e.g. GoalDeclaration component
-    console.log('View declaration for', card.date);
+    // If an external handler is provided, use it
+    if (onViewDeclaration) {
+      onViewDeclaration(goal);
+      return;
+    }
     
-    // For now, we'll just log this - implementation would depend on your app structure
-    // You might want to open a dialog or navigate to a different page
+    // Fallback behavior if no handler is provided
+    console.log('View declaration for goal:', goal?.title);
   };
   
   // Determine if the card has any completed tasks
@@ -106,7 +110,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate }) {
         open={detailsOpen}
         onClose={handleCloseDetails}
         onSave={handleSaveCard}
-        onDeclarationView={handleViewDeclaration}
+        onViewDeclaration={handleViewDeclaration}
       />
     </>
   );

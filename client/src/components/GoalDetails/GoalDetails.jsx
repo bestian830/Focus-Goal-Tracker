@@ -599,13 +599,14 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
       />
 
       {/* 每周DailyCards显示 */}
-      <WeeklyDailyCards 
+      <WeeklyDailyCards
         goal={selectedGoal}
         dailyCards={dailyCards}
         onCardsUpdate={handleDailyCardsUpdate}
+        onViewDeclaration={handleOpenDeclaration}
       />
 
-      <DailyTasks tasks={dailyTasks} />
+      {/* <DailyTasks tasks={dailyTasks} /> */}
 
       {/* 目标宣言对话框 */}
       <GoalDeclaration

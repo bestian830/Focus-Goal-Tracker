@@ -81,6 +81,18 @@ export default function DailyCardRecord({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Handle viewing declaration details
+  const handleViewDeclaration = () => {
+    // Check if callback exists and call it with the goal object
+    if (onViewDeclaration && goal) {
+      console.log('開啟目標宣言對話框', goal);
+      onClose(); // 先關閉當前對話框
+      onViewDeclaration(goal); // 然後打開宣言對話框
+      return;
+    }
+    console.warn('無法打開宣言對話框：onViewDeclaration回調未提供或goal為空');
+  };
+
   // Load daily card data when goal or date changes
   useEffect(() => {
     if (!goal || !date) return;
@@ -221,17 +233,20 @@ export default function DailyCardRecord({
         </Typography>
         
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography variant="body1" component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+            Goal:
+          </Typography>
           <Typography variant="h6" component="div" sx={{ mr: 1 }}>
             {goal?.title || 'Goal'}
           </Typography>
           
-          <Tooltip title="View Declaration">
+          <Tooltip title="View and edit goal declaration">
             <IconButton
               color="primary"
-              onClick={onViewDeclaration}
+              onClick={handleViewDeclaration}
               size="small"
             >
-              <DescriptionIcon />
+              <MenuBookIcon />
             </IconButton>
           </Tooltip>
         </Box>

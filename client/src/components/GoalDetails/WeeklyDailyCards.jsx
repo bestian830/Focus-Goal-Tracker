@@ -14,8 +14,9 @@ import apiService from '../../services/api';
  * @param {Object} props.goal - Goal object
  * @param {Array} props.dailyCards - Array of daily card data
  * @param {Function} props.onCardsUpdate - Callback for when cards are updated
+ * @param {Function} props.onViewDeclaration - Callback for viewing goal declaration
  */
-export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate }) {
+export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate, onViewDeclaration }) {
   const [currentWeekCards, setCurrentWeekCards] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +104,13 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
     }
   };
   
+  // Handle declaration view request
+  const handleViewDeclaration = () => {
+    if (onViewDeclaration && goal) {
+      onViewDeclaration(goal);
+    }
+  };
+  
   // Switch to previous week
   const handlePreviousWeek = () => {
     setWeekOffset(prev => prev - 1);
@@ -185,6 +193,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
               goal={goal}
               isToday={isToday(card.date)}
               onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
+              onViewDeclaration={onViewDeclaration}
             />
           ))}
         </Box>
