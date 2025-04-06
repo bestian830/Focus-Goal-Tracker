@@ -3,6 +3,10 @@
   background-color: #f5f5f5;
   border-radius: 8px;
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
 }
 
 .header {
@@ -14,6 +18,9 @@
 
 .title {
   font-weight: 500;
+  margin-bottom: 0;
+  font-size: 1.25rem;
+  color: #3f51b5;
 }
 
 .weekControls {
@@ -29,19 +36,54 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  margin-bottom: 1rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Ensure cards maintain a consistent width */
+.cardsContainer > * {
+  min-width: 0; /* 允许子元素收缩，防止溢出 */
+  width: 100%;
+}
+
+/* 進度條容器 */
+.progressContainer {
+  margin-top: 1rem;
+}
+
+/* 每個卡片的容器 */
+.cardWrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 今日按鈕 */
+.todayButton {
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  align-self: flex-end;
+}
+
+/* 響應式設計 */
+@media (max-width: 900px) {
   .cardsContainer {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 8px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  .cardsContainer {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
   .cardsContainer {
     grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
   
   .header {

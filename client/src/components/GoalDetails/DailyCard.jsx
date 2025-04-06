@@ -18,47 +18,31 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Format the date for display
-  const formatDate = (dateStr) => {
+  const formatDate = (dateString) => {
     try {
-      const date = new Date(dateStr);
+      const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        console.error('Invalid date in formatDate:', dateStr);
+        console.error('Invalid date:', dateString);
         return '?';
       }
-      
-      console.log('Formatting date:', {
-        input: dateStr,
-        parsed: date.toString(),
-        output: date.getDate()
-      });
-      
-      return `${date.getDate()}`;
+      return date.getDate();
     } catch (error) {
-      console.error('Error formatting date:', error, dateStr);
+      console.error('Error formatting date:', error);
       return '?';
     }
   };
 
   // Format the day name for display
-  const formatDay = (dateStr) => {
+  const formatDay = (dateString) => {
     try {
-      const date = new Date(dateStr);
+      const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        console.error('Invalid date in formatDay:', dateStr);
+        console.error('Invalid day:', dateString);
         return '?';
       }
-      
-      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-      
-      console.log('Formatting day:', {
-        input: dateStr,
-        parsed: date.toString(),
-        output: day
-      });
-      
-      return day;
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
     } catch (error) {
-      console.error('Error formatting day:', error, dateStr);
+      console.error('Error formatting day:', error);
       return '?';
     }
   };
@@ -73,23 +57,18 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
     setDetailsOpen(false);
   };
 
-  // Handle saving updated card data
+  // Handle saving the card after editing
   const handleSaveCard = (updatedCard) => {
     if (onUpdate) {
       onUpdate(updatedCard);
     }
   };
 
-  // Handle viewing declaration details
+  // Handle viewing the declaration
   const handleViewDeclaration = () => {
-    // If an external handler is provided, use it
     if (onViewDeclaration) {
-      onViewDeclaration(goal);
-      return;
+      onViewDeclaration();
     }
-    
-    // Fallback behavior if no handler is provided
-    console.log('View declaration for goal:', goal?.title);
   };
   
   // Determine if the card has any completed tasks
@@ -98,43 +77,57 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
   // Determine if card has progress records
   const hasRecords = card.records && card.records.length > 0;
 
+  const formattedDay = formatDay(card.date);
+  const formattedDate = formatDate(card.date);
+  const today = isToday;
+
   return (
     <>
       <Paper 
-        className={`${styles.card} ${isToday ? styles.today : ''}`}
+        className={`${styles.card} ${today ? styles.today : ''}`}
         onClick={handleCardClick}
-        elevation={isToday ? 3 : 1}
+        elevation={1}
       >
         <Box className={styles.dateInfo}>
           <Typography variant="caption" className={styles.day}>
-            {formatDay(card.date)}
+            {formattedDay}
           </Typography>
           <Typography variant="h6" className={styles.date}>
-            {formatDate(card.date)}
+            {formattedDate}
           </Typography>
-          {isToday && (
+        </Box>
+        
+        <Box className={styles.todayLabelContainer}>
+          {today && (
             <Typography variant="caption" className={styles.todayLabel}>
               Today
             </Typography>
           )}
         </Box>
         
-        <Box className={styles.statusInfo}>
-          <Badge 
-            color="success" 
-            variant={hasCompletedTasks ? "dot" : "standard"}
-            invisible={!hasCompletedTasks}
-          >
-            <AssignmentIcon 
-              color={hasCompletedTasks ? "primary" : "action"} 
-              fontSize="small" 
-            />
-          </Badge>
-          {hasRecords && (
-            <Typography variant="caption" className={styles.recordsCount}>
-              {card.records.length} {card.records.length === 1 ? 'record' : 'records'}
-            </Typography>
-          )}
+        <Box className={styles.bottomSection}>
+          <Box className={styles.statusInfo}>
+            <Badge 
+              color="success" 
+              variant={hasCompletedTasks ? "dot" : "standard"}
+              invisible={!hasCompletedTasks}
+            >
+              <AssignmentIcon 
+                color={hasCompletedTasks ? "primary" : "action"} 
+                fontSize="small" 
+              />
+            </Badge>
+          </Box>
+          
+          <Box className={styles.recordsInfo}>
+            {hasRecords ? (
+              <Typography variant="caption" className={styles.recordsCount}>
+                {card.records.length} {card.records.length === 1 ? 'note' : 'notes'}
+              </Typography>
+            ) : (
+              <div className={styles.emptyRecords}></div>
+            )}
+          </Box>
         </Box>
       </Paper>
       
