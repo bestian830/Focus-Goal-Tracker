@@ -34,12 +34,12 @@ function GuestLogin() {
     setError('');
     
     try {
-      // 首先检查 localStorage 中是否已有 tempId
+      // check if tempId exists in localStorage
       const existingTempId = localStorage.getItem('tempId');
       console.log('检查localStorage中的tempId:', existingTempId);
       
-      // 无论是否有现有tempId，都发送请求，让后端决定是返回现有用户还是创建新用户
-      // 如果有现有tempId，则传递给后端进行验证
+      // whether there is an existing tempId, send a request to the backend to decide whether to return the existing user or create a new user
+      // if there is an existing tempId, pass it to the backend for verification
       const requestData = existingTempId ? { existingTempId } : {};
       
       const response = await apiService.auth.createTempUser(requestData);
@@ -63,7 +63,7 @@ function GuestLogin() {
       }
     } catch (error) {
       console.error('Failed to create temporary session:', error);
-      setError('登入失敗。請嘗試使用"前往主頁"按鈕或稍後再試。');
+      setError('Login failed. Please try using the "前往主頁" button or try again later.');
     } finally {
       setLoading(false);
     }
@@ -71,21 +71,21 @@ function GuestLogin() {
 
   // Handle manual navigation
   const handleManualNavigation = () => {
-    // 首先檢查 localStorage 中是否已有 tempId
+    // check if tempId exists in localStorage
     const existingTempId = localStorage.getItem('tempId');
       
     if (existingTempId) {
-      // 如果已有 tempId，直接使用它並重定向
+      // if there is an existing tempId, use it and redirect
       console.log('Using existing temporary user ID (manual navigation):', existingTempId);
       navigate('/', { replace: true });
       return;
     }
     
-    // If we have a successful API response but navigation failed, try to use that
+    // if we have a successful API response but navigation failed, try to use that
     if (apiResponse?.success && apiResponse?.data?.tempId) {
       localStorage.setItem('tempId', apiResponse.data.tempId);
     } else {
-      // Fallback to client-side temp ID generation
+      // fallback to client-side temp ID generation
       const tempId = `temp_${Math.random().toString(36).substring(2, 10)}`;
       localStorage.setItem('tempId', tempId);
     }
@@ -95,8 +95,8 @@ function GuestLogin() {
 
   return (
     <div className="guest-login-container">
-      <h1>歡迎使用 Focus</h1>
-      <p className="subtitle">追蹤你的目標，提高生產力</p>
+      <h1>Welcome to Focus</h1>
+      <p className="subtitle">Track your goals, boost productivity</p>
       
       {error && <div className="error-message">{error}</div>}
       
@@ -105,18 +105,18 @@ function GuestLogin() {
         onClick={handleGuestLogin}
         disabled={loading}
       >
-        {loading ? '登入中...' : '以訪客身份進入'}
+        {loading ? 'Logging in...' : 'Enter as Guest'}
       </button>
       
       <div className="login-options">
-        <p className="or-divider">或</p>
+        <p className="or-divider">Or</p>
         <div className="auth-links">
           <Link to="/login" className="auth-link">
-            登入
+            Login
           </Link>
           <span className="separator">|</span>
           <Link to="/register" className="auth-link">
-            註冊
+            Register
           </Link>
         </div>
         
@@ -126,9 +126,9 @@ function GuestLogin() {
             onClick={handleManualNavigation}
             className="debug-button"
           >
-            前往主頁
+            Go to Home
           </button>
-          <p className="debug-text">(如果自動跳轉不起作用，請使用此按鈕)</p>
+            <p className="debug-text">(If the automatic redirect does not work, please use this button)</p>
         </div>
       </div>
     </div>

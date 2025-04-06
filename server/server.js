@@ -25,35 +25,35 @@ connectDB();
 
 const app = express();
 
-// 配置允許的來源
+// CORS Configuration
 const allowedOrigins = [
-  "http://localhost:5173",  // 本地開發環境
-  "https://focusappdeploy-frontend.onrender.com",  // Render部署的前端
-  process.env.CLIENT_URL,  // 環境變量中配置的客戶端URL
-].filter(Boolean); // 過濾掉 undefined 或 null
+  "http://localhost:5173", // local frontend
+  "https://focusappdeploy-frontend.onrender.com", // Render deployment frontend
+  process.env.CLIENT_URL, // client URL from env
+].filter(Boolean); // filter undefined or null
 
 // Middleware
 app.use(
   cors({
-    origin: function(origin, callback) {
-      // 允許沒有來源的請求（比如同源請求）
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         console.warn(`Blocked request from unauthorized origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // 允許跨域請求攜帶 cookie
+    credentials: true, // Allow cross-origin requests to carry cookies
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["Set-Cookie"],
   })
 );
 
-// 輸出CORS配置信息
+// Log CORS configuration (for debugging)
 console.log("=== CORS Configuration ===");
 console.log("Allowed Origins:", allowedOrigins);
 console.log("=======================");
@@ -88,7 +88,7 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     message: "API is running",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 

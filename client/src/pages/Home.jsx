@@ -200,9 +200,10 @@ function Home() {
       // try to clear session on server
       try {
         if (user && user.isGuest) {
-          // 对于临时用户，我们不实际删除临时账户
-          // 仅清除cookies，但保留localStorage中的tempId
-          // 这允许用户稍后使用相同的tempId返回
+
+          // for temporary users, we do not actually delete temporary accounts
+          // only clear localStorage and cookies, but keep the account in the database
+          // this allows the user to return later using the same tempId
           const tempId = localStorage.getItem("tempId");
           
           if (tempId) {
@@ -213,9 +214,11 @@ function Home() {
               console.error("Failed to logout temporary user:", error);
               // if error, still continue local cleanup
             }
-            
-            // 不从localStorage中移除tempId，保留以便用户可以再次使用相同的临时ID
-            console.log("保留临时用户ID以便再次使用:", tempId);
+
+
+            console.log("keep tempId for potential reuse:", tempId);
+            // do not remove tempId from localStorage, keep it for potential reuse
+
           }
         } else if (user && !user.isGuest) {
           // for registered users, call logout API

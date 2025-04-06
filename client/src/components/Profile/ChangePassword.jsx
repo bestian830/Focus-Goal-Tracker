@@ -12,7 +12,7 @@ export default function ChangePassword() {
       return;
     }
 
-    // 实际逻辑(后期启用)
+    // actual logic (later enabled)
     // fetch('/api/change-password', {
     //     method: 'POST',
     //     headers: {
@@ -24,7 +24,7 @@ export default function ChangePassword() {
     // .then(data => setMessage(data.message))
     // .catch((err => setMessage('Error changing password')));
 
-    // 当前假数据模拟逻辑
+    // current mock data simulation logic
     setMessage("Password changed successfully (simulation)");
   };
 
