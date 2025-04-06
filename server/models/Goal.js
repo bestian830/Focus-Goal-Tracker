@@ -109,6 +109,18 @@ const GoalSchema = new mongoose.Schema(
             default: false,
           },
         },
+        records: [
+          {
+            content: {
+              type: String,
+              required: true,
+            },
+            createdAt: {
+              type: Date,
+              default: Date.now,
+            }
+          }
+        ],
         links: [
           {
             url: {
