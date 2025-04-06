@@ -1,58 +1,65 @@
 .card {
-  width: 60px;
-  height: 85px;
-  border-radius: 8px;
-  padding: 8px 4px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  margin: 0 2px;
-  transition: all 0.2s ease;
-  position: relative;
+  justify-content: space-between;
+  padding: 12px;
+  height: 100px;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.todayCard {
-  border: 2px solid #1976d2;
-  background-color: rgba(25, 118, 210, 0.05);
+.today {
+  border: 2px solid #3f51b5;
+  background-color: rgba(63, 81, 181, 0.05);
 }
 
-.dateDisplay {
+.dateInfo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  height: 100%;
   width: 100%;
 }
 
-.weekday {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #424242;
-  margin-bottom: 4px;
+.day {
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 .date {
-  font-size: 0.8rem;
-  color: #757575;
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin: 4px 0;
 }
 
-.todayIndicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #1976d2;
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.todayLabel {
+  background-color: #3f51b5;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.statusInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.recordsCount {
+  color: #666;
+  font-size: 0.75rem;
 }
 
 /* 响应式设计 */
@@ -62,7 +69,7 @@
     height: 75px;
   }
   
-  .weekday {
+  .day {
     font-size: 0.9rem;
   }
   

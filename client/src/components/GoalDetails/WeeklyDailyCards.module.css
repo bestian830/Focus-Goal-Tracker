@@ -1,6 +1,8 @@
 .container {
-  margin: 24px 0;
-  width: 100%;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 24px;
 }
 
 .header {
@@ -11,9 +13,7 @@
 }
 
 .title {
-  font-size: 1.2rem;
   font-weight: 500;
-  color: #333;
 }
 
 .weekControls {
@@ -23,47 +23,34 @@
 
 .weekTitle {
   margin: 0 8px;
-  text-transform: none;
-  font-size: 0.9rem;
 }
 
 .cardsContainer {
-  display: flex;
-  overflow-x: auto;
-  padding: 8px 0;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
 }
 
-/* 隐藏滚动条但保留功能 */
-.cardsContainer::-webkit-scrollbar {
-  display: none;
-}
-
-/* 响应式设计 */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .container {
-    margin: 16px 0;
-  }
-  
-  .title {
-    font-size: 1.1rem;
-  }
-  
-  .weekTitle {
-    font-size: 0.8rem;
+  .cardsContainer {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
   }
 }
 
 @media (max-width: 480px) {
+  .cardsContainer {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
   
   .weekControls {
+    margin-top: 8px;
     width: 100%;
     justify-content: space-between;
   }

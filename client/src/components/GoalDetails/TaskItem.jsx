@@ -1,11 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function TaskItem({ task }) {
+/**
+ * TaskItem component displays a single task with checkbox
+ * @param {Object} props
+ * @param {Object} props.task - The task object with id, text, and completed
+ * @param {Function} props.onStatusChange - Callback when task status changes
+ */
+export default function TaskItem({ task, onStatusChange }) {
   const [completed, setCompleted] = useState(task.completed);
 
+  // Update local state when prop changes
+  useEffect(() => {
+    setCompleted(task.completed);
+  }, [task.completed]);
+
   const handleToggle = () => {
-    setCompleted(!completed);
-    // 实际项目中这里应该有API调用来更新任务状态
+    const newStatus = !completed;
+    setCompleted(newStatus);
+    
+    // Call callback if provided
+    if (onStatusChange) {
+      onStatusChange(task.id, newStatus);
+    }
   };
 
   return (

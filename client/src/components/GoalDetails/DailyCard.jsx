@@ -1,60 +1,113 @@
 import { useState } from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Badge } from '@mui/material';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import styles from './DailyCard.module.css';
+import DailyCardRecord from './DailyCardRecord';
 
 /**
- * DailyCard - 显示单个日期的卡片，简化版本只显示日期
+ * DailyCard - Displays a single date's card showing task completion status
  * 
  * @param {Object} props
- * @param {Object} props.card - 卡片数据对象
- * @param {Date|String} props.card.date - 卡片日期
- * @param {Boolean} props.isToday - 是否为今天的卡片
- * @param {Function} props.onUpdate - 卡片更新回调
+ * @param {Object} props.card - Card data for the specific date
+ * @param {Object} props.goal - Goal object
+ * @param {Boolean} props.isToday - Whether this card represents today
+ * @param {Function} props.onUpdate - Callback for when card data is updated
  */
-export default function DailyCard({ card, onUpdate, isToday }) {
-  const [isHovered, setIsHovered] = useState(false);
-  
-  // 格式化日期显示
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-    const monthDay = `${date.getMonth() + 1}/${date.getDate()}`;
-    const weekday = weekdays[date.getDay()];
-    
-    return { monthDay, weekday };
-  };
-  
-  const { monthDay, weekday } = formatDate(card?.date);
-  
-  // 处理卡片点击
-  const handleCardClick = () => {
-    // 处理卡片点击事件，可用于打开详细视图
-    console.log('卡片点击：', card);
-    // 这里可以添加导航或打开对话框的逻辑
+export default function DailyCard({ card, goal, isToday, onUpdate }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  // Format the date for display
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return `${date.getDate()}`;
   };
 
+  // Format the day name for display
+  const formatDay = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  };
+
+  // Handle card click to open details
+  const handleCardClick = () => {
+    setDetailsOpen(true);
+  };
+
+  // Handle closing the details view
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+  };
+
+  // Handle saving updated card data
+  const handleSaveCard = (updatedCard) => {
+    if (onUpdate) {
+      onUpdate(updatedCard);
+    }
+  };
+
+  // Handle viewing declaration details
+  const handleViewDeclaration = () => {
+    // This would open the declaration view, e.g. GoalDeclaration component
+    console.log('View declaration for', card.date);
+    
+    // For now, we'll just log this - implementation would depend on your app structure
+    // You might want to open a dialog or navigate to a different page
+  };
+  
+  // Determine if the card has any completed tasks
+  const hasCompletedTasks = card.completed && card.completed.dailyTask;
+  
+  // Determine if card has progress records
+  const hasRecords = card.records && card.records.length > 0;
+
   return (
-    <Paper 
-      elevation={isToday ? 3 : 1} 
-      className={`${styles.card} ${isToday ? styles.todayCard : ''}`}
-      onClick={handleCardClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* 日期显示 - 简化版本 */}
-      <Box className={styles.dateDisplay}>
-        {isToday && <div className={styles.todayIndicator} />}
+    <>
+      <Paper 
+        className={`${styles.card} ${isToday ? styles.today : ''}`}
+        onClick={handleCardClick}
+        elevation={isToday ? 3 : 1}
+      >
+        <Box className={styles.dateInfo}>
+          <Typography variant="caption" className={styles.day}>
+            {formatDay(card.date)}
+          </Typography>
+          <Typography variant="h6" className={styles.date}>
+            {formatDate(card.date)}
+          </Typography>
+          {isToday && (
+            <Typography variant="caption" className={styles.todayLabel}>
+              Today
+            </Typography>
+          )}
+        </Box>
         
-        <Typography variant="h6" className={styles.weekday}>
-          周{weekday}
-        </Typography>
-        
-        <Typography variant="body1" className={styles.date}>
-          {monthDay}
-        </Typography>
-      </Box>
-    </Paper>
+        <Box className={styles.statusInfo}>
+          <Badge 
+            color="success" 
+            variant={hasCompletedTasks ? "dot" : "standard"}
+            invisible={!hasCompletedTasks}
+          >
+            <AssignmentIcon 
+              color={hasCompletedTasks ? "primary" : "action"} 
+              fontSize="small" 
+            />
+          </Badge>
+          {hasRecords && (
+            <Typography variant="caption" className={styles.recordsCount}>
+              {card.records.length} {card.records.length === 1 ? 'record' : 'records'}
+            </Typography>
+          )}
+        </Box>
+      </Paper>
+      
+      <DailyCardRecord
+        goal={goal}
+        date={card.date}
+        open={detailsOpen}
+        onClose={handleCloseDetails}
+        onSave={handleSaveCard}
+        onDeclarationView={handleViewDeclaration}
+      />
+    </>
   );
 } 

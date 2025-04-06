@@ -8,22 +8,22 @@ import styles from './WeeklyDailyCards.module.css';
 import apiService from '../../services/api';
 
 /**
- * WeeklyDailyCards - 显示一周的每日卡片组件
+ * WeeklyDailyCards - Displays a week of daily cards for a goal
  * 
  * @param {Object} props
- * @param {Object} props.goal - 目标对象
- * @param {Array} props.dailyCards - 每日卡片数据数组
- * @param {Function} props.onCardsUpdate - 卡片数据更新回调
+ * @param {Object} props.goal - Goal object
+ * @param {Array} props.dailyCards - Array of daily card data
+ * @param {Function} props.onCardsUpdate - Callback for when cards are updated
  */
 export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate }) {
   const [currentWeekCards, setCurrentWeekCards] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
-  // 根据目标创建日期或当前日期生成一周的日期
+  // Generate a week of dates based on goal creation date or current date
   const generateWeekDates = (goalDate, offset = 0) => {
     const startDate = new Date(goalDate);
-    // 计算起始日期，添加偏移周数
+    // Calculate start date, adding offset weeks
     startDate.setDate(startDate.getDate() + (offset * 7));
     
     const weekDates = [];
@@ -35,7 +35,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
     return weekDates;
   };
   
-  // 初始化和更新卡片数据
+  // Initialize and update card data
   useEffect(() => {
     if (!goal) return;
     
@@ -45,22 +45,22 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
       const goalCreatedAt = goal.createdAt ? new Date(goal.createdAt) : new Date();
       const weekDates = generateWeekDates(goalCreatedAt, weekOffset);
       
-      // 匹配现有的dailyCards或创建新的空卡片
+      // Match existing dailyCards or create new empty cards
       const newWeekCards = weekDates.map(date => {
         const dateStr = date.toISOString().split('T')[0];
         
-        // 查找匹配的已有卡片
+        // Find matching existing card
         const existingCard = dailyCards.find(card => {
           const cardDate = new Date(card.date);
           return cardDate.toISOString().split('T')[0] === dateStr;
         });
         
-        // 如果找到匹配的卡片，返回它
+        // If a matching card is found, return it
         if (existingCard) {
           return existingCard;
         }
         
-        // 否则创建一个新的空卡片
+        // Otherwise create a new empty card
         return {
           date: date.toISOString(),
           dailyTask: goal.currentSettings?.dailyTask || '',
@@ -69,7 +69,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
             dailyTask: false,
             dailyReward: false
           },
-          note: ''
+          records: []
         };
       });
       
@@ -80,45 +80,45 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
     updateWeekCards();
   }, [goal, dailyCards, weekOffset]);
   
-  // 处理卡片更新
+  // Handle card updates
   const handleCardUpdate = async (updatedCard, index) => {
     try {
-      // 更新本地状态
+      // Update local state
       const updatedCards = [...currentWeekCards];
       updatedCards[index] = updatedCard;
       setCurrentWeekCards(updatedCards);
       
-      // 调用API保存更新
+      // Call API to save the update
       if (goal && goal._id) {
         await apiService.goals.addOrUpdateDailyCard(goal._id, updatedCard);
         
-        // 通知父组件更新
+        // Notify parent component of update
         if (onCardsUpdate) {
           onCardsUpdate(updatedCards);
         }
       }
     } catch (error) {
-      console.error('更新每日卡片失败:', error);
-      // 可以添加错误处理UI
+      console.error('Failed to update daily card:', error);
+      // Error handling UI could be added here
     }
   };
   
-  // 切换到前一周
+  // Switch to previous week
   const handlePreviousWeek = () => {
     setWeekOffset(prev => prev - 1);
   };
   
-  // 切换到后一周
+  // Switch to next week
   const handleNextWeek = () => {
     setWeekOffset(prev => prev + 1);
   };
   
-  // 回到当前周
+  // Return to current week
   const handleCurrentWeek = () => {
     setWeekOffset(0);
   };
   
-  // 检查日期是否是今天
+  // Check if a date is today
   const isToday = (dateStr) => {
     const today = new Date();
     const cardDate = new Date(dateStr);
@@ -130,7 +130,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
     );
   };
   
-  // 获取周标题显示
+  // Get week title for display
   const getWeekTitle = () => {
     if (!currentWeekCards.length) return '';
     
@@ -138,7 +138,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
     const lastDate = new Date(currentWeekCards[6].date);
     
     const formatDate = (date) => {
-      return `${date.getMonth() + 1}月${date.getDate()}日`;
+      return `${date.getMonth() + 1}/${date.getDate()}`;
     };
     
     return `${formatDate(firstDate)} - ${formatDate(lastDate)}`;
@@ -148,7 +148,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
     <Box className={styles.container}>
       <Box className={styles.header}>
         <Typography variant="h6" className={styles.title}>
-          每周打卡记录
+          Weekly Progress Cards
         </Typography>
         
         <Box className={styles.weekControls}>
@@ -169,7 +169,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
           <IconButton 
             onClick={handleNextWeek} 
             size="small"
-            disabled={weekOffset >= 0} // 不允许查看未来的周
+            disabled={weekOffset >= 0} // Don't allow viewing future weeks
           >
             <ChevronRightIcon />
           </IconButton>
@@ -182,6 +182,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate 
             <DailyCard 
               key={`${card.date}-${index}`}
               card={card}
+              goal={goal}
               isToday={isToday(card.date)}
               onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
             />
