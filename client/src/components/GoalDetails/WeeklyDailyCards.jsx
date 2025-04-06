@@ -48,22 +48,61 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       
       // Match existing dailyCards or create new empty cards
       const newWeekCards = weekDates.map(date => {
+        // 使用 ISO 字符串格式，但只保留日期部分 (YYYY-MM-DD)
         const dateStr = date.toISOString().split('T')[0];
+        
+        console.log('Processing weekly date:', {
+          date,
+          dateStr,
+          isoString: date.toISOString(),
+          dateString: date.toString()
+        });
         
         // Find matching existing card
         const existingCard = dailyCards.find(card => {
-          const cardDate = new Date(card.date);
-          return cardDate.toISOString().split('T')[0] === dateStr;
+          try {
+            if (!card.date) return false;
+            
+            // 嘗試提取卡片日期的 YYYY-MM-DD 部分
+            let cardDateStr;
+            try {
+              // 如果已經是 ISO 字符串，直接分割
+              if (typeof card.date === 'string' && card.date.includes('T')) {
+                cardDateStr = card.date.split('T')[0];
+              } else {
+                // 否則創建日期對象並轉換為 ISO 格式
+                const cardDate = new Date(card.date);
+                if (isNaN(cardDate.getTime())) return false;
+                cardDateStr = cardDate.toISOString().split('T')[0];
+              }
+            } catch (err) {
+              console.error('Error extracting date string:', err, card.date);
+              return false;
+            }
+            
+            // 日誌記錄用於調試
+            console.log('Comparing dates:', {
+              weekDateStr: dateStr, 
+              cardDateStr,
+              match: cardDateStr === dateStr
+            });
+            
+            return cardDateStr === dateStr;
+          } catch (error) {
+            console.error('Error comparing card dates:', error, card);
+            return false;
+          }
         });
         
         // If a matching card is found, return it
         if (existingCard) {
+          console.log('Found existing card:', existingCard);
           return existingCard;
         }
         
         // Otherwise create a new empty card
-        return {
-          date: date.toISOString(),
+        const newCard = {
+          date: date.toISOString(), // 使用完整 ISO 字符串
           dailyTask: goal.currentSettings?.dailyTask || '',
           dailyReward: goal.currentSettings?.dailyReward || '',
           completed: {
@@ -72,6 +111,9 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
           },
           records: []
         };
+        
+        console.log('Created new card:', newCard);
+        return newCard;
       });
       
       setCurrentWeekCards(newWeekCards);
@@ -128,28 +170,64 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   
   // Check if a date is today
   const isToday = (dateStr) => {
-    const today = new Date();
-    const cardDate = new Date(dateStr);
-    
-    return (
-      today.getFullYear() === cardDate.getFullYear() &&
-      today.getMonth() === cardDate.getMonth() &&
-      today.getDate() === cardDate.getDate()
-    );
+    try {
+      if (!dateStr) return false;
+      
+      // 獲取日期的 YYYY-MM-DD 字符串
+      let dateYMD;
+      try {
+        if (typeof dateStr === 'string' && dateStr.includes('T')) {
+          // 如果是 ISO 字符串，直接分割
+          dateYMD = dateStr.split('T')[0];
+        } else {
+          // 否則創建日期對象
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) return false;
+          dateYMD = date.toISOString().split('T')[0];
+        }
+      } catch (err) {
+        console.error('Error extracting date for isToday check:', err);
+        return false;
+      }
+      
+      // 獲取今天的 YYYY-MM-DD 字符串
+      const today = new Date().toISOString().split('T')[0];
+      
+      return dateYMD === today;
+    } catch (error) {
+      console.error('Error checking if date is today:', error, dateStr);
+      return false;
+    }
   };
   
   // Get week title for display
   const getWeekTitle = () => {
-    if (!currentWeekCards.length) return '';
-    
-    const firstDate = new Date(currentWeekCards[0].date);
-    const lastDate = new Date(currentWeekCards[6].date);
-    
-    const formatDate = (date) => {
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    };
-    
-    return `${formatDate(firstDate)} - ${formatDate(lastDate)}`;
+    try {
+      if (!currentWeekCards.length) return '';
+      
+      // Ensure dates are valid
+      const firstCardDate = currentWeekCards[0]?.date;
+      const lastCardDate = currentWeekCards[6]?.date;
+      
+      if (!firstCardDate || !lastCardDate) return '';
+      
+      const firstDate = new Date(firstCardDate);
+      const lastDate = new Date(lastCardDate);
+      
+      // Verify dates are valid
+      if (isNaN(firstDate.getTime()) || isNaN(lastDate.getTime())) {
+        return 'Week Range';
+      }
+      
+      const formatDate = (date) => {
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      };
+      
+      return `${formatDate(firstDate)} - ${formatDate(lastDate)}`;
+    } catch (error) {
+      console.error('Error generating week title:', error);
+      return 'Week Range';
+    }
   };
 
   return (

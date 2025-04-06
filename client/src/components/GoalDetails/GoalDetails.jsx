@@ -291,10 +291,29 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
         const goalId = selectedGoal._id || selectedGoal.id;
         console.log("关闭宣言对话框后刷新目标数据:", goalId);
         
-        // 不再等待刷新完成才执行UI操作
-        refreshGoalData(goalId).catch(error => {
-          console.error("后台刷新目标数据失败:", error);
+        // 使用Promise.all同时刷新目标数据和每日卡片数据
+        Promise.all([
+          // 刷新目标数据
+          refreshGoalData(goalId).catch(error => {
+            console.error("后台刷新目标数据失败:", error);
+          }),
+          
+          // 重新获取每日卡片数据
+          (async () => {
+            try {
+              console.log("重新获取每日卡片数据");
+              const response = await apiService.goals.getById(goalId);
+              if (response.data && response.data.data && response.data.data.dailyCards) {
+                console.log("获取到最新每日卡片数据:", response.data.data.dailyCards.length, "张卡片");
+                setDailyCards(response.data.data.dailyCards);
+              }
+            } catch (error) {
+              console.error("获取每日卡片数据失败:", error);
+            }
+          })()
+        ]).catch(error => {
           // 这里可以考虑添加一个轻量级的通知，但不阻塞UI
+          console.error("数据刷新失败:", error);
         });
       } catch (error) {
         console.error("关闭对话框后处理失败:", error);
