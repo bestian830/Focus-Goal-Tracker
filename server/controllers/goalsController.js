@@ -582,10 +582,35 @@ const addOrUpdateDailyCard = async (req, res) => {
     // Convert date string to Date object
     const cardDate = date ? new Date(date) : new Date();
     
-    // Check if a card for this date already exists
-    const existingCardIndex = goal.dailyCards.findIndex(card => 
-      new Date(card.date).toDateString() === cardDate.toDateString()
-    );
+    console.log('處理日卡請求:', {
+      目標ID: id,
+      請求日期: date,
+      解析日期: cardDate,
+      現有卡片數量: goal.dailyCards.length
+    });
+    
+    // 改進日期比較邏輯，更準確地處理日期比較
+    const existingCardIndex = goal.dailyCards.findIndex(card => {
+      // 轉換兩個日期為本地日期字符串 YYYY-MM-DD 進行比較
+      const cardLocalDate = new Date(card.date);
+      const targetLocalDate = new Date(cardDate);
+      
+      const cardDateStr = `${cardLocalDate.getFullYear()}-${String(cardLocalDate.getMonth() + 1).padStart(2, '0')}-${String(cardLocalDate.getDate()).padStart(2, '0')}`;
+      const targetDateStr = `${targetLocalDate.getFullYear()}-${String(targetLocalDate.getMonth() + 1).padStart(2, '0')}-${String(targetLocalDate.getDate()).padStart(2, '0')}`;
+      
+      console.log('日期比較:', {
+        卡片日期: cardDateStr,
+        目標日期: targetDateStr,
+        相等: cardDateStr === targetDateStr
+      });
+      
+      return cardDateStr === targetDateStr;
+    });
+    
+    console.log('日期比較結果:', {
+      找到現有卡片: existingCardIndex !== -1,
+      索引: existingCardIndex
+    });
     
     if (existingCardIndex !== -1) {
       // Update existing card

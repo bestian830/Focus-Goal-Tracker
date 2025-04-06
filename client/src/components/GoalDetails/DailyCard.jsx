@@ -19,14 +19,48 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
 
   // Format the date for display
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return `${date.getDate()}`;
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date in formatDate:', dateStr);
+        return '?';
+      }
+      
+      console.log('Formatting date:', {
+        input: dateStr,
+        parsed: date.toString(),
+        output: date.getDate()
+      });
+      
+      return `${date.getDate()}`;
+    } catch (error) {
+      console.error('Error formatting date:', error, dateStr);
+      return '?';
+    }
   };
 
   // Format the day name for display
   const formatDay = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date in formatDay:', dateStr);
+        return '?';
+      }
+      
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      console.log('Formatting day:', {
+        input: dateStr,
+        parsed: date.toString(),
+        output: day
+      });
+      
+      return day;
+    } catch (error) {
+      console.error('Error formatting day:', error, dateStr);
+      return '?';
+    }
   };
 
   // Handle card click to open details

@@ -28,23 +28,37 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
     
     // 獲取當前星期的起始日
     const day = startDate.getDay(); // 0 = 星期日, 1 = 星期一, ...
-    startDate.setDate(startDate.getDate() - day); // 調整到本週的星期日
+    
+    // 為了處理周六重複問題，先使用標準邏輯獲取本週的星期日
+    const adjustedDate = new Date(startDate);
+    adjustedDate.setDate(startDate.getDate() - day); // 調整到本週的星期日
     
     // 添加偏移週數
-    startDate.setDate(startDate.getDate() + (offset * 7));
+    adjustedDate.setDate(adjustedDate.getDate() + (offset * 7));
     
     console.log('Generating week dates:', {
       originalDate: goalDate,
-      startDate: startDate.toLocaleDateString(),
+      adjustedStartDate: adjustedDate.toLocaleDateString(),
+      weekDay: day,
       offset
     });
     
     const weekDates = [];
     for (let i = 0; i < 7; i++) {
       // 創建新日期對象，避免修改原始日期
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
+      const currentDate = new Date(adjustedDate);
+      currentDate.setDate(adjustedDate.getDate() + i);
+      
+      // 移除時間部分，只保留日期（重要，避免跨日期邊界問題）
+      currentDate.setHours(0, 0, 0, 0);
+      
       weekDates.push(currentDate);
+      
+      console.log(`創建第 ${i+1} 天:`, {
+        日期: currentDate.toLocaleDateString(),
+        ISO: currentDate.toISOString(),
+        星期: currentDate.getDay()
+      });
     }
     
     return weekDates;
@@ -189,6 +203,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       
       // 獲取本地日期（YYYY-MM-DD格式）而不是UTC
       const localToday = new Date();
+      localToday.setHours(0, 0, 0, 0);
       const todayYMD = `${localToday.getFullYear()}-${String(localToday.getMonth() + 1).padStart(2, '0')}-${String(localToday.getDate()).padStart(2, '0')}`;
       
       // 解析傳入的日期字符串，轉換為本地日期格式
@@ -207,6 +222,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       
       console.log('Comparing today:', {
         input: dateStr,
+        inputType: typeof dateStr,
         parsed: dateYMD,
         today: todayYMD,
         match: dateYMD === todayYMD
@@ -283,16 +299,38 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       
       <Fade in={!isLoading} timeout={500}>
         <Box className={styles.cardsContainer}>
-          {currentWeekCards.map((card, index) => (
-            <DailyCard 
-              key={`${card.date}-${index}`}
-              card={card}
-              goal={goal}
-              isToday={isToday(card.date)}
-              onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
-              onViewDeclaration={onViewDeclaration}
-            />
-          ))}
+          {currentWeekCards.map((card, index) => {
+            // 检查是否重复的周六日期（解决日期重复问题）
+            if (index > 0 && index < currentWeekCards.length) {
+              const prevCardDate = new Date(currentWeekCards[index-1].date);
+              const thisCardDate = new Date(card.date);
+              
+              // 如果前后两个日期相同，跳过渲染
+              if (
+                prevCardDate.getFullYear() === thisCardDate.getFullYear() &&
+                prevCardDate.getMonth() === thisCardDate.getMonth() &&
+                prevCardDate.getDate() === thisCardDate.getDate()
+              ) {
+                console.log('跳过重复的日期卡片:', {
+                  前一个卡片: prevCardDate.toLocaleDateString(),
+                  当前卡片: thisCardDate.toLocaleDateString(),
+                  索引: index
+                });
+                return null;
+              }
+            }
+            
+            return (
+              <DailyCard 
+                key={`${card.date}-${index}`}
+                card={card}
+                goal={goal}
+                isToday={isToday(card.date)}
+                onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
+                onViewDeclaration={onViewDeclaration}
+              />
+            );
+          }).filter(Boolean)} {/* 过滤掉null值 */}
         </Box>
       </Fade>
     </Box>
