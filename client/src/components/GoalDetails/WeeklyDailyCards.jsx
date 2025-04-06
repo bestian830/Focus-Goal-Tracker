@@ -23,16 +23,30 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   
   // Generate a week of dates based on goal creation date or current date
   const generateWeekDates = (goalDate, offset = 0) => {
+    // 使用本地時間處理，不使用 UTC
     const startDate = new Date(goalDate);
-    // Calculate start date, adding offset weeks
+    
+    // 獲取當前星期的起始日
+    const day = startDate.getDay(); // 0 = 星期日, 1 = 星期一, ...
+    startDate.setDate(startDate.getDate() - day); // 調整到本週的星期日
+    
+    // 添加偏移週數
     startDate.setDate(startDate.getDate() + (offset * 7));
+    
+    console.log('Generating week dates:', {
+      originalDate: goalDate,
+      startDate: startDate.toLocaleDateString(),
+      offset
+    });
     
     const weekDates = [];
     for (let i = 0; i < 7; i++) {
+      // 創建新日期對象，避免修改原始日期
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
       weekDates.push(currentDate);
     }
+    
     return weekDates;
   };
   
@@ -173,27 +187,32 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
     try {
       if (!dateStr) return false;
       
-      // 獲取日期的 YYYY-MM-DD 字符串
+      // 獲取本地日期（YYYY-MM-DD格式）而不是UTC
+      const localToday = new Date();
+      const todayYMD = `${localToday.getFullYear()}-${String(localToday.getMonth() + 1).padStart(2, '0')}-${String(localToday.getDate()).padStart(2, '0')}`;
+      
+      // 解析傳入的日期字符串，轉換為本地日期格式
       let dateYMD;
       try {
-        if (typeof dateStr === 'string' && dateStr.includes('T')) {
-          // 如果是 ISO 字符串，直接分割
-          dateYMD = dateStr.split('T')[0];
-        } else {
-          // 否則創建日期對象
-          const date = new Date(dateStr);
-          if (isNaN(date.getTime())) return false;
-          dateYMD = date.toISOString().split('T')[0];
-        }
+        // 創建日期對象
+        const dateObj = new Date(dateStr);
+        if (isNaN(dateObj.getTime())) return false;
+        
+        // 轉換為本地日期格式 YYYY-MM-DD
+        dateYMD = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
       } catch (err) {
         console.error('Error extracting date for isToday check:', err);
         return false;
       }
       
-      // 獲取今天的 YYYY-MM-DD 字符串
-      const today = new Date().toISOString().split('T')[0];
+      console.log('Comparing today:', {
+        input: dateStr,
+        parsed: dateYMD,
+        today: todayYMD,
+        match: dateYMD === todayYMD
+      });
       
-      return dateYMD === today;
+      return dateYMD === todayYMD;
     } catch (error) {
       console.error('Error checking if date is today:', error, dateStr);
       return false;

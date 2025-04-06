@@ -109,12 +109,24 @@ export default function DailyCardRecord({
     const existingCard = goal.dailyCards && goal.dailyCards.find(card => card.date === date);
     
     if (existingCard) {
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
-      const cardDate = date;
+      // 使用本地日期格式處理，而不是 UTC
+      const today = new Date();
+      const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      // 解析卡片日期
+      let cardDateObj = new Date(date);
+      const cardDateFormatted = `${cardDateObj.getFullYear()}-${String(cardDateObj.getMonth() + 1).padStart(2, '0')}-${String(cardDateObj.getDate()).padStart(2, '0')}`;
+      
+      // 記錄日期比較信息
+      console.log('Comparing card date with today:', {
+        cardDate: cardDateFormatted,
+        today: todayFormatted,
+        isToday: cardDateFormatted === todayFormatted,
+        isFuture: cardDateFormatted > todayFormatted
+      });
       
       // Check if the card is for today or a future date
-      if (cardDate >= today) {
+      if (cardDateFormatted >= todayFormatted) {
         // For today or future dates, update with latest settings but preserve completion status
         setCardData({
           ...existingCard,
@@ -270,27 +282,28 @@ export default function DailyCardRecord({
         originalDate: date,
         cardDataDate: cardData.date,
         dateType: typeof date,
-        isISOString: date && date.includes('T') && date.includes('Z')
+        isISOString: date && typeof date === 'string' && date.includes('T') && date.includes('Z')
       });
       
-      // 確保日期格式對齊後端處理邏輯
+      // 確保日期格式正確，使用本地時間處理
       let cardDate;
       try {
-        // 嘗試創建日期對象 - 後端使用 new Date(date)
         cardDate = date ? new Date(date) : new Date();
         
         if (isNaN(cardDate.getTime())) {
           throw new Error('Invalid date format');
         }
         
-        // More logging to debug date processing
+        // 記錄日期詳情，用於調試
         console.log('Date processing:', {
           originalDate: date,
-          parsedDate: cardDate,
-          dateISOString: cardDate.toISOString(),
-          dateString: cardDate.toString(),
-          dateStringForBackend: cardDate.toDateString(),
-          backendComparisonExample: new Date().toDateString() === cardDate.toDateString()
+          parsedDate: cardDate.toString(),
+          localDateISOString: new Date(
+            cardDate.getFullYear(), 
+            cardDate.getMonth(), 
+            cardDate.getDate()
+          ).toISOString(),
+          utcDateISOString: cardDate.toISOString()
         });
       } catch (error) {
         console.error('Error creating date object:', error, date);
@@ -299,10 +312,15 @@ export default function DailyCardRecord({
         return;
       }
       
-      // 準備發送給API的數據 - 保持使用ISO格式
+      // 準備發送給API的數據 - 使用 ISO 格式，但保留本地日期
       const updatedCard = {
         ...cardData,
-        date: cardDate.toISOString() // 確保使用ISO字符串格式，後端會將其轉換為Date對象
+        // 創建基於本地日期的 ISO 字符串 (UTC 午夜)
+        date: new Date(
+          cardDate.getFullYear(), 
+          cardDate.getMonth(), 
+          cardDate.getDate()
+        ).toISOString()
       };
       
       console.log('Sending updated card to API:', updatedCard);
