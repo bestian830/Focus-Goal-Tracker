@@ -23,34 +23,35 @@ router.get('/auth-test', requireAuth, (req, res) => {
   });
 });
 
-// 简化的生成报告路由 - 暂时不调用 ReportService
+// 修改此路由以调用实际服务
 router.post('/:goalId', requireAuth, async (req, res) => {
   try {
     const { goalId } = req.params;
-    const { timeRange } = req.body;
-    const userId = req.user.id;
+    // 从请求体获取 timeRange，如果未提供则默认为 'daily'
+    // 前端目前固定发送 'daily'
+    const timeRange = req.body.timeRange || 'daily'; 
+    const userId = req.user.id; // 由 requireAuth 中间件提供
 
-    console.log('简化的生成报告路由被调用:', {
-      goalId,
-      userId,
-      timeRange
-    });
+    console.log('Received request to generate report:', { goalId, userId, timeRange });
 
-    // 返回成功响应，不实际生成报告
+    // 调用 ReportService 来生成报告
+    const report = await ReportService.generateReport(goalId, userId, timeRange);
+
+    console.log(`Report generated successfully for goal ${goalId}, report ID: ${report._id}`);
+
+    // 将生成的报告数据返回给前端
     res.json({ 
       success: true, 
-      data: {
-        goalId,
-        userId,
-        timeRange,
-        message: '这是一个测试响应，没有实际生成报告'
-      }
+      data: report // 发送完整的报告对象
     });
+
   } catch (error) {
-    console.error('错误:', error);
+    console.error(`Error in POST /api/reports/${req.params.goalId}:`, error);
+    // 返回 500 错误和错误信息
     res.status(500).json({ 
       success: false, 
-      error: error.message 
+      // 在生产环境中考虑返回更通用的错误信息
+      error: error.message || 'Failed to generate report due to an internal server error.' 
     });
   }
 });
