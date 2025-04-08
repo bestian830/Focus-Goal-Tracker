@@ -118,15 +118,6 @@ const checkApiHealth = async () => {
   }
 };
 
-// initial health check
-setTimeout(() => {
-  checkApiHealth().then((isHealthy) => {
-    if (!isHealthy && window.location.hostname !== "localhost") {
-      console.warn("Warning: Unable to connect to backend API, please ensure the service is running properly.");
-    }
-  });
-}, 1000);
-
 // encapsulate API methods
 const apiService = {
   // diagnostic method
@@ -276,6 +267,24 @@ const apiService = {
         `/api/progress/summary?goalId=${goalId}&startDate=${startDate}&endDate=${endDate}`
       ),
   },
+
+  // report related
+  reports: {
+    generate: (goalId) => {
+      console.log('调用生成报告 API，goalId:', goalId);
+      return api.post(`/api/reports/${goalId}`, { timeRange: 'daily' })
+        .then(response => {
+          console.log('API 响应:', response);
+          return response;
+        })
+        .catch(error => {
+          console.error('API 错误:', error);
+          throw error;
+        });
+    },
+    getLatest: (goalId) => api.get(`/api/reports/${goalId}/latest`),
+    rate: (feedbackId, rating) => api.post(`/api/reports/${feedbackId}/rate`, { rating })
+  }
 };
 
 export default apiService;

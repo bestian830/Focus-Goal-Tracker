@@ -6,14 +6,19 @@ import "../../styles/Home.css"; // import styles
 
 /**
  * Header Component
- * 
+ *
  * Top navigation bar component, includes:
  * 1. Application title
  * 2. User information display (user avatar, welcome message)
  * 3. Login/logout functionality
  * 4. Guest login option
  */
-export default function Header({ user, loading, handleLogout, toggleProfileModal }) {
+export default function Header({
+  user,
+  loading,
+  handleLogout,
+  toggleProfileModal,
+}) {
   const navigate = useNavigate();
 
   return (
@@ -27,7 +32,11 @@ export default function Header({ user, loading, handleLogout, toggleProfileModal
             <span>Welcome, {user.username}</span>
             <div className="avatar-container" onClick={toggleProfileModal}>
               {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="User Avatar" className="avatar-image" />
+                <img
+                  src={user.avatarUrl}
+                  alt="User Avatar"
+                  className="avatar-image"
+                />
               ) : (
                 <FaUser className="avatar-icon" />
               )}
@@ -38,10 +47,7 @@ export default function Header({ user, loading, handleLogout, toggleProfileModal
           </div>
         ) : (
           <div className="guest-options">
-            <button
-              onClick={() => navigate("/login")}
-              className="login-button"
-            >
+            <button onClick={() => navigate("/login")} className="login-button">
               Login
             </button>
             <button

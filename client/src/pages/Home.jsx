@@ -65,15 +65,15 @@ function Home() {
       }
 
       console.log(`Fetching goals for user ${id}, isGuest: ${isGuest}`);
-      
+
       try {
         const response = await apiService.goals.getUserGoals(id);
         console.log("User goals API response:", response);
-        
+
         if (response.data && response.data.success) {
           const goals = response.data.data || [];
           setUserGoals(goals);
-          
+
           // 如果用户没有目标，显示引导流程
           if (goals.length === 0) {
             console.log("User has no goals, showing onboarding");
@@ -82,7 +82,7 @@ function Home() {
             console.log(`User has ${goals.length} goals`);
             setShowOnboarding(false);
           }
-          
+
           return goals;
         } else {
           console.warn("API response success is false:", response);
@@ -124,17 +124,22 @@ function Home() {
         }
 
         if (userId) {
-          console.log("Detected registered user ID, starting to fetch user data");
+          console.log(
+            "Detected registered user ID, starting to fetch user data"
+          );
           try {
             const response = await apiService.auth.getCurrentUser(userId);
 
             if (response.data && response.data.success) {
-              console.log("Successfully fetched user data:", response.data.data);
+              console.log(
+                "Successfully fetched user data:",
+                response.data.data
+              );
               setUser({
                 ...response.data.data,
                 isGuest: false,
               });
-              
+
               // 获取用户目标
               await fetchUserGoals(userId, false);
             }
@@ -150,7 +155,7 @@ function Home() {
                 username: "User",
                 isGuest: false,
               });
-              
+
               // 获取用户目标
               await fetchUserGoals(userId, false);
             }
@@ -162,7 +167,7 @@ function Home() {
             username: "Guest User",
             isGuest: true,
           });
-          
+
           // 获取临时用户目标
           await fetchUserGoals(tempId, true);
         }
@@ -180,7 +185,7 @@ function Home() {
       if (user) {
         console.log("Running scheduled refresh of goals data");
         const userId = user.id || user._id;
-        fetchUserGoals(userId, user?.isGuest || false).catch(err => {
+        fetchUserGoals(userId, user?.isGuest || false).catch((err) => {
           console.error("Scheduled refresh failed:", err);
         });
       }
@@ -200,12 +205,11 @@ function Home() {
       // try to clear session on server
       try {
         if (user && user.isGuest) {
-
           // for temporary users, we do not actually delete temporary accounts
           // only clear localStorage and cookies, but keep the account in the database
           // this allows the user to return later using the same tempId
           const tempId = localStorage.getItem("tempId");
-          
+
           if (tempId) {
             try {
               // only clear cookies without deleting the account
@@ -215,15 +219,13 @@ function Home() {
               // if error, still continue local cleanup
             }
 
-
             console.log("keep tempId for potential reuse:", tempId);
             // do not remove tempId from localStorage, keep it for potential reuse
-
           }
         } else if (user && !user.isGuest) {
           // for registered users, call logout API
           await apiService.auth.logout();
-          
+
           // clear userId in localStorage
           localStorage.removeItem("userId");
         }
@@ -256,13 +258,13 @@ function Home() {
   const handleOnboardingComplete = async (newGoal) => {
     console.log("Onboarding complete, new goal created:", newGoal);
     setShowOnboarding(false);
-    
+
     // 立即刷新目標列表而不是簡單地添加新目標
     if (user) {
       console.log("Refreshing goals list after new goal creation");
       const userId = user.id || user._id;
       await fetchUserGoals(userId, user.isGuest);
-      
+
       // 選擇新創建的目標
       if (newGoal && (newGoal._id || newGoal.id)) {
         setSelectedGoalId(newGoal._id || newGoal.id);
@@ -270,8 +272,8 @@ function Home() {
     } else {
       console.warn("User information not available, cannot refresh goals");
       // 如果沒有用戶信息，至少將新目標添加到列表中
-      setUserGoals(prev => [...prev, newGoal]);
-      
+      setUserGoals((prev) => [...prev, newGoal]);
+
       // 選擇新創建的目標
       if (newGoal && (newGoal._id || newGoal.id)) {
         setSelectedGoalId(newGoal._id || newGoal.id);
@@ -296,7 +298,7 @@ function Home() {
     console.log("Resetting goals state");
     setUserGoals([]);
     setSelectedGoalId(null);
-    
+
     // 如果用戶沒有目標，顯示引導流程
     if (user) {
       console.log("No goals, showing onboarding modal");
@@ -306,14 +308,16 @@ function Home() {
 
   // 添加處理優先級變更的函數
   const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
-    console.log(`Home handling priority change for goal ${goalId} to ${newPriority}`);
-    
+    console.log(
+      `Home handling priority change for goal ${goalId} to ${newPriority}`
+    );
+
     // 如果有更新後的目標對象，則使用它直接更新狀態
     if (updatedGoal) {
       console.log("Updated goal received from API:", updatedGoal);
-      
-      setUserGoals(prevGoals => {
-        return prevGoals.map(goal => {
+
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
           if (currentGoalId === goalId) {
             // 保留現有屬性，但更新優先級和其他API返回的字段
@@ -324,8 +328,8 @@ function Home() {
       });
     } else {
       // 如果沒有更新後的目標對象，則僅更新優先級
-      setUserGoals(prevGoals => {
-        return prevGoals.map(goal => {
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
           if (currentGoalId === goalId) {
             return { ...goal, priority: newPriority };
@@ -339,13 +343,13 @@ function Home() {
   // 添加處理目標日期變更的函數
   const handleDateChange = (goalId, newDate, updatedGoal) => {
     console.log(`Home handling date change for goal ${goalId} to ${newDate}`);
-    
+
     // 如果有更新後的目標對象，則使用它直接更新狀態
     if (updatedGoal) {
       console.log("Updated goal with new date received from API:", updatedGoal);
-      
-      setUserGoals(prevGoals => {
-        return prevGoals.map(goal => {
+
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
           if (currentGoalId === goalId) {
             // 保留現有屬性，但更新目標日期和其他API返回的字段
@@ -356,8 +360,8 @@ function Home() {
       });
     } else {
       // 如果沒有更新後的目標對象，則僅更新目標日期
-      setUserGoals(prevGoals => {
-        return prevGoals.map(goal => {
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
           if (currentGoalId === goalId) {
             return { ...goal, targetDate: newDate };
@@ -370,26 +374,31 @@ function Home() {
 
   // Add handleGoalDeleted method to update goals after deletion
   const handleGoalDeleted = async (deletedGoalId) => {
-    console.log(`Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`);
-    
+    console.log(
+      `Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`
+    );
+
     // 暫時移除刪除的目標（用於立即反饋）
-    const updatedGoals = userGoals.filter(g => {
+    const updatedGoals = userGoals.filter((g) => {
       const goalId = g._id || g.id;
       return goalId !== deletedGoalId;
     });
     setUserGoals(updatedGoals);
-    
+
     // 檢查是否刪除了最後一個目標
     const isLastGoal = updatedGoals.length === 0;
-    
+
     // 從後端重新獲取完整的目標列表（確保與數據庫同步）
     if (user) {
       console.log("Refreshing goals list after deletion");
       const userId = user.id || user._id;
       try {
         const goals = await fetchUserGoals(userId, user.isGuest);
-        console.log("Goals list refreshed successfully after deletion, count:", goals.length);
-        
+        console.log(
+          "Goals list refreshed successfully after deletion, count:",
+          goals.length
+        );
+
         // 如果沒有目標了，重置狀態
         if (goals.length === 0) {
           resetGoals();
@@ -397,7 +406,7 @@ function Home() {
         }
       } catch (error) {
         console.error("Failed to refresh goals after deletion:", error);
-        
+
         // 如果API調用失敗但我們的本地狀態顯示沒有目標了，仍然重置
         if (isLastGoal) {
           resetGoals();
@@ -409,12 +418,15 @@ function Home() {
       resetGoals();
       return;
     }
-    
+
     // 如果被刪除的目標是當前選中的目標，選擇另一個目標
     if (selectedGoalId === deletedGoalId) {
       // 立即選擇另一個目標，不需要等待
       if (updatedGoals.length > 0) {
-        console.log("Selecting another goal after deletion:", updatedGoals[0]._id || updatedGoals[0].id);
+        console.log(
+          "Selecting another goal after deletion:",
+          updatedGoals[0]._id || updatedGoals[0].id
+        );
         setSelectedGoalId(updatedGoals[0]._id || updatedGoals[0].id);
       } else {
         console.log("No goals remaining after deletion, clearing selection");
@@ -427,24 +439,24 @@ function Home() {
   const refreshSingleGoal = async (goalId) => {
     try {
       console.log(`刷新单个目标数据: ${goalId}`);
-      
+
       // 检查goalId是否有效
       if (!goalId) {
         console.error("无法刷新目标数据：goalId无效");
         return null;
       }
-      
+
       // 调用API获取最新的目标数据
       try {
         const response = await apiService.goals.getById(goalId);
-        
+
         if (response.data && response.data.data) {
           const updatedGoal = response.data.data;
           console.log("获取到最新目标数据:", updatedGoal);
-          
+
           // 更新goals数组中的目标数据
-          setUserGoals(prevGoals => {
-            return prevGoals.map(goal => {
+          setUserGoals((prevGoals) => {
+            return prevGoals.map((goal) => {
               const currentGoalId = goal._id || goal.id;
               if (currentGoalId === goalId) {
                 return updatedGoal;
@@ -452,14 +464,16 @@ function Home() {
               return goal;
             });
           });
-          
+
           return updatedGoal;
         }
       } catch (apiError) {
         console.error(`API调用失败，goalId: ${goalId}`, apiError);
-        
+
         // 尝试从现有数据中返回
-        const existingGoal = userGoals.find(g => (g._id === goalId || g.id === goalId));
+        const existingGoal = userGoals.find(
+          (g) => g._id === goalId || g.id === goalId
+        );
         if (existingGoal) {
           console.log("返回现有目标数据:", existingGoal);
           return existingGoal;
@@ -468,37 +482,37 @@ function Home() {
     } catch (error) {
       console.error("刷新单个目标数据失败:", error);
     }
-    
+
     return null;
   };
 
   return (
     <div className="home-container">
-      <Header 
-        user={user} 
-        loading={loading} 
-        handleLogout={handleLogout} 
-        toggleProfileModal={toggleProfileModal} 
+      <Header
+        user={user}
+        loading={loading}
+        handleLogout={handleLogout}
+        toggleProfileModal={toggleProfileModal}
       />
 
       <div className="main-content">
         {user ? (
           <>
-            <Sidebar 
-              goals={userGoals} 
-              onGoalSelect={handleGoalSelect} 
+            <Sidebar
+              goals={userGoals}
+              onGoalSelect={handleGoalSelect}
               onAddGoalClick={() => setShowOnboarding(true)}
               onPriorityChange={handlePriorityChange}
               onDateChange={handleDateChange}
               activeGoalId={selectedGoalId}
             />
-            <GoalDetails 
-              goals={userGoals} 
+            <GoalDetails
+              goals={userGoals}
               goalId={selectedGoalId}
               onGoalDeleted={handleGoalDeleted}
-              refreshGoalData={refreshSingleGoal} 
+              refreshGoalData={refreshSingleGoal}
             />
-            <ProgressReport />
+            <ProgressReport goalId={selectedGoalId} />
           </>
         ) : (
           <div className="welcome-message">
@@ -512,10 +526,10 @@ function Home() {
 
       {/* Profile Modal */}
       {user && (
-        <ProfileModal 
-          isOpen={showProfileModal} 
-          onClose={toggleProfileModal} 
-          user={user} 
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={toggleProfileModal}
+          user={user}
         />
       )}
 

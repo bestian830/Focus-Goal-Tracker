@@ -3,7 +3,7 @@ import ExportButton from './ExportButton';
 import KeyAchievements from './KeyAchievements';
 import AIFeedback from './AIFeedback';
 
-export default function ProgressReport() {
+export default function ProgressReport({ goalId }) {
   const [report, setReport] = useState(null);
 
   useEffect(() => {
@@ -28,12 +28,15 @@ export default function ProgressReport() {
   }, []);
 
   if (!report) return <div className="progress-report">Loading...</div>;
+  
+  // 如果没有goalId，显示提示信息
+  if (!goalId) return <div className="progress-report">请先选择一个目标</div>;
 
   return (
     <div className="progress-report">
       <ExportButton />
       <KeyAchievements achievements={report.achievements} />
-      <AIFeedback feedback={report.aiFeedback} />
+      <AIFeedback goalId={goalId} />
     </div>
   );
 }
