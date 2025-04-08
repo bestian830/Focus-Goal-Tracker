@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, CircularProgress, Paper, Button } from '@mui/material';
 import apiService from '../../services/api';
+import '../../styles/AIFeedback.css';
 
 export default function AIFeedback({ goalId }) {
   const [feedback, setFeedback] = useState(null);
@@ -44,8 +45,8 @@ export default function AIFeedback({ goalId }) {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+    <Paper elevation={3} className="ai-feedback-paper">
+      <Box className="ai-feedback-header">
         <Typography variant="h6">AI 进度分析</Typography>
         <Button 
           variant="contained" 
@@ -63,16 +64,16 @@ export default function AIFeedback({ goalId }) {
       )}
 
       {loading && (
-        <Box display="flex" justifyContent="center" p={3}>
+        <Box className="ai-feedback-loading-container">
           <CircularProgress />
-          <Typography variant="body2" sx={{ ml: 2 }}>
+          <Typography variant="body2" className="ai-feedback-loading-text">
             正在生成分析...
           </Typography>
         </Box>
       )}
 
       {!feedback && !loading && !error && (
-        <Box textAlign="center" p={3}>
+        <Box className="ai-feedback-placeholder">
           <Typography variant="body2" color="text.secondary">
             {goalId ? '点击按钮生成 AI 分析报告' : '请先选择一个目标'}
           </Typography>
@@ -81,10 +82,10 @@ export default function AIFeedback({ goalId }) {
 
       {feedback && (
         <>
-          <Box sx={{ whiteSpace: 'pre-line' }}>
+          <Box className="ai-feedback-content">
             {feedback.content || '暂无分析内容'}
           </Box>
-          <Box mt={2}>
+          <Box className="ai-feedback-timestamp">
             <Typography variant="subtitle2" color="text.secondary">
               分析时间: {lastUpdate?.toLocaleString()}
             </Typography>

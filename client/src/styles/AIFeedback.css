@@ -1,0 +1,35 @@
+/* AIFeedback 组件样式 */
+.ai-feedback-paper {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.ai-feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ai-feedback-loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ai-feedback-loading-text {
+  margin-left: 16px;
+}
+
+.ai-feedback-placeholder {
+  text-align: center;
+  padding: 24px;
+}
+
+.ai-feedback-content {
+  white-space: pre-line;
+}
+
+.ai-feedback-timestamp {
+  margin-top: 16px;
+} 
