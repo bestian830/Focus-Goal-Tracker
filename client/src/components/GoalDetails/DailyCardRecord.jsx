@@ -33,8 +33,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import DailyTasks from './DailyTasks';
-import DailyReward from './DailyReward';
 import apiService from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 /**
  * DailyCardRecord component displays and manages a daily card with tasks, rewards, and progress records
@@ -72,10 +72,8 @@ export default function DailyCardRecord({
   const [cardData, setCardData] = useState({
     date: date,
     dailyTask: '',
-    dailyReward: '',
     completed: {
-      dailyTask: false,
-      dailyReward: false
+      dailyTask: false
     },
     taskCompletions: {}, // 用于存储每个任务的独立完成状态
     records: []
@@ -145,8 +143,11 @@ export default function DailyCardRecord({
         isFuture: cardDateFormatted > todayFormatted
       });
 
-      // 初始化任务完成状态
+      // 初始化任务完成状态 - 确保使用现有的保存状态
+      // 检查existingCard中是否已有taskCompletions字段
       const taskCompletions = existingCard.taskCompletions || {};
+      
+      console.log('加载已保存的任务完成状态:', taskCompletions);
       
       // Check if the card is for today or a future date
       if (cardDateFormatted >= todayFormatted) {
@@ -198,34 +199,95 @@ export default function DailyCardRecord({
     console.log('Daily card data initialized:', {
       date,
       existingCard: existingCard ? 'found' : 'not found',
-      recordsType: existingCard ? (Array.isArray(existingCard.records) ? 'array' : typeof existingCard.records) : 'N/A'
+      recordsType: existingCard ? (Array.isArray(existingCard.records) ? 'array' : typeof existingCard.records) : 'N/A',
+      taskCompletionsLoaded: existingCard ? (existingCard.taskCompletions ? 'yes' : 'no') : 'N/A'
     });
   }, [goal, date, open]);
 
-  // Handle task completion status change
-  const handleTaskStatusChange = (taskId, completed) => {
-    console.log(`Task ${taskId} status changed to ${completed}`);
+  // Handle task status change
+  const handleTaskStatusChange = async (taskId, completed) => {
+    console.log(`任务状态变更开始: ${taskId} => ${completed}`);
     
-    setCardData(prev => {
-      // 更新特定任务的完成状态
-      const updatedTaskCompletions = {
-        ...prev.taskCompletions,
-        [taskId]: completed
+    try {
+      if (!goal || !goal._id) {
+        console.error('无效的目标数据:', goal);
+        toast.error('无法保存，目标数据无效');
+        return;
+      }
+
+      // 确保日期格式正确
+      if (!date) {
+        console.error('无效的日期:', date);
+        toast.error('无法保存，日期数据无效');
+        return;
+      }
+
+      // 先创建新的任务完成状态对象，再更新本地状态
+      // 这确保我们不会修改引用同一对象
+      const newTaskCompletions = {
+        ...cardData.taskCompletions
       };
       
-      // 检查是否有任何任务完成
-      const anyTaskCompleted = Object.values(updatedTaskCompletions).some(status => status === true);
+      // 明确更新状态值 
+      newTaskCompletions[taskId] = completed;
       
-      return {
-        ...prev,
-        taskCompletions: updatedTaskCompletions,
-        // 设置整体任务完成状态
-        completed: {
-          ...prev.completed,
-          dailyTask: anyTaskCompleted
-        }
+      console.log('任务状态变化:', {
+        任务ID: taskId,
+        新状态: completed,
+        原状态: cardData.taskCompletions[taskId],
+        更新后对象: newTaskCompletions
+      });
+      
+      // 创建新的cardData对象，避免直接修改原对象
+      const updatedCard = {
+        ...cardData,
+        taskCompletions: newTaskCompletions
       };
-    });
+      
+      // 先更新UI状态
+      setCardData(updatedCard);
+      
+      // 准备日期格式
+      const formattedDate = new Date(date).toISOString();
+      console.log('格式化的日期:', formattedDate);
+      
+      // 准备发送到服务器的数据
+      const payload = {
+        date: formattedDate,
+        dailyTask: updatedCard.dailyTask,
+        completed: updatedCard.completed || { dailyTask: false },
+        records: updatedCard.records || [],
+        taskCompletions: newTaskCompletions  // 使用新创建的状态对象
+      };
+      
+      console.log('正在保存任务状态到数据库:', {
+        目标ID: goal._id,
+        日期: payload.date,
+        任务ID: taskId,
+        完成状态: completed,
+        完整载荷: payload
+      });
+      
+      // 使用apiService发送请求
+      const response = await apiService.goals.addOrUpdateDailyCard(goal._id, payload);
+      
+      console.log('任务状态已保存, 响应:', response);
+      
+      // 显示成功消息
+      toast.success('任务状态已保存');
+      
+      // 通知父组件更新
+      if (onSave) {
+        console.log('Calling onSave callback with updatedCard data');
+        // Pass the locally constructed updatedCard, consistent with handleTaskStatusChange
+        onSave(updatedCard); 
+      } else {
+        console.log('No onSave callback provided');
+      }
+    } catch (error) {
+      console.error('保存任务状态失败:', error);
+      toast.error('保存任务状态失败，请重试');
+    }
   };
 
   // Handle adding a new progress record
@@ -481,9 +543,15 @@ export default function DailyCardRecord({
       // 確保日期格式正確，使用本地時間處理
       let cardDate;
       try {
-        cardDate = date ? new Date(date) : new Date();
+        if (!date) {
+          console.error('无效的日期数据:', date);
+          throw new Error('Invalid date data');
+        }
+        
+        cardDate = new Date(date);
         
         if (isNaN(cardDate.getTime())) {
+          console.error('Invalid date format:', date);
           throw new Error('Invalid date format');
         }
       } catch (error) {
@@ -493,47 +561,69 @@ export default function DailyCardRecord({
         return;
       }
       
-      // 準備發送給API的數據 - 使用 ISO 格式，但保留本地日期
+      // 确保taskCompletions对象已定义，并深拷贝以避免引用问题
+      const safeTaskCompletions = JSON.parse(JSON.stringify(cardData.taskCompletions || {}));
+      
+      // 打印当前任务完成状态，便于调试
+      console.log('DailyCardRecord - handleSave - 保存时的任务完成状态:', {
+        目标ID: goal._id,
+        日期: date,
+        总任务数: Object.keys(safeTaskCompletions).length,
+        已完成数: Object.values(safeTaskCompletions).filter(Boolean).length,
+        详细状态: safeTaskCompletions
+      });
+      
+      // 準備發送給API的數據 - 使用 ISO 格式
       const updatedCard = {
-        ...cardData,
-        // 創建基於本地日期的 ISO 字符串 (UTC 午夜)
-        date: new Date(
-          cardDate.getFullYear(), 
-          cardDate.getMonth(), 
-          cardDate.getDate()
-        ).toISOString(),
-        taskCompletions: cardData.taskCompletions // 确保包含任务完成状态
+        ...JSON.parse(JSON.stringify(cardData)), // 深拷贝避免引用问题
+        date: cardDate.toISOString(),
+        taskCompletions: safeTaskCompletions // 使用安全处理后的任务完成状态
       };
       
-      console.log('Sending updated card to API:', updatedCard);
-      console.log('Task completions being saved:', cardData.taskCompletions);
+      // 确保completed字段存在且包含正确的值
+      if (!updatedCard.completed) {
+        updatedCard.completed = { dailyTask: false };
+      }
+      
+      console.log('Sending updated card to API:', {
+        goalId: goal._id,
+        date: updatedCard.date,
+        taskCompletions: updatedCard.taskCompletions
+      });
       
       // Save to API
       const goalId = goal._id || goal.id;
-      console.log('Using goal ID for save:', goalId);
       
-      const response = await apiService.goals.addOrUpdateDailyCard(goalId, updatedCard);
-      console.log('API response:', response);
-      
-      // Show success message with completed tasks info
-      const completedTasksCount = Object.values(cardData.taskCompletions).filter(Boolean).length;
-      const totalTasksCount = Object.keys(cardData.taskCompletions).length;
-      
-      setSuccess(`Daily progress saved successfully (${completedTasksCount}/${totalTasksCount} tasks completed)`);
-      
-      // Clear success message after a few seconds
-      setTimeout(() => setSuccess(''), 5000);
-      
-      // Call onSave callback if provided
-      if (onSave) {
-        console.log('Calling onSave callback with response data');
-        onSave(response.data);
-      } else {
-        console.log('No onSave callback provided');
+      try {
+        const response = await apiService.goals.addOrUpdateDailyCard(goalId, updatedCard);
+        console.log('API response:', response);
+        
+        // Show success message with completed tasks info
+        const completedTasksCount = Object.values(safeTaskCompletions).filter(Boolean).length;
+        const totalTasksCount = Object.keys(safeTaskCompletions).length;
+        
+        setSuccess(`Daily progress saved successfully (${completedTasksCount}/${totalTasksCount} tasks completed)`);
+        toast.success(`保存成功!`);
+        
+        // Clear success message after a few seconds
+        setTimeout(() => setSuccess(''), 5000);
+        
+        // Call onSave callback if provided
+        if (onSave) {
+          console.log('Calling onSave callback with updatedCard data');
+          // Pass the locally constructed updatedCard, consistent with handleTaskStatusChange
+          onSave(updatedCard); 
+        } else {
+          console.log('No onSave callback provided');
+        }
+      } catch (apiError) {
+        console.error('API save error:', apiError);
+        throw new Error(`API error: ${apiError.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to save daily card:', error);
       setError(`Failed to save changes: ${error.message || 'Unknown error'}`);
+      toast.error(`保存失败: ${error.message || '未知错误'}`);
     } finally {
       setIsSaving(false);
     }

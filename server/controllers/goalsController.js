@@ -632,7 +632,16 @@ const addOrUpdateDailyCard = async (req, res) => {
       
       // 处理任务完成状态
       if (taskCompletions) {
-        goal.dailyCards[existingCardIndex].taskCompletions = taskCompletions;
+        console.log('更新任务完成状态:', {
+          原状态: goal.dailyCards[existingCardIndex].taskCompletions || {},
+          新状态: taskCompletions
+        });
+        
+        // 完全替换任务完成状态对象，而不是浅合并
+        // 使用深拷贝避免引用问题
+        goal.dailyCards[existingCardIndex].taskCompletions = JSON.parse(JSON.stringify(taskCompletions));
+        
+        console.log('更新后的任务完成状态:', goal.dailyCards[existingCardIndex].taskCompletions);
       }
       
       // 處理記錄（records）字段
@@ -655,8 +664,14 @@ const addOrUpdateDailyCard = async (req, res) => {
         completed: completed || { dailyTask: false, dailyReward: false },
         records: records || [],
         links: links || [],
-        taskCompletions: taskCompletions || {} // 添加任务完成状态字段
+        // 使用深拷贝创建任务完成状态对象，避免引用问题
+        taskCompletions: taskCompletions ? JSON.parse(JSON.stringify(taskCompletions)) : {}
       };
+      
+      console.log('创建新卡片:', {
+        日期: cardDate,
+        任务完成状态: newCard.taskCompletions
+      });
       
       goal.dailyCards.push(newCard);
     }

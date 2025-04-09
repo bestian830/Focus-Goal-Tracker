@@ -20,30 +20,40 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
   // Format the date for display
   const formatDate = (dateString) => {
     try {
+      if (!dateString) {
+        console.warn('Empty date string provided to formatDate');
+        return '--';
+      }
+      
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
         console.error('Invalid date:', dateString);
-        return '?';
+        return '--';
       }
       return date.getDate();
     } catch (error) {
       console.error('Error formatting date:', error);
-      return '?';
+      return '--';
     }
   };
 
   // Format the day name for display
   const formatDay = (dateString) => {
     try {
+      if (!dateString) {
+        console.warn('Empty date string provided to formatDay');
+        return '--';
+      }
+      
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
         console.error('Invalid day:', dateString);
-        return '?';
+        return '--';
       }
       return date.toLocaleDateString('en-US', { weekday: 'short' });
     } catch (error) {
       console.error('Error formatting day:', error);
-      return '?';
+      return '--';
     }
   };
 

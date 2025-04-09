@@ -5,7 +5,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DailyCard from './DailyCard';
 import styles from './WeeklyDailyCards.module.css';
-import apiService from '../../services/api';
 
 /**
  * WeeklyDailyCards - Displays a week of daily cards for a goal
@@ -137,7 +136,8 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
             dailyTask: false,
             dailyReward: false
           },
-          records: []
+          records: [],
+          taskCompletions: {} // 添加任务完成状态字段，初始化为空对象
         };
         
         console.log('Created new card:', newCard);
@@ -154,24 +154,88 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   // Handle card updates
   const handleCardUpdate = async (updatedCard, index) => {
     try {
-      // Update local state
+      // 确保卡片数据中包含任务完成状态
+      if (!updatedCard.taskCompletions) {
+        updatedCard.taskCompletions = {};
+      }
+
+      console.log('WeeklyDailyCards - handleCardUpdate - 更新卡片数据:', {
+        index,
+        日期: updatedCard.date,
+        任务完成状态: updatedCard.taskCompletions
+      });
+      
+      // 使用深拷贝更新本地状态，避免对象引用问题
       const updatedCards = [...currentWeekCards];
-      updatedCards[index] = updatedCard;
+      // 使用深拷贝替换卡片
+      updatedCards[index] = JSON.parse(JSON.stringify(updatedCard));
       setCurrentWeekCards(updatedCards);
       
-      // Call API to save the update
-      if (goal && goal._id) {
-        await apiService.goals.addOrUpdateDailyCard(goal._id, updatedCard);
+      // // Call API to save the update - REMOVED as DailyCardRecord handles saving
+      // if (goal && goal._id) {
+      //   const response = await apiService.goals.addOrUpdateDailyCard(goal._id, updatedCard);
+      //   console.log('API响应:', response);
+      // }
         
-        // Notify parent component of update
-        if (onCardsUpdate) {
-          onCardsUpdate(updatedCards);
-        }
+      // Notify parent component of update
+      if (onCardsUpdate) {
+        console.log('WeeklyDailyCards - handleCardUpdate - 调用 onCardsUpdate 通知 GoalDetails');
+        onCardsUpdate(updatedCards);
       }
     } catch (error) {
       console.error('Failed to update daily card:', error);
       // Error handling UI could be added here
     }
+  };
+  
+  // 确保卡片数据中date字段有效
+  const validateCardData = (cardData) => {
+    // 保存原始的重要数据
+    const originalCompletions = cardData.taskCompletions || {};
+    const originalRecords = cardData.records || [];
+    const originalCompleted = cardData.completed || { dailyTask: false };
+    
+    // 如果没有日期或日期无效，使用当前日期，但保留其他数据
+    if (!cardData.date) {
+      console.warn('Card missing date, adding current date:', cardData);
+      return {
+        ...cardData,
+        date: new Date().toISOString(),
+        // 确保保留原始的任务完成状态和记录
+        taskCompletions: originalCompletions,
+        records: originalRecords,
+        completed: originalCompleted
+      };
+    }
+    
+    // 尝试解析日期，如果无效则重置为当前日期
+    try {
+      const testDate = new Date(cardData.date);
+      if (isNaN(testDate.getTime())) {
+        console.warn('Card has invalid date, resetting:', cardData.date);
+        return {
+          ...cardData,
+          date: new Date().toISOString(),
+          // 确保保留原始的任务完成状态和记录
+          taskCompletions: originalCompletions,
+          records: originalRecords,
+          completed: originalCompleted
+        };
+      }
+    } catch (e) {
+      console.error('Error validating card date:', e);
+      return {
+        ...cardData,
+        date: new Date().toISOString(),
+        // 确保保留原始的任务完成状态和记录
+        taskCompletions: originalCompletions,
+        records: originalRecords,
+        completed: originalCompleted
+      };
+    }
+    
+    // 如果日期有效，保持不变
+    return cardData;
   };
   
   // Handle declaration view request
@@ -199,7 +263,10 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   // Check if a date is today
   const isToday = (dateStr) => {
     try {
-      if (!dateStr) return false;
+      if (!dateStr) {
+        console.warn('Empty date string provided to isToday');
+        return false;
+      }
       
       // 獲取本地日期（YYYY-MM-DD格式）而不是UTC
       const localToday = new Date();
@@ -211,7 +278,10 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       try {
         // 創建日期對象
         const dateObj = new Date(dateStr);
-        if (isNaN(dateObj.getTime())) return false;
+        if (isNaN(dateObj.getTime())) {
+          console.error('Invalid date in isToday:', dateStr);
+          return false;
+        }
         
         // 轉換為本地日期格式 YYYY-MM-DD
         dateYMD = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
@@ -319,13 +389,16 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
                 return null;
               }
             }
+
+            // 验证卡片数据，确保日期有效
+            const validatedCard = validateCardData(card);
             
             return (
               <DailyCard 
-                key={`${card.date}-${index}`}
-                card={card}
+                key={`${validatedCard.date}-${index}`}
+                card={validatedCard}
                 goal={goal}
-                isToday={isToday(card.date)}
+                isToday={isToday(validatedCard.date)}
                 onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
                 onViewDeclaration={onViewDeclaration}
               />

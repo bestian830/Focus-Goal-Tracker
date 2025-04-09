@@ -251,7 +251,23 @@ const apiService = {
     addCheckpoint: (id, checkpoint) =>
       api.post(`/api/goals/${id}/checkpoints`, checkpoint),
     addOrUpdateDailyCard: (id, cardData) =>
-      api.post(`/api/goals/${id}/daily-card`, cardData),
+      api.post(`/api/goals/${id}/daily-card`, cardData)
+        .then(response => {
+          console.log('每日卡片保存成功:', {
+            goalId: id,
+            response: response.data
+          });
+          return response;
+        })
+        .catch(error => {
+          console.error('保存每日卡片失败:', {
+            goalId: id,
+            错误: error.message,
+            状态: error.response?.status,
+            响应: error.response?.data
+          });
+          throw error;
+        }),
   },
 
   // progress related

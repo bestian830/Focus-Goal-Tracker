@@ -189,14 +189,22 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   
   // 处理DailyCards更新
   const handleDailyCardsUpdate = (updatedCards) => {
+    // 使用深拷贝确保不共享对象引用
+    const safeUpdatedCards = JSON.parse(JSON.stringify(updatedCards));
+    
+    console.log('GoalDetails中接收到卡片更新:', {
+      卡片数量: safeUpdatedCards.length,
+      首个卡片状态: safeUpdatedCards[0]?.taskCompletions
+    });
+    
     // 更新本地状态
-    setDailyCards(updatedCards);
+    setDailyCards(safeUpdatedCards);
     
     // 更新selectedGoal中的dailyCards
     if (selectedGoal) {
       setSelectedGoal({
         ...selectedGoal,
-        dailyCards: updatedCards
+        dailyCards: safeUpdatedCards
       });
     }
   };
