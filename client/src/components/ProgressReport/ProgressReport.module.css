@@ -1,0 +1,8 @@
+/* Add styles for ProgressReport component here */
+.reportContainer {
+    padding: 16px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    background-color: #fff;
+}

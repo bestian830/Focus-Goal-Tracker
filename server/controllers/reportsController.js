@@ -77,12 +77,19 @@ const buildPrompt = (goal) => {
     prompt += `- No daily progress recorded yet.\n`;
   }
 
-  // Updated instruction to explicitly ask for future suggestions
-  prompt += `\nBased on the goal and the recent progress log:
-1. Provide a concise analysis (1-2 sentences) of recent progress, focusing on consistency and patterns.
-2. Identify potential challenges or areas needing attention (1 sentence).
-3. Offer specific, actionable suggestions for the **next steps** or **future planning** to help achieve the goal (2-3 sentences).
-Be encouraging, realistic, and forward-looking.`;
+  // Updated instruction to specify output structure and exclude achievements
+  prompt += `\nBased on the goal and the recent progress log, provide **only** the following sections:
+
+**Progress Analysis:**
+[1-2 sentences analyzing recent progress, focusing on consistency and patterns.]
+
+**Potential Challenges:**
+[1 sentence identifying potential challenges or areas needing attention.]
+
+**Actionable Suggestions:**
+[2-3 sentences with specific, actionable suggestions for next steps or future planning.]
+
+Ensure the response is encouraging, realistic, and forward-looking. Do not include any other sections like 'Key Achievements'.`;
 
   console.log("--- Generated AI Prompt ---");
   console.log(prompt);

@@ -118,10 +118,37 @@
 
 /* Main content area */
 .main-content {
-  padding: 2rem;
+  /* padding: 2rem; */ /* Removed padding to allow children to fill space */
   display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
+  /* flex-wrap: wrap; */ /* Remove wrap to keep items in one row */
+  /* gap: 2rem; */ /* Remove gap, control spacing with flex properties */
+  flex-grow: 1; /* Allow main content to fill remaining vertical space */
+  width: 100%; /* Ensure it takes full width */
+}
+
+/* Assign flex ratios to children */
+.main-content > :nth-child(1) { /* Sidebar */
+  flex: 1 1 0%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
+  min-width: 250px; /* Optional: Ensure sidebar has a minimum width */
+  overflow-y: auto; /* Allow sidebar to scroll if content overflows */
+}
+
+.main-content > :nth-child(2) { /* GoalDetails */
+  flex: 2 1 0%; /* flex-grow: 2, flex-shrink: 1, flex-basis: 0% */
+  overflow-y: auto; /* Allow details to scroll */
+  border-left: 1px solid #eee; /* Optional separator */
+  border-right: 1px solid #eee; /* Optional separator */
+}
+
+.main-content > :nth-child(3) { /* ProgressReport */
+  flex: 1 1 0%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
+  min-width: 250px; /* Optional: Ensure report has a minimum width */
+  overflow-y: auto; /* Allow report to scroll */
+}
+
+/* Style adjustments for children if needed */
+.main-content > * { 
+  padding: 1rem; /* Add padding back to individual children */
 }
 
 .welcome-message {
