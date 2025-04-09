@@ -1,9 +1,11 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import ExportButton from './ExportButton';
-import KeyAchievements from './KeyAchievements';
+// import KeyAchievements from './KeyAchievements';
 import AIFeedback from './AIFeedback';
+import styles from './ProgressReport.module.css';
 
-export default function ProgressReport() {
+export default function ProgressReport({ goalId }) {
   const [report, setReport] = useState(null);
 
   useEffect(() => {
@@ -27,13 +29,16 @@ export default function ProgressReport() {
     setReport(mockReport);
   }, []);
 
-  if (!report) return <div className="progress-report">Loading...</div>;
+  if (!report) return <div className={styles.reportContainer}>Loading...</div>;
+  
+  // 如果没有goalId，显示提示信息
+  if (!goalId) return <div className={styles.reportContainer}>请先选择一个目标</div>;
 
   return (
-    <div className="progress-report">
+    <div className={styles.reportContainer}>
       <ExportButton />
-      <KeyAchievements achievements={report.achievements} />
-      <AIFeedback feedback={report.aiFeedback} />
+      {/* <KeyAchievements goalId={goalId} /> */}
+      <AIFeedback goalId={goalId} />
     </div>
   );
 }

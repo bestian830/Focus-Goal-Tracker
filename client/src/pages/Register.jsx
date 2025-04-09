@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import apiService from '../services/api';
 import '../styles/Register.css'; // We'll create this CSS file later
 
 /**
@@ -68,6 +69,7 @@ function Register() {
     try {
       // Check for temp user ID in localStorage
       const tempId = localStorage.getItem('tempId');
+      console.log("注册过程: 检查临时用户ID", tempId ? `找到ID: ${tempId}` : "未找到临时ID");
       
       // Prepare registration data
       const registrationData = {
@@ -78,21 +80,27 @@ function Register() {
       
       // Include tempId if available to migrate guest data
       if (tempId) {
+        console.log(`包含临时ID ${tempId} 在注册数据中，用于数据迁移`);
         registrationData.tempId = tempId;
       }
       
+      console.log("准备发送的注册数据:", {
+        ...registrationData,
+        password: "******" // 隐藏密码，只用于日志
+      });
+      
       // Call the registration API
-      const response = await axios.post(
-        'http://localhost:5050/api/auth/register', 
-        registrationData
-      );
+      const response = await apiService.auth.register(registrationData);
+      console.log("注册成功，服务器响应:", response.data);
       
       // Store user data and token in localStorage
       localStorage.setItem('userId', response.data.data.id);
-      localStorage.setItem('token', response.data.data.token);
       
-      // Remove temporary user ID if it exists
-      localStorage.removeItem('tempId');
+      // Only remove tempId if registration was successful AND we had a tempId
+      if (tempId) {
+        console.log(`注册成功，移除临时ID: ${tempId}`);
+        localStorage.removeItem('tempId');
+      }
       
       // Redirect to home page
       navigate('/');
@@ -101,7 +109,9 @@ function Register() {
       
       // Display appropriate error message
       if (error.response && error.response.data && error.response.data.error) {
-        setError(error.response.data.error.message);
+        const errorMessage = error.response.data.error.message;
+        console.error("服务器返回错误:", errorMessage);
+        setError(errorMessage);
       } else {
         setError('Registration failed. Please try again.');
       }

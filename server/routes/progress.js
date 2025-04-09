@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   getProgress,
   createProgress,
   updateProgress,
@@ -8,11 +8,11 @@ const {
   addRecord,
   updateCheckpointStatus,
   getProgressSummary
-} = require("../controllers/progressController");
-const { requireAuth, requireOwnership } = require('../middleware/auth');
-const { rateLimiter } = require('../middleware/rateLimiter');
-const Progress = require('../models/Progress');
-const Goal = require('../models/Goal');
+} from "../controllers/progressController.js";
+import { requireAuth, requireOwnership } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
+import Progress from '../models/Progress.js';
+import Goal from '../models/Goal.js';
 
 /**
  * Progress Routes
@@ -150,4 +150,4 @@ router.put("/:id/checkpoints/:checkpointId", requireAuth, requireOwnership(async
   return progress.userId;
 }), updateCheckpointStatus);
 
-module.exports = router; 
+export default router; 

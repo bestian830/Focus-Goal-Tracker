@@ -9,7 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
-import "./App.css";
+import "./styles/GlobalStyles.css";
 
 function App() {
   return (

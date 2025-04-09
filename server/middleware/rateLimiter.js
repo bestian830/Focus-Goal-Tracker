@@ -91,12 +91,12 @@ const rateLimiter = (options = {}) => {
  * More restrictive to prevent abuse
  * 
  * @param {Object} options - Rate limiting options
- * @param {Number} options.maxCreations - Maximum number of temp users allowed in the window (default: 5)
- * @param {Number} options.windowMs - Time window in milliseconds (default: 1 hour)
+ * @param {Number} options.maxCreations - Maximum number of temp users allowed in the window (default: 10)
+ * @param {Number} options.windowMs - Time window in milliseconds (default: 30 minutes)
  */
 const tempUserCreationLimiter = (options = {}) => {
-  const maxCreations = options.maxCreations || 5;
-  const windowMs = options.windowMs || 60 * 60 * 1000; // 1 hour by default
+  const maxCreations = options.maxCreations || 10;
+  const windowMs = options.windowMs || 30 * 60 * 1000; // 30 minutes by default
   
   return (req, res, next) => {
     // Get client IP
@@ -145,7 +145,7 @@ const tempUserCreationLimiter = (options = {}) => {
   };
 };
 
-module.exports = {
+export {
   rateLimiter,
   tempUserCreationLimiter
 }; 

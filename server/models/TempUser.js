@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 /**
@@ -56,4 +56,5 @@ const TempUserSchema = new Schema(
 // The unique: true in the tempId field already creates an index
 TempUserSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-module.exports = mongoose.model("TempUser", TempUserSchema);
+const TempUser = mongoose.model("TempUser", TempUserSchema);
+export default TempUser;

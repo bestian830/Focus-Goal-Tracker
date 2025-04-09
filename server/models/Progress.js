@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 /**
  * Progress Schema - Defines the structure for progress tracking in MongoDB
@@ -30,7 +30,7 @@ const ProgressSchema = new mongoose.Schema(
     },
     records: [
       {
-        content: {
+        activity: {
           type: String,
           required: true,
         },
@@ -38,10 +38,9 @@ const ProgressSchema = new mongoose.Schema(
           type: Number, // in minutes
           default: 0,
         },
-        mood: {
+        notes: {
           type: String,
-          enum: ["Great", "Good", "Neutral", "Bad", "Terrible"],
-          default: "Neutral",
+          default: "",
         },
         images: [
           {
@@ -90,8 +89,9 @@ const ProgressSchema = new mongoose.Schema(
   }
 );
 
-// Create compound index for userId + goalId + date to ensure uniqueness per day
-ProgressSchema.index({ userId: 1, goalId: 1, date: 1 }, { unique: true });
+// 注释掉这个索引，避免在 goals 集合中创建相同的索引
+// ProgressSchema.index({ userId: 1, goalId: 1, date: 1 }, { unique: true });
 
 // Create and export the Progress model
-module.exports = mongoose.model("Progress", ProgressSchema);
+const Progress = mongoose.model("Progress", ProgressSchema);
+export default Progress;

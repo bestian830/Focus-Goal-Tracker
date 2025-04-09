@@ -1,9 +1,13 @@
-export default function AddGoalButton() {
-  const handleAddGoal = () => {
-    alert('Add Goal Clicked (simulation)');
-  };
+import React from 'react';
 
+export default function AddGoalButton({ onAddGoalClick, disabled }) {
   return (
-    <button className="add-goal-btn" onClick={handleAddGoal}>Add Goal</button>
+    <button 
+      className={`add-goal-btn ${disabled ? 'disabled' : ''}`} 
+      onClick={onAddGoalClick}
+      disabled={disabled}
+    >
+      添加目標
+    </button>
   );
 }

@@ -8,13 +8,13 @@
  * logoutUser: Logout user, when a user logs out
 */
 
-const User = require("../models/User");
-const TempUser = require("../models/TempUser");
-const {
+import User from "../models/User.js";
+import TempUser from "../models/TempUser.js";
+import {
   generateUserToken,
   setTokenCookie,
   clearTokenCookie,
-} = require("../utils/jwtUtils");
+} from "../utils/jwtUtils.js";
 // The JWT_SECRET should be defined in .env file
 const JWT_SECRET =
   process.env.JWT_SECRET || "your_jwt_secret_key_for_development";
@@ -146,6 +146,8 @@ const getCurrentUser = async (req, res) => {
 const registerUser = async (req, res) => {
   try {
     const { username, email, password, tempId } = req.body;
+    
+    console.log(`开始注册用户 - 邮箱: ${email}, 用户名: ${username}, 临时ID: ${tempId || '无'}`);
 
     // Validate input
     if (!username || !email || !password) {
@@ -158,6 +160,7 @@ const registerUser = async (req, res) => {
     // Check if email is already in use
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log(`注册失败 - 邮箱已存在: ${email}`);
       return res.status(400).json({
         success: false,
         error: { message: "Email is already in use" },
@@ -170,31 +173,70 @@ const registerUser = async (req, res) => {
       email,
       password,
     });
+    console.log(`新用户创建成功 - ID: ${user._id}, 邮箱: ${email}`);
 
     // If tempId is provided, find and migrate temp user data
     if (tempId) {
-      const tempUser = await TempUser.findOne({ tempId });
-      if (tempUser) {
-        // Associate tempId with the new user
-        user.tempId = tempId;
-        await user.save();
-
-        // In a real implementation, you would migrate goals and progress data here
-        console.log(
-          `Temp user data for ${tempId} will be migrated to user ${user._id}`
-        );
-
-        // 成功迁移后删除临时用户
-        await TempUser.findOneAndDelete({ tempId });
-        console.log(`Temp user ${tempId} has been deleted after migration`);
+      console.log(`检测到临时用户ID: ${tempId}，准备数据迁移`);
+      try {
+        const tempUser = await TempUser.findOne({ tempId });
+        
+        if (tempUser) {
+          console.log(`找到临时用户记录 - ID: ${tempUser._id}, 临时ID: ${tempId}`);
+          
+          // Associate tempId with the new user
+          user.tempId = tempId;
+          await user.save();
+          console.log(`已关联临时ID ${tempId} 到用户 ${user._id}`);
+          
+          // 迁移目标数据
+          console.log(`开始迁移临时用户 ${tempId} 的目标数据到注册用户 ${user._id}`);
+          
+          // 导入Goal模型
+          const Goal = await import("../models/Goal.js").then(module => module.default);
+          console.log(`已加载Goal模型，准备查询临时用户目标`);
+          
+          // 查找所有属于该临时用户的目标
+          const goals = await Goal.find({ userId: tempId });
+          console.log(`找到 ${goals.length} 个需要迁移的目标，目标IDs: ${goals.map(g => g._id).join(', ')}`);
+          
+          // 检查userId字段的类型以解决潜在问题
+          if (goals.length > 0) {
+            console.log(`第一个目标的userId类型: ${typeof goals[0].userId}, 值: ${goals[0].userId}`);
+            console.log(`目标模型结构: ${JSON.stringify(Goal.schema.paths.userId)}`);
+          }
+          
+          // 更新每个目标的userId为新注册用户的ID
+          let migratedCount = 0;
+          for (const goal of goals) {
+            console.log(`迁移目标 ${goal._id} 从 ${tempId} 到 ${user._id}`);
+            // 将userId从tempId更改为注册用户的ID（以字符串形式存储）
+            goal.userId = user._id.toString();
+            await goal.save();
+            migratedCount++;
+          }
+          console.log(`成功迁移 ${migratedCount}/${goals.length} 个目标`);
+          
+          // 成功迁移后删除临时用户
+          await TempUser.findOneAndDelete({ tempId });
+          console.log(`临时用户 ${tempId} 数据迁移完成并删除`);
+        } else {
+          console.log(`找不到临时用户: ${tempId}，无数据需要迁移`);
+        }
+      } catch (migrationError) {
+        console.error("迁移临时用户数据时出错:", migrationError);
+        console.error(`迁移错误详情: ${migrationError.stack}`);
+        // 继续注册流程，不因为迁移错误而中断
       }
     }
 
     // Generate JWT token
     const token = generateUserToken(user._id);
+    console.log(`生成用户令牌成功`);
 
     // Set JWT token as HttpOnly cookie
     setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
+    console.log(`已设置认证Cookie，30天有效`);
 
     res.status(201).json({
       success: true,
@@ -204,8 +246,10 @@ const registerUser = async (req, res) => {
         email: user.email,
       },
     });
+    console.log(`用户注册完成 - ID: ${user._id}`);
   } catch (error) {
     console.error("Error registering user:", error);
+    console.error(`注册错误详情: ${error.stack}`);
     res.status(500).json({
       success: false,
       error: {
@@ -248,7 +292,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Validate password
+    // Check if password is correct
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -257,15 +301,15 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
     // Generate JWT token
     const token = generateUserToken(user._id);
 
     // Set JWT token as HttpOnly cookie
     setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
-
-    // Update last login time
-    user.lastLogin = Date.now();
-    await user.save();
 
     res.status(200).json({
       success: true,
@@ -276,7 +320,7 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error logging in user:", error);
+    console.error("Error logging in:", error);
     res.status(500).json({
       success: false,
       error: {
@@ -288,26 +332,28 @@ const loginUser = async (req, res) => {
 };
 
 /**
- * Logout user and clear authentication cookie
+ * Logout user
  *
  * This function:
- * 1. Clears the authentication token cookie
- * 2. Returns success message
+ * 1. Clears the JWT token cookie
+ * 2. Returns a success message
  *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 const logoutUser = (req, res) => {
   try {
-    // Clear the authentication cookie
-    clearTokenCookie(res);
+    console.log(`用戶註銷: ${req.user?.userType === 'registered' ? req.user.id : req.user?.tempId}`);
     
+    // Clear the JWT token cookie
+    clearTokenCookie(res);
+
     res.status(200).json({
       success: true,
-      message: "Successfully logged out"
+      message: "Logged out successfully",
     });
   } catch (error) {
-    console.error("Error logging out user:", error);
+    console.error("Error logging out:", error);
     res.status(500).json({
       success: false,
       error: {
@@ -318,7 +364,8 @@ const logoutUser = (req, res) => {
   }
 };
 
-module.exports = {
+// Export controller functions
+export {
   createTempUser,
   getCurrentUser,
   registerUser,

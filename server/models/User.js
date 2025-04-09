@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 /**
  * User Schema - Defines the structure for user documents in MongoDB
@@ -90,4 +90,5 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
 // The unique: true and sparse: true in the schema fields already create indexes
 
 // Create and export the User model
-module.exports = mongoose.model("User", UserSchema);
+const User = mongoose.model("User", UserSchema);
+export default User;

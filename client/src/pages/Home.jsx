@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ProfileModal from "../components/ProfileModal";
+import OnboardingModal from "../components/OnboardingModal";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
 import GoalDetails from "../components/GoalDetails/GoalDetails";
 import ProgressReport from "../components/ProgressReport/ProgressReport";
+import apiService from "../services/api";
 import "../styles/Home.css";
-import "../styles/ComponentStyles.css";
 
 /**
  * Home Component
@@ -26,119 +27,221 @@ function Home() {
   const [loading, setLoading] = useState(true);
   // State for profile modal
   const [showProfileModal, setShowProfileModal] = useState(false);
+  // State for API connection
+  const [apiConnected, setApiConnected] = useState(true);
+  // State for onboarding modal
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  // State for user goals
+  const [userGoals, setUserGoals] = useState([]);
+  // 选中的目标ID
+  const [selectedGoalId, setSelectedGoalId] = useState(null);
 
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
+
+  // 檢查 API 連接狀態
+  useEffect(() => {
+    const checkApiConnection = async () => {
+      try {
+        const isHealthy = await apiService.healthCheck();
+        setApiConnected(isHealthy);
+        console.log("API health check result:", isHealthy);
+      } catch (error) {
+        console.error("API health check failed:", error);
+        setApiConnected(false);
+      }
+    };
+
+    checkApiConnection();
+  }, []);
+
+  // 获取用户目标
+  const fetchUserGoals = async (id, isGuest) => {
+    try {
+      if (!id) {
+        console.log("No user ID provided for fetchUserGoals");
+        setShowOnboarding(true);
+        return [];
+      }
+
+      console.log(`Fetching goals for user ${id}, isGuest: ${isGuest}`);
+
+      try {
+        const response = await apiService.goals.getUserGoals(id);
+        console.log("User goals API response:", response);
+
+        if (response.data && response.data.success) {
+          const goals = response.data.data || [];
+          setUserGoals(goals);
+
+          // 如果用户没有目标，显示引导流程
+          if (goals.length === 0) {
+            console.log("User has no goals, showing onboarding");
+            setShowOnboarding(true);
+          } else {
+            console.log(`User has ${goals.length} goals`);
+            setShowOnboarding(false);
+          }
+
+          return goals;
+        } else {
+          console.warn("API response success is false:", response);
+          setShowOnboarding(true);
+          return [];
+        }
+      } catch (apiError) {
+        console.error("Failed to fetch user goals:", apiError);
+        // 如果API调用失败，也显示引导流程
+        setShowOnboarding(true);
+        setUserGoals([]);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error in fetchUserGoals:", error);
+      setShowOnboarding(true);
+      setUserGoals([]);
+      return [];
+    }
+  };
 
   // Check if user is logged in (either as guest or registered)
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
+      console.log("=== Start fetching user data ===");
 
       try {
         // Check if user ID is stored in local storage
         const userId = localStorage.getItem("userId");
         const tempId = localStorage.getItem("tempId");
 
+        console.log("User information in localStorage:", { userId, tempId });
+
+        if (!userId && !tempId) {
+          console.log("No user information found, displaying welcome page");
+          setLoading(false);
+          return;
+        }
+
         if (userId) {
-          // For registered users, fetch user data from the API (axios)
+          console.log(
+            "Detected registered user ID, starting to fetch user data"
+          );
           try {
-            const response = await axios.get(
-              `http://localhost:5050/api/auth/me/${userId}`,
-              {
-                withCredentials: true, // Send cookies with the request
-              }
-            );
+            const response = await apiService.auth.getCurrentUser(userId);
 
             if (response.data && response.data.success) {
+              console.log(
+                "Successfully fetched user data:",
+                response.data.data
+              );
               setUser({
                 ...response.data.data,
                 isGuest: false,
               });
+
+              // 获取用户目标
+              await fetchUserGoals(userId, false);
             }
           } catch (apiError) {
-            console.error("Error fetching user data from API:", apiError);
-            // If there's an error, we'll fall back to using local storage
-            setUser({
-              id: userId,
-              username: "User",
-              isGuest: false,
-            });
+            console.error("Failed to fetch user data:", apiError);
+            if (apiError.response?.status === 401) {
+              console.log("User not authorized, clearing local storage");
+              localStorage.removeItem("userId");
+              navigate("/login");
+            } else {
+              setUser({
+                id: userId,
+                username: "User",
+                isGuest: false,
+              });
+
+              // 获取用户目标
+              await fetchUserGoals(userId, false);
+            }
           }
         } else if (tempId) {
-          //  For guest users, set user data with temporary ID
+          console.log("Detected temporary user ID:", tempId);
           setUser({
             id: tempId,
             username: "Guest User",
             isGuest: true,
           });
+
+          // 获取临时用户目标
+          await fetchUserGoals(tempId, true);
         }
       } catch (error) {
-        console.error("Error in user data logic:", error);
+        console.error("User data logic error:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+
+    // 設置定期刷新機制，每 30 秒從後端獲取一次最新目標數據
+    const refreshInterval = setInterval(() => {
+      if (user) {
+        console.log("Running scheduled refresh of goals data");
+        const userId = user.id || user._id;
+        fetchUserGoals(userId, user?.isGuest || false).catch((err) => {
+          console.error("Scheduled refresh failed:", err);
+        });
+      }
+    }, 30000); // 每 30 秒刷新一次
+
+    return () => {
+      // 組件卸載時清除定時器
+      clearInterval(refreshInterval);
+    };
+  }, [navigate]);
 
   /**
    * Handle user logout
    */
   const handleLogout = async () => {
     try {
-      // 尝试在服务器端清除会话
+      // try to clear session on server
       try {
         if (user && user.isGuest) {
-          // 对于临时用户，我们不实际删除临时账户
-          // 仅清除localStorage和cookies，但保留数据库中的账户
-          // 这允许用户稍后使用相同的tempId返回
+          // for temporary users, we do not actually delete temporary accounts
+          // only clear localStorage and cookies, but keep the account in the database
+          // this allows the user to return later using the same tempId
           const tempId = localStorage.getItem("tempId");
-          
+
           if (tempId) {
             try {
-              // 仅清除cookie而不删除账户
-              await axios.post(
-                "http://localhost:5050/api/auth/logout",
-                {},
-                {
-                  withCredentials: true,
-                }
-              );
+              // only clear cookies without deleting the account
+              await apiService.auth.logout();
             } catch (error) {
-              console.error("临时用户登出API调用失败:", error);
-              // 如果出错，仍继续本地清理
+              console.error("Failed to logout temporary user:", error);
+              // if error, still continue local cleanup
             }
-            
-            // 不从localStorage中移除tempId，保留以便潜在的重用
+
+            console.log("keep tempId for potential reuse:", tempId);
+            // do not remove tempId from localStorage, keep it for potential reuse
           }
         } else if (user && !user.isGuest) {
-          // 对于注册用户，调用登出API
-          await axios.post(
-            "http://localhost:5050/api/auth/logout",
-            {},
-            {
-              withCredentials: true,
-            }
-          );
-          
-          // 清除localStorage中的userId
+          // for registered users, call logout API
+          await apiService.auth.logout();
+
+          // clear userId in localStorage
           localStorage.removeItem("userId");
         }
       } catch (error) {
-        console.error("API登出失败，继续执行本地登出:", error);
-        // 即使API调用失败，我们也继续进行本地清理
+        console.error("Failed to logout API:", error);
+        // even if API call fails, we still continue local cleanup
         if (user && !user.isGuest) {
           localStorage.removeItem("userId");
         }
       }
 
-      // 重定向到登录页面
+      // redirect to login page
       navigate("/login");
     } catch (error) {
-      console.error("登出过程出错:", error);
-      // 确保在任何情况下都能清理本地存储并导航到登录页面
+      console.error("Logout process error:", error);
+      // ensure local storage is cleaned up in any case and navigate to login page
       if (user && !user.isGuest) {
         localStorage.removeItem("userId");
       }
@@ -151,21 +254,265 @@ function Home() {
     setShowProfileModal(!showProfileModal);
   };
 
+  // 处理引导完成
+  const handleOnboardingComplete = async (newGoal) => {
+    console.log("Onboarding complete, new goal created:", newGoal);
+    setShowOnboarding(false);
+
+    // 立即刷新目標列表而不是簡單地添加新目標
+    if (user) {
+      console.log("Refreshing goals list after new goal creation");
+      const userId = user.id || user._id;
+      await fetchUserGoals(userId, user.isGuest);
+
+      // 選擇新創建的目標
+      if (newGoal && (newGoal._id || newGoal.id)) {
+        setSelectedGoalId(newGoal._id || newGoal.id);
+      }
+    } else {
+      console.warn("User information not available, cannot refresh goals");
+      // 如果沒有用戶信息，至少將新目標添加到列表中
+      setUserGoals((prev) => [...prev, newGoal]);
+
+      // 選擇新創建的目標
+      if (newGoal && (newGoal._id || newGoal.id)) {
+        setSelectedGoalId(newGoal._id || newGoal.id);
+      }
+    }
+  };
+
+  // 关闭引导模态框
+  const handleCloseOnboarding = () => {
+    console.log("Onboarding modal closed");
+    setShowOnboarding(false);
+  };
+
+  // 处理从侧边栏选择目标
+  const handleGoalSelect = (goalId) => {
+    console.log("Goal selected:", goalId);
+    setSelectedGoalId(goalId);
+  };
+
+  // Reset goals state and UI
+  const resetGoals = () => {
+    console.log("Resetting goals state");
+    setUserGoals([]);
+    setSelectedGoalId(null);
+
+    // 如果用戶沒有目標，顯示引導流程
+    if (user) {
+      console.log("No goals, showing onboarding modal");
+      setShowOnboarding(true);
+    }
+  };
+
+  // 添加處理優先級變更的函數
+  const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
+    console.log(
+      `Home handling priority change for goal ${goalId} to ${newPriority}`
+    );
+
+    // 如果有更新後的目標對象，則使用它直接更新狀態
+    if (updatedGoal) {
+      console.log("Updated goal received from API:", updatedGoal);
+
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            // 保留現有屬性，但更新優先級和其他API返回的字段
+            return { ...goal, ...updatedGoal };
+          }
+          return goal;
+        });
+      });
+    } else {
+      // 如果沒有更新後的目標對象，則僅更新優先級
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            return { ...goal, priority: newPriority };
+          }
+          return goal;
+        });
+      });
+    }
+  };
+
+  // 添加處理目標日期變更的函數
+  const handleDateChange = (goalId, newDate, updatedGoal) => {
+    console.log(`Home handling date change for goal ${goalId} to ${newDate}`);
+
+    // 如果有更新後的目標對象，則使用它直接更新狀態
+    if (updatedGoal) {
+      console.log("Updated goal with new date received from API:", updatedGoal);
+
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            // 保留現有屬性，但更新目標日期和其他API返回的字段
+            return { ...goal, ...updatedGoal };
+          }
+          return goal;
+        });
+      });
+    } else {
+      // 如果沒有更新後的目標對象，則僅更新目標日期
+      setUserGoals((prevGoals) => {
+        return prevGoals.map((goal) => {
+          const currentGoalId = goal._id || goal.id;
+          if (currentGoalId === goalId) {
+            return { ...goal, targetDate: newDate };
+          }
+          return goal;
+        });
+      });
+    }
+  };
+
+  // Add handleGoalDeleted method to update goals after deletion
+  const handleGoalDeleted = async (deletedGoalId) => {
+    console.log(
+      `Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`
+    );
+
+    // 暫時移除刪除的目標（用於立即反饋）
+    const updatedGoals = userGoals.filter((g) => {
+      const goalId = g._id || g.id;
+      return goalId !== deletedGoalId;
+    });
+    setUserGoals(updatedGoals);
+
+    // 檢查是否刪除了最後一個目標
+    const isLastGoal = updatedGoals.length === 0;
+
+    // 從後端重新獲取完整的目標列表（確保與數據庫同步）
+    if (user) {
+      console.log("Refreshing goals list after deletion");
+      const userId = user.id || user._id;
+      try {
+        const goals = await fetchUserGoals(userId, user.isGuest);
+        console.log(
+          "Goals list refreshed successfully after deletion, count:",
+          goals.length
+        );
+
+        // 如果沒有目標了，重置狀態
+        if (goals.length === 0) {
+          resetGoals();
+          return; // 不繼續執行
+        }
+      } catch (error) {
+        console.error("Failed to refresh goals after deletion:", error);
+
+        // 如果API調用失敗但我們的本地狀態顯示沒有目標了，仍然重置
+        if (isLastGoal) {
+          resetGoals();
+          return;
+        }
+      }
+    } else if (isLastGoal) {
+      // 如果沒有用戶信息但是刪除了最後一個目標，也需要重置
+      resetGoals();
+      return;
+    }
+
+    // 如果被刪除的目標是當前選中的目標，選擇另一個目標
+    if (selectedGoalId === deletedGoalId) {
+      // 立即選擇另一個目標，不需要等待
+      if (updatedGoals.length > 0) {
+        console.log(
+          "Selecting another goal after deletion:",
+          updatedGoals[0]._id || updatedGoals[0].id
+        );
+        setSelectedGoalId(updatedGoals[0]._id || updatedGoals[0].id);
+      } else {
+        console.log("No goals remaining after deletion, clearing selection");
+        setSelectedGoalId(null);
+      }
+    }
+  };
+
+  // 刷新单个目标数据
+  const refreshSingleGoal = async (goalId) => {
+    try {
+      console.log(`刷新单个目标数据: ${goalId}`);
+
+      // 检查goalId是否有效
+      if (!goalId) {
+        console.error("无法刷新目标数据：goalId无效");
+        return null;
+      }
+
+      // 调用API获取最新的目标数据
+      try {
+        const response = await apiService.goals.getById(goalId);
+
+        if (response.data && response.data.data) {
+          const updatedGoal = response.data.data;
+          console.log("获取到最新目标数据:", updatedGoal);
+
+          // 更新goals数组中的目标数据
+          setUserGoals((prevGoals) => {
+            return prevGoals.map((goal) => {
+              const currentGoalId = goal._id || goal.id;
+              if (currentGoalId === goalId) {
+                return updatedGoal;
+              }
+              return goal;
+            });
+          });
+
+          return updatedGoal;
+        }
+      } catch (apiError) {
+        console.error(`API调用失败，goalId: ${goalId}`, apiError);
+
+        // 尝试从现有数据中返回
+        const existingGoal = userGoals.find(
+          (g) => g._id === goalId || g.id === goalId
+        );
+        if (existingGoal) {
+          console.log("返回现有目标数据:", existingGoal);
+          return existingGoal;
+        }
+      }
+    } catch (error) {
+      console.error("刷新单个目标数据失败:", error);
+    }
+
+    return null;
+  };
+
   return (
     <div className="home-container">
-      <Header 
-        user={user} 
-        loading={loading} 
-        handleLogout={handleLogout} 
-        toggleProfileModal={toggleProfileModal} 
+      <Header
+        user={user}
+        loading={loading}
+        handleLogout={handleLogout}
+        toggleProfileModal={toggleProfileModal}
       />
 
       <div className="main-content">
         {user ? (
           <>
-            <Sidebar />
-            <GoalDetails />
-            <ProgressReport />
+            <Sidebar
+              goals={userGoals}
+              onGoalSelect={handleGoalSelect}
+              onAddGoalClick={() => setShowOnboarding(true)}
+              onPriorityChange={handlePriorityChange}
+              onDateChange={handleDateChange}
+              activeGoalId={selectedGoalId}
+            />
+            <GoalDetails
+              goals={userGoals}
+              goalId={selectedGoalId}
+              onGoalDeleted={handleGoalDeleted}
+              refreshGoalData={refreshSingleGoal}
+            />
+            <ProgressReport goalId={selectedGoalId} />
           </>
         ) : (
           <div className="welcome-message">
@@ -179,10 +526,21 @@ function Home() {
 
       {/* Profile Modal */}
       {user && (
-        <ProfileModal 
-          isOpen={showProfileModal} 
-          onClose={toggleProfileModal} 
-          user={user} 
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={toggleProfileModal}
+          user={user}
+        />
+      )}
+
+      {/* Onboarding Modal */}
+      {user && (
+        <OnboardingModal
+          open={showOnboarding}
+          onClose={handleCloseOnboarding}
+          userId={user.id}
+          isGuest={user.isGuest}
+          onComplete={handleOnboardingComplete}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiService from '../services/api';
 import '../styles/Profile.css';
 
 /**
@@ -29,6 +29,8 @@ function Profile() {
   const [error, setError] = useState('');
   // success message
   const [successMessage, setSuccessMessage] = useState('');
+  // API connection state
+  const [apiConnected, setApiConnected] = useState(true);
   
   // form data
   const [formData, setFormData] = useState({
@@ -43,51 +45,102 @@ function Profile() {
     confirmPassword: '',
   });
   
+  // 檢查API連接
+  useEffect(() => {
+    const checkApiConnection = async () => {
+      try {
+        const isHealthy = await apiService.healthCheck();
+        setApiConnected(isHealthy);
+      } catch (error) {
+        console.error("API健康檢查失敗:", error);
+        setApiConnected(false);
+      }
+    };
+    
+    checkApiConnection();
+  }, []);
+  
   // check if the user is logged in and get the data
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
       setError('');
       
+      console.log("=== 開始獲取用戶資料 ===");
+      console.log("API連接狀態:", apiConnected);
+      
+      // 檢查 cookie 和本地存儲
+      const hasCookie = document.cookie.includes('token=');
+      const userId = localStorage.getItem('userId');
+      console.log("認證狀態檢查:", {
+        userId: userId,
+        hasCookie: hasCookie
+      });
+      
+      // if the API connection fails, display the error message
+      if (!apiConnected) {
+        console.error("API連接失敗");
+        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        setLoading(false);
+        return;
+      }
+      
       try {
         // check if there is a temp user ID
         const tempId = localStorage.getItem('tempId');
         if (tempId) {
-          // temp user cannot access the profile page
+          console.log("檢測到臨時用戶ID:", tempId);
           setError('臨時用戶不能訪問此頁面。請先註冊或登錄。');
           setLoading(false);
+          setTimeout(() => navigate('/login'), 2000);
           return;
         }
         
         // get the user ID
-        const userId = localStorage.getItem('userId');
         if (!userId) {
-          // user is not logged in, redirect to login page
+          console.log("未找到用戶ID，重定向到登錄頁面");
           navigate('/login');
           return;
         }
         
+        if (!hasCookie) {
+          console.error("檢測到 userId 但未找到認證 cookie，可能需要重新登錄");
+        }
+        
+        console.log("開始請求用戶資料...");
         // get the user data
-        const response = await axios.get('http://localhost:5050/api/users/profile', {
-          withCredentials: true
-        });
+        const response = await apiService.users.getProfile();
         
         if (response.data && response.data.success) {
+          console.log("成功獲取用戶資料:", response.data.data);
           const userData = response.data.data;
           setProfile(userData);
           setFormData({
             username: userData.username,
             email: userData.email,
           });
+        } else {
+          console.error("API返回數據格式錯誤:", response);
+          setError('獲取用戶資料失敗：服務器返回數據格式錯誤');
         }
       } catch (error) {
-        console.error('Failed to fetch user profile:', error);
-        if (error.response && error.response.status === 401) {
-          setError('Please login to access your profile.');
-          // maybe need to redirect to login page
+        console.error('獲取用戶資料失敗:', error);
+        if (error.code === 'ERR_NETWORK') {
+          console.error("網絡錯誤詳情:", {
+            message: error.message,
+            config: error.config
+          });
+          setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        } else if (error.response && error.response.status === 401) {
+          console.log("未授權訪問，重定向到登錄頁面");
+          setError('您需要登錄才能訪問個人資料頁面。');
           setTimeout(() => navigate('/login'), 2000);
+        } else if (error.response && error.response.data && error.response.data.error) {
+          console.error("API錯誤響應:", error.response.data.error);
+          setError(error.response.data.error.message);
         } else {
-          setError('Failed to fetch user data. Please try again later.');
+          console.error("未知錯誤:", error);
+          setError('獲取用戶資料失敗。請稍後再試。');
         }
       } finally {
         setLoading(false);
@@ -95,7 +148,7 @@ function Profile() {
     };
     
     fetchUserProfile();
-  }, [navigate]);
+  }, [navigate, apiConnected]);
   
   // handle form input change
   const handleChange = (e) => {
@@ -120,21 +173,21 @@ function Profile() {
     setSuccessMessage('');
     
     try {
-      const response = await axios.put('http://localhost:5050/api/users/profile', formData, {
-        withCredentials: true
-      });
+      const response = await apiService.users.updateProfile(formData);
       
       if (response.data && response.data.success) {
         setProfile(response.data.data);
-        setSuccessMessage('Data updated successfully!');
+        setSuccessMessage('個人資料更新成功！');
         setIsEditing(false);
       }
     } catch (error) {
       console.error('Failed to update profile:', error);
-      if (error.response && error.response.data && error.response.data.error) {
+      if (error.code === 'ERR_NETWORK') {
+        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+      } else if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('Failed to update data. Please try again later.');
+        setError('更新資料失敗。請稍後再試。');
       }
     }
   };
@@ -147,20 +200,18 @@ function Profile() {
     
     // validate if the new password and confirm password match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('New password and confirm password do not match.');
+      setError('新密碼和確認密碼不一致。');
       return;
     }
     
     try {
-      const response = await axios.put('http://localhost:5050/api/users/password', {
+      const response = await apiService.users.changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
-      }, {
-        withCredentials: true
       });
       
       if (response.data && response.data.success) {
-        setSuccessMessage('Password updated successfully!');
+        setSuccessMessage('密碼更新成功！');
         setIsChangingPassword(false);
         setPasswordData({
           currentPassword: '',
@@ -170,10 +221,12 @@ function Profile() {
       }
     } catch (error) {
       console.error('Failed to update password:', error);
-      if (error.response && error.response.data && error.response.data.error) {
+      if (error.code === 'ERR_NETWORK') {
+        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+      } else if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('Failed to update password. Please try again later.');
+        setError('更新密碼失敗。請稍後再試。');
       }
     }
   };
@@ -184,15 +237,13 @@ function Profile() {
     setSuccessMessage('');
     
     try {
-      const response = await axios.delete('http://localhost:5050/api/users/account', {
-        withCredentials: true
-      });
+      const response = await apiService.users.deleteAccount();
       
       if (response.data && response.data.success) {
         // remove the user ID from the local storage
         localStorage.removeItem('userId');
         
-        setSuccessMessage('Your account has been successfully deleted. Redirecting to home...');
+        setSuccessMessage('您的帳戶已成功刪除。正在重定向到首頁...');
         
         // delay redirecting, so the user can read the success message
         setTimeout(() => {
@@ -201,18 +252,36 @@ function Profile() {
       }
     } catch (error) {
       console.error('Failed to delete account:', error);
-      if (error.response && error.response.data && error.response.data.error) {
+      if (error.code === 'ERR_NETWORK') {
+        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+      } else if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('Failed to delete account. Please try again later.');
+        setError('刪除帳戶失敗。請稍後再試。');
       }
       setShowDeleteConfirm(false);
     }
   };
   
+  // 重試連接
+  const handleRetry = () => {
+    window.location.reload();
+  };
+  
   // loading state
   if (loading) {
-    return <div className="profile-container"><p>Loading...</p></div>;
+    return <div className="profile-container"><p>載入中...</p></div>;
+  }
+  
+  // 顯示API連接錯誤
+  if (!apiConnected) {
+    return (
+      <div className="profile-container">
+        <h2>連接錯誤</h2>
+        <p className="error-message">無法連接到服務器。請檢查您的網絡連接或稍後再試。</p>
+        <button onClick={handleRetry} className="btn">重試</button>
+      </div>
+    );
   }
   
   // render error message
@@ -220,6 +289,7 @@ function Profile() {
     return (
       <div className="profile-container">
         <p className="error-message">{error}</p>
+        <button onClick={() => navigate('/')} className="btn">返回首頁</button>
       </div>
     );
   }

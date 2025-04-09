@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
 
 /**
  * Report Schema - Defines the structure for AI-generated reports in MongoDB
@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
  * Fields:
  * - goalId: Reference to the goal this report is about
  * - userId: Reference to the user who owns this report
- * - type: Type of report (weekly, monthly)
+ * - type: Type of report (daily, weekly, monthly)
  * - period: Time period the report covers
  * - content: Main report content
  * - insights: AI-generated insights
@@ -21,14 +21,8 @@ const ReportSchema = new mongoose.Schema(
       required: true,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    type: {
       type: String,
-      enum: ["weekly", "monthly", "custom"],
-      default: "weekly",
+      required: true,
     },
     period: {
       startDate: {
@@ -76,6 +70,19 @@ const ReportSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    analysis: {
+      type: Object,
+      default: {},
+    },
+    type: {
+      type: String,
+      enum: ['daily', 'weekly', 'monthly'],
+      default: 'daily',
+    },
+    timeRange: {
+      start: Date,
+      end: Date,
+    },
   },
   {
     collection: "reports",
@@ -83,4 +90,6 @@ const ReportSchema = new mongoose.Schema(
 );
 
 // Create and export the Report model
-module.exports = mongoose.model("Report", ReportSchema);
+const Report = mongoose.model("Report", ReportSchema);
+
+export default Report;

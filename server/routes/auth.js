@@ -1,15 +1,15 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   createTempUser,
   getCurrentUser,
   registerUser,
   loginUser,
   logoutUser,
   // linkTempUser
-} = require("../controllers/authController");
-const { requireAuth, requireRegisteredUser } = require('../middleware/auth');
-const { rateLimiter } = require('../middleware/rateLimiter');
+} from "../controllers/authController.js";
+import { requireAuth, requireRegisteredUser } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
 
 /**
  * Auth Routes
@@ -46,11 +46,11 @@ router.post("/register", authLimiter, registerUser);
 router.post("/login", authLimiter, loginUser);
 
 // POST /api/auth/logout - Logout user
-// Used to logout the current user
-router.post("/logout", requireAuth, logoutUser);
+// Used to logout the current user - removing requireAuth to allow logout in any state
+router.post("/logout", logoutUser);
 
 // // POST /api/auth/link-temp - Link temporary user data to existing user
 // // Used to migrate guest data to registered account
 // router.post("/link-temp", linkTempUser);
 
-module.exports = router;
+export default router;
