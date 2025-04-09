@@ -18,10 +18,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import ImageIcon from '@mui/icons-material/Image';
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import styles from './GoalDeclaration.module.css';
-import apiService from '../../services/api';
 
 /**
  * Editable field component - allows direct text editing
@@ -86,9 +83,6 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [imagePreview, setImagePreview] = useState('');
-  const [imagePreviewDialog, setImagePreviewDialog] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [editedData, setEditedData] = useState({
     title: '',
     motivation: '',
@@ -177,12 +171,10 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
       dailyReward,
       ultimateReward,
       targetDate,
-      visionImage
     } = data;
     
     const username = 'User'; // Can be obtained as needed
     const formattedDate = targetDate ? new Date(targetDate).toLocaleDateString() : '';
-    const visionImagePlaceholder = visionImage ? '[Vision Image Attached]' : '[No Vision Image Yet]';
     
     return `${title}
 
@@ -195,8 +187,6 @@ I trust that I have what it takes, because I already hold ${resources} in my han
 I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll ${nextStep}, beginning with this first step and letting the momentum carry me onward.
 
 I understand that as long as I commit to ${dailyTask} each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
-
-When I close my eyes, I clearly see this image: ${visionImagePlaceholder}. It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
 
 Every time I complete my daily milestone, I'll reward myself with something small and meaningful: ${dailyReward}. When I fully accomplish my goal, I'll celebrate this journey by treating myself to ${ultimateReward}, as recognition for what I've achieved.
 
@@ -259,13 +249,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
     });
     
     try {
-      // Check if content includes Vision Image paragraph
-      const hasVisionParagraph = content.includes('I clearly see this image') || 
-                                content.includes('When I close my eyes') || 
-                                content.includes('When I close my eyes') ||
-                                content.includes('[No Vision Image Yet]');
-      const visionImageExists = goal?.details?.visionImage;
-      
       // Process declaration content in paragraphs (only if content is long enough)
       if (content.length < 10) {
         console.warn("Declaration content too short, not processing paragraphs:", content);
@@ -320,63 +303,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
             // Skip empty paragraphs
             if (!paragraph.trim()) return null;
             
-            // Check if it's a Vision Image paragraph
-            if (paragraph.includes('I clearly see this image') || 
-                paragraph.includes('When I close my eyes') || 
-                paragraph.includes('When I close my eyes') ||
-                paragraph.includes('[No Vision Image Yet]')) {
-              return (
-                <div key={index} className={styles.visionParagraph}>
-                  <Typography className={styles.paragraph} variant="body1">
-                    When I close my eyes, I clearly see this image:
-                  </Typography>
-                  
-                  {visionImageExists ? (
-                    <Box className={styles.declarationImageContainer}>
-                      <img 
-                        src={goal.details.visionImage} 
-                        alt="Goal Vision" 
-                        className={styles.declarationImage}
-                        onClick={() => handleImageClick(goal.details.visionImage)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-                        Click to view full image
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center',
-                      border: '1px dashed #ccc',
-                      borderRadius: 1,
-                      py: 2,
-                      px: 3,
-                      mb: 2
-                    }}>
-                      <Typography className={styles.paragraph} variant="body1" sx={{ fontStyle: 'italic', color: 'text.secondary', mb: 1 }}>
-                        [No Vision Image Set]
-                      </Typography>
-                      <Button 
-                        variant="outlined" 
-                        color="primary" 
-                        size="small"
-                        onClick={() => setIsEditing(true)} 
-                        startIcon={<AddPhotoAlternateIcon />}
-                      >
-                        Add Vision Image
-                      </Button>
-                    </Box>
-                  )}
-                  
-                  <Typography className={styles.paragraph} variant="body1">
-                    It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
-                  </Typography>
-                </div>
-              );
-            }
-            
             // Check if paragraph contains variables
             let formattedParagraph = paragraph;
             
@@ -390,7 +316,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
               { regex: /something small and meaningful: (.*?)\./, group: 1 }, // dailyReward
               { regex: /treating myself to (.*?),/, group: 1 }, // ultimateReward
               { regex: /deadline for myself: (.*?)\./, group: 1 }, // targetDate
-              { regex: /I clearly see this image: \[(.*?)\]/, group: 1 }, // visionImage
             ];
             
             // Apply variable detection and style replacement
@@ -459,30 +384,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
     }
   };
   
-  // Handle image upload
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size cannot exceed 5MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      handleFieldChange('visionImage', reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Remove image
-  const handleRemoveImage = () => {
-    setImagePreview('');
-    handleFieldChange('visionImage', null);
-  };
-  
   // Render editable declaration
   const renderEditableDeclaration = () => {
     if (!goal) {
@@ -538,59 +439,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
           /> each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
         </Typography>
         
-        <div className={styles.visionParagraph}>
-          <Typography className={styles.paragraph} variant="body1">
-            When I close my eyes, I clearly see this image:
-          </Typography>
-          
-          {/* Vision Image upload and preview */}
-          <Box className={styles.visionImageSection}>
-            {imagePreview || editedData.visionImage ? (
-              <Box className={styles.imagePreviewContainer}>
-                <img 
-                  src={imagePreview || editedData.visionImage} 
-                  alt="Vision Image" 
-                  className={styles.imagePreview} 
-                />
-                <IconButton 
-                  className={styles.removeImageBtn}
-                  onClick={handleRemoveImage}
-                  size="small"
-                >
-                  <CancelIcon />
-                </IconButton>
-              </Box>
-            ) : (
-              <Box className={styles.uploadImageBox}>
-                <Input
-                  type="file"
-                  id="vision-image-upload"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="vision-image-upload">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    startIcon={<ImageIcon />}
-                    className={styles.uploadButton}
-                  >
-                    Upload Vision Image
-                  </Button>
-                </label>
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                  Add an image representing your goal vision
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          
-          <Typography className={styles.paragraph} variant="body1">
-            It's not just a vision of my desired outcome; it's the driving force that moves me forward today.
-          </Typography>
-        </div>
-        
         <Typography className={styles.paragraph} variant="body1">
           Every time I complete my daily milestone, I'll reward myself with something small and meaningful: <EditableField 
             value={editedData.dailyReward} 
@@ -610,19 +458,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </Typography>
       </div>
     );
-  };
-  
-  // Handle image click preview
-  const handleImageClick = (imageUrl) => {
-    if (!imageUrl) return;
-    
-    setPreviewImageUrl(imageUrl);
-    setImagePreviewDialog(true);
-  };
-  
-  // Close image preview
-  const handleCloseImagePreview = () => {
-    setImagePreviewDialog(false);
   };
   
   // Save declaration
@@ -853,12 +688,7 @@ I trust that I have what it takes, because I already have the preparation I need
 
 I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me forward.
 
-I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
-
-When I close my eyes, I clearly see this image:
-[No Vision Image Yet]
-
-It's not just a vision of my desired outcome; it's the driving force that moves me forward today.`)
+I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.`)
           )}
         </div>
         
@@ -876,31 +706,6 @@ It's not just a vision of my desired outcome; it's the driving force that moves 
             </Button>
           )}
         </Box>
-        
-        {/* Image preview dialog */}
-        <Dialog
-          open={imagePreviewDialog}
-          onClose={handleCloseImagePreview}
-          maxWidth="lg"
-        >
-          <DialogContent sx={{ p: 1 }}>
-            <img 
-              src={previewImageUrl}
-              alt="Vision Image Preview"
-              style={{ 
-                maxWidth: '100%', 
-                maxHeight: '80vh',
-                display: 'block',
-                margin: '0 auto'
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseImagePreview} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
       </DialogContent>
     </Dialog>
   );

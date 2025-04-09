@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import ProgressTimeline from "./ProgressTimeline";
 import DailyTasks from "./DailyTasks";
 import WeeklyDailyCards from "./WeeklyDailyCards";
 import GoalDeclaration from "./GoalDeclaration";
@@ -604,18 +603,6 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
           </Fade>
         )}
       </Box>
-
-      <ProgressTimeline
-        progress={
-          selectedGoal.progress !== undefined
-            ? selectedGoal.progress * 10 // 如果有直接的进度值
-            : selectedGoal.checkpoints && selectedGoal.checkpoints.length > 0
-            ? (selectedGoal.checkpoints.filter((cp) => cp.isCompleted).length /
-                selectedGoal.checkpoints.length) *
-              100
-            : 0
-        }
-      />
 
       {/* 每周DailyCards显示 */}
       <WeeklyDailyCards
