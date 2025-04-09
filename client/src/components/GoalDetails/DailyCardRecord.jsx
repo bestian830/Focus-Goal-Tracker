@@ -71,6 +71,7 @@ export default function DailyCardRecord({
       dailyTask: false,
       dailyReward: false
     },
+    taskCompletions: {}, // 用于存储每个任务的独立完成状态
     records: []
   });
 
@@ -124,6 +125,9 @@ export default function DailyCardRecord({
         isToday: cardDateFormatted === todayFormatted,
         isFuture: cardDateFormatted > todayFormatted
       });
+
+      // 初始化任务完成状态
+      const taskCompletions = existingCard.taskCompletions || {};
       
       // Check if the card is for today or a future date
       if (cardDateFormatted >= todayFormatted) {
@@ -131,28 +135,38 @@ export default function DailyCardRecord({
         setCardData({
           ...existingCard,
           dailyTask: goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
-          dailyReward: goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
           // Ensure records is an array
-          records: Array.isArray(existingCard.records) ? existingCard.records : []
-          // Keep the existing completion status
+          records: Array.isArray(existingCard.records) ? existingCard.records : [],
+          taskCompletions // 保留任务完成状态
         });
       } else {
         // For past dates, use existing card data unchanged, but ensure records is an array
         setCardData({
           ...existingCard,
-          records: Array.isArray(existingCard.records) ? existingCard.records : []
+          records: Array.isArray(existingCard.records) ? existingCard.records : [],
+          taskCompletions // 保留任务完成状态
         });
       }
     } else {
+      // 初始化任务完成状态为全部未完成
+      const taskCompletions = {};
+      if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
+        goal.dailyTasks.forEach((taskText, index) => {
+          taskCompletions[`task-${index}`] = false;
+        });
+      }
+      if (goal && goal.currentSettings?.dailyTask) {
+        taskCompletions[`daily-task-${date}`] = false;
+      }
+      
       // Create new card with current goal settings
       setCardData({
         date: date,
         dailyTask: goal.currentSettings?.dailyTask || '',
-        dailyReward: goal.currentSettings?.dailyReward || '',
         completed: {
-          dailyTask: false,
-          dailyReward: false
+          dailyTask: false
         },
+        taskCompletions, // 添加初始任务完成状态
         records: []  // Empty array for new cards
       });
     }
@@ -166,25 +180,29 @@ export default function DailyCardRecord({
   }, [goal, date, open]);
 
   // Handle task completion status change
-  const handleTaskStatusChange = (completed) => {
-    setCardData(prev => ({
-      ...prev,
-      completed: {
-        ...prev.completed,
-        dailyTask: completed
-      }
-    }));
-  };
-
-  // Handle reward claimed status change
-  const handleRewardStatusChange = (claimed) => {
-    setCardData(prev => ({
-      ...prev,
-      completed: {
-        ...prev.completed,
-        dailyReward: claimed
-      }
-    }));
+  const handleTaskStatusChange = (taskId, completed) => {
+    console.log(`Task ${taskId} status changed to ${completed}`);
+    
+    setCardData(prev => {
+      // 更新特定任务的完成状态
+      const updatedTaskCompletions = {
+        ...prev.taskCompletions,
+        [taskId]: completed
+      };
+      
+      // 检查是否有任何任务完成
+      const anyTaskCompleted = Object.values(updatedTaskCompletions).some(status => status === true);
+      
+      return {
+        ...prev,
+        taskCompletions: updatedTaskCompletions,
+        // 设置整体任务完成状态
+        completed: {
+          ...prev.completed,
+          dailyTask: anyTaskCompleted
+        }
+      };
+    });
   };
 
   // Handle adding a new progress record
@@ -277,14 +295,6 @@ export default function DailyCardRecord({
         throw new Error('Invalid goal data');
       }
       
-      // Detailed logging for debugging date issues
-      console.log('Card data before save:', {
-        originalDate: date,
-        cardDataDate: cardData.date,
-        dateType: typeof date,
-        isISOString: date && typeof date === 'string' && date.includes('T') && date.includes('Z')
-      });
-      
       // 確保日期格式正確，使用本地時間處理
       let cardDate;
       try {
@@ -293,18 +303,6 @@ export default function DailyCardRecord({
         if (isNaN(cardDate.getTime())) {
           throw new Error('Invalid date format');
         }
-        
-        // 記錄日期詳情，用於調試
-        console.log('Date processing:', {
-          originalDate: date,
-          parsedDate: cardDate.toString(),
-          localDateISOString: new Date(
-            cardDate.getFullYear(), 
-            cardDate.getMonth(), 
-            cardDate.getDate()
-          ).toISOString(),
-          utcDateISOString: cardDate.toISOString()
-        });
       } catch (error) {
         console.error('Error creating date object:', error, date);
         setError('Invalid date format. Please try again.');
@@ -320,7 +318,8 @@ export default function DailyCardRecord({
           cardDate.getFullYear(), 
           cardDate.getMonth(), 
           cardDate.getDate()
-        ).toISOString()
+        ).toISOString(),
+        taskCompletions: cardData.taskCompletions // 确保包含任务完成状态
       };
       
       console.log('Sending updated card to API:', updatedCard);
@@ -354,11 +353,29 @@ export default function DailyCardRecord({
   };
 
   // Tasks for the DailyTasks component
-  const tasksForComponent = cardData.dailyTask ? [{
-    id: `daily-task-${date}`,
-    text: cardData.dailyTask,
-    completed: cardData.completed.dailyTask
-  }] : [];
+  const tasksForComponent = [];
+  
+  // 如果goal有dailyTasks数组，添加到任务列表
+  if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
+    goal.dailyTasks.forEach((taskText, index) => {
+      const taskId = `task-${index}`;
+      tasksForComponent.push({
+        id: taskId,
+        text: taskText,
+        completed: cardData.taskCompletions[taskId] || false
+      });
+    });
+  }
+  
+  // 如果cardData有dailyTask，也添加到列表（保持兼容）
+  if (cardData.dailyTask && !tasksForComponent.some(task => task.text === cardData.dailyTask)) {
+    const taskId = `daily-task-${date}`;
+    tasksForComponent.push({
+      id: taskId,
+      text: cardData.dailyTask,
+      completed: cardData.taskCompletions[taskId] || false
+    });
+  }
 
   const displayDate = formatDisplayDate(date);
   
@@ -421,15 +438,7 @@ export default function DailyCardRecord({
         {/* Daily Task Section */}
         <DailyTasks 
           tasks={tasksForComponent} 
-          onTaskStatusChange={(taskId, completed) => handleTaskStatusChange(completed)}
-        />
-        
-        {/* Daily Reward Section */}
-        <DailyReward 
-          reward={cardData.dailyReward}
-          claimed={cardData.completed.dailyReward}
-          onClaimedChange={handleRewardStatusChange}
-          disabled={!cardData.completed.dailyTask} // Disable if task not completed
+          onTaskStatusChange={handleTaskStatusChange}
         />
         
         <Divider sx={{ my: 2 }} />

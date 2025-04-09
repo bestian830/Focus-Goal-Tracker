@@ -566,7 +566,7 @@ const updateGoalStatus = async (req, res) => {
 const addOrUpdateDailyCard = async (req, res) => {
   try {
     const { id } = req.params;
-    const { date, dailyTask, dailyReward, completed, links, records } = req.body;
+    const { date, dailyTask, dailyReward, completed, links, records, taskCompletions } = req.body;
     
     // Find goal
     const goal = await Goal.findById(id);
@@ -630,6 +630,11 @@ const addOrUpdateDailyCard = async (req, res) => {
         }
       }
       
+      // 处理任务完成状态
+      if (taskCompletions) {
+        goal.dailyCards[existingCardIndex].taskCompletions = taskCompletions;
+      }
+      
       // 處理記錄（records）字段
       if (records) {
         goal.dailyCards[existingCardIndex].records = records;
@@ -649,7 +654,8 @@ const addOrUpdateDailyCard = async (req, res) => {
         dailyReward: dailyReward || goal.currentSettings?.dailyReward || '',
         completed: completed || { dailyTask: false, dailyReward: false },
         records: records || [],
-        links: links || []
+        links: links || [],
+        taskCompletions: taskCompletions || {} // 添加任务完成状态字段
       };
       
       goal.dailyCards.push(newCard);

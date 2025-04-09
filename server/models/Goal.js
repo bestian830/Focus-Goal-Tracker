@@ -88,6 +88,10 @@ const GoalSchema = new mongoose.Schema(
             default: false,
           },
         },
+        taskCompletions: {
+          type: Object,
+          default: {}
+        },
         records: [
           {
             content: {
