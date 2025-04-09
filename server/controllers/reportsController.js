@@ -1,10 +1,13 @@
 import Goal from '../models/Goal.js';
-import axios from 'axios'; // For calling external AI API
+import axios from 'axios'; // Keep axios
+// import OpenAI from 'openai'; // Remove OpenAI library import
 
-// --- Configuration (Replace with your actual details) ---
-// You might need to get an API key from Hugging Face or another provider
-const HUGGINGFACE_API_URL = process.env.HUGGINGFACE_API_URL; // Read URL from environment variables
-const HUGGINGFACE_API_TOKEN = process.env.HUGGINGFACE_API_TOKEN; // Store your token securely in environment variables
+// --- Configuration ---
+const HUGGINGFACE_API_URL = process.env.HUGGINGFACE_API_URL; // Read standard API URL
+const HUGGINGFACE_API_TOKEN = process.env.HUGGINGFACE_API_TOKEN;
+// const HF_MODEL_NAME = process.env.HF_MODEL_NAME; // No longer strictly needed for axios call if URL includes it
+// const HUGGINGFACE_API_BASE_URL = process.env.HUGGINGFACE_API_BASE_URL; // Remove Base URL usage
+
 
 if (!HUGGINGFACE_API_TOKEN) {
   console.warn("HUGGINGFACE_API_TOKEN is not set. AI report generation will likely fail.");
@@ -74,7 +77,12 @@ const buildPrompt = (goal) => {
     prompt += `- No daily progress recorded yet.\n`;
   }
 
-  prompt += `\nBased on the goal and the recent progress log, provide a concise analysis (2-3 sentences) focusing on consistency, potential challenges, and actionable suggestions for improvement. Be encouraging but realistic.`;
+  // Updated instruction to explicitly ask for future suggestions
+  prompt += `\nBased on the goal and the recent progress log:
+1. Provide a concise analysis (1-2 sentences) of recent progress, focusing on consistency and patterns.
+2. Identify potential challenges or areas needing attention (1 sentence).
+3. Offer specific, actionable suggestions for the **next steps** or **future planning** to help achieve the goal (2-3 sentences).
+Be encouraging, realistic, and forward-looking.`;
 
   console.log("--- Generated AI Prompt ---");
   console.log(prompt);
@@ -84,7 +92,7 @@ const buildPrompt = (goal) => {
 };
 
 /**
- * Calls the external AI service.
+ * Calls the external AI service using Axios.
  * @param {string} prompt - The prompt to send to the AI.
  * @returns {Promise<string>} A promise that resolves with the AI-generated feedback content.
  */
@@ -93,24 +101,21 @@ const callAIService = async (prompt) => {
     throw new Error("AI service token is not configured.");
   }
   if (!HUGGINGFACE_API_URL) {
-      throw new Error("AI service URL is not configured.");
+    throw new Error("AI service URL is not configured.");
   }
 
   try {
-    console.log(`Calling AI service at: ${HUGGINGFACE_API_URL}`);
-    // --- Adjust this part based on the specific AI model/API requirements ---
-    // This example assumes a text-generation or summarization model.
-    // You might need to change the payload structure (`inputs` vs. other fields)
-    // and how you extract the result (`response.data[0].generated_text` or similar).
+    console.log(`DEBUG: Attempting to call AI service. URL: ${HUGGINGFACE_API_URL}`); // Log the URL being used
+    console.log(`Calling AI service (axios) at: ${HUGGINGFACE_API_URL}`);
+    // Use axios to call the standard Hugging Face Inference API
     const response = await axios.post(
       HUGGINGFACE_API_URL,
       {
         inputs: prompt,
-        // Add any model-specific parameters here, e.g., max_length, temperature
         parameters: {
-          max_new_tokens: 150, // Limit the length of the generated response
-          // temperature: 0.7, // Adjust creativity vs. factuality
-          // Add other parameters as needed by the model
+          max_new_tokens: 250, // Adjust as needed
+          return_full_text: false, // Often useful to get only the generated part
+          // temperature: 0.7, // Optional: Adjust creativity
         }
       },
       {
@@ -118,73 +123,53 @@ const callAIService = async (prompt) => {
           'Authorization': `Bearer ${HUGGINGFACE_API_TOKEN}`,
           'Content-Type': 'application/json',
         },
-        timeout: 30000 // 30 second timeout
+        timeout: 45000 // Increased timeout slightly (45 seconds)
       }
     );
-    // --- End Adjustment Section ---
 
     console.log('AI service response status:', response.status);
-    // console.log('AI service raw response data:', response.data); // Log raw data for debugging
+    console.log('AI service raw response data:', JSON.stringify(response.data, null, 2));
 
-    // --- Extract the actual feedback from the response ---
-    // This structure depends heavily on the specific Hugging Face model/API used.
-    // Inspect `response.data` carefully to find the generated text.
-    // Common structures: response.data[0].generated_text, response.data.summary_text, etc.
+    // Extract feedback - structure might differ slightly, check raw response
     let feedbackContent = "Error: Could not extract feedback from AI response.";
     if (Array.isArray(response.data) && response.data[0] && response.data[0].generated_text) {
-        // Often, the result is an array with one object containing generated_text
-        // Sometimes the input prompt is included, remove it if necessary.
-        feedbackContent = response.data[0].generated_text.replace(prompt, '').trim();
-    } else if (response.data && typeof response.data === 'object') {
-        // Look for other potential keys if the primary one isn't found
-        const possibleKeys = ['generated_text', 'summary_text', 'text'];
-        for (const key of possibleKeys) {
-            if (response.data[key]) {
-                feedbackContent = response.data[key].replace(prompt, '').trim();
-                break;
-            }
-        }
-        // Handle nested structures if necessary
-        if (feedbackContent.startsWith("Error:") && response.data.outputs && response.data.outputs.generated_text) {
-             feedbackContent = response.data.outputs.generated_text.replace(prompt, '').trim();
-        }
-    } else if (typeof response.data === 'string') {
-        // Less common, but sometimes the response is just the string
-         feedbackContent = response.data.replace(prompt, '').trim();
+      feedbackContent = response.data[0].generated_text.trim();
+    } else if (response.data && response.data.generated_text) { // Some models might return object directly
+       feedbackContent = response.data.generated_text.trim();
+    } else {
+        console.error("Unexpected AI response format. Raw data:", response.data);
     }
 
-
-    if (!feedbackContent || feedbackContent.startsWith("Error:")) {
-         console.error("Failed to extract valid feedback from AI response. Raw data:", response.data);
+    if (feedbackContent.startsWith("Error:")) {
          throw new Error("Failed to extract valid feedback from AI response.");
     }
 
-     // Simple post-processing: remove potential artifacts or ensure readability
+    // Simple post-processing
     feedbackContent = feedbackContent.replace(/<pad>/g, '').replace(/<\/s>/g, '').trim();
-
 
     console.log('Extracted AI feedback:', feedbackContent);
     return feedbackContent;
 
   } catch (error) {
-    console.error(`Error calling AI service: ${error.message}`);
+    console.error(`Error calling AI service (axios): ${error.message}`);
     if (error.response) {
       console.error('AI Service Error Response Status:', error.response.status);
-      console.error('AI Service Error Response Data:', error.response.data);
+      console.error('AI Service Error Response Data:', JSON.stringify(error.response.data, null, 2));
     } else if (error.request) {
-      console.error('AI Service No Response Received:', error.request);
+      console.error('AI Service No Response Received');
     } else {
       console.error('AI Service Request Setup Error:', error.message);
     }
-     // Provide a more user-friendly error based on status if possible
+
     if (error.response?.status === 401) {
-        throw new Error("AI service authentication failed. Check API token.");
+      throw new Error("AI service authentication failed. Check API token.");
     } else if (error.response?.status === 429) {
-         throw new Error("AI service rate limit exceeded. Please try again later.");
+      throw new Error("AI service rate limit exceeded. Please try again later.");
+    } else if (error.response?.status === 503) {
+        throw new Error("AI service is unavailable or model is loading. Please try again later."); // More specific 503 message
     } else if (error.code === 'ECONNABORTED') {
-         throw new Error("AI service request timed out. Please try again later.");
+      throw new Error("AI service request timed out. Please try again later.");
     }
-    // Include more details in the generic error message
     throw new Error(`Failed to get feedback from AI service. Status: ${error.response?.status || 'N/A'}, Data: ${JSON.stringify(error.response?.data) || error.message}`);
   }
 };
@@ -240,7 +225,8 @@ export const generateReport = async (req, res) => {
       success: false,
       error: {
         message: `Failed to generate AI report: ${error.message}`,
-        details: error.stack // Include stack trace for debugging
+        // Avoid sending full stack trace to client in production
+        details: process.env.NODE_ENV === 'development' ? error.stack : 'Internal server error' 
       }
     });
   }
