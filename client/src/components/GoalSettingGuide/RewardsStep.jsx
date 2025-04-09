@@ -1,25 +1,25 @@
-import React from 'react';
-import { Box, TextField, Typography, Grid } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { zhCN } from 'date-fns/locale';
+import React, { useState } from 'react';
+import { Box, TextField, Typography, Grid, Button, List, ListItem, ListItemText, IconButton, Paper } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 /**
  * 奖励设定步骤
- * 第五步：用户设置完成每日任务的奖励、实现最终目标的奖励，以及目标日期
+ * 第四步：用户可以设置多个奖励项目（可选）
  */
 const RewardsStep = ({ 
-  dailyReward, 
-  ultimateReward, 
-  targetDate, 
-  onDailyRewardChange, 
-  onUltimateRewardChange, 
-  onTargetDateChange 
+  rewards,
+  onAddReward,
+  onRemoveReward
 }) => {
-  // 处理日期变更，不再记录日志减少控制台输出
-  const handleDateChange = (date) => {
-    onTargetDateChange(date);
+  const [newReward, setNewReward] = useState('');
+
+  // 添加奖励
+  const handleAddReward = () => {
+    if (newReward.trim()) {
+      onAddReward(newReward);
+      setNewReward('');
+    }
   };
 
   return (
@@ -27,70 +27,55 @@ const RewardsStep = ({
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
-            如果我完成每日任务，我会奖励自己
+            我的奖励机制
           </Typography>
           
           <Typography variant="body2" color="text.secondary" paragraph>
-            为每天的进步设定一个小奖励，这将帮助你建立积极的习惯循环。
+            为你的进步和成就设定奖励，这将帮助你保持动力和积极性（可选）。
           </Typography>
           
-          <TextField
-            fullWidth
-            label="每日奖励"
-            variant="outlined"
-            value={dailyReward || ''}
-            onChange={(e) => onDailyRewardChange(e.target.value)}
-            placeholder="例如：看30分钟喜欢的剧集、喝一杯优质咖啡..."
-            inputProps={{ maxLength: 200 }}
-            helperText={`${(dailyReward || '').length}/200 字符`}
-          />
-        </Grid>
-        
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            如果我实现了这个目标，我会给自己的奖励是
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" paragraph>
-            为实现最终目标设定一个有意义的奖励，这将成为你路途中的强大动力。
-          </Typography>
-          
-          <TextField
-            fullWidth
-            label="最终奖励"
-            variant="outlined"
-            value={ultimateReward || ''}
-            onChange={(e) => onUltimateRewardChange(e.target.value)}
-            placeholder="例如：一次周末出游、购买期待已久的物品..."
-            inputProps={{ maxLength: 200 }}
-            helperText={`${(ultimateReward || '').length}/200 字符`}
-          />
-        </Grid>
-        
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            我计划在这个日期前实现目标
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" paragraph>
-            为目标设定一个明确的时间期限，这能增加紧迫感并帮助你更好规划。
-          </Typography>
-          
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={zhCN}>
-            <DatePicker
-              label="目标日期"
-              value={targetDate}
-              onChange={handleDateChange}
-              disablePast
-              slotProps={{ 
-                textField: { 
-                  fullWidth: true,
-                  variant: "outlined",
-                  helperText: "选择一个目标完成日期"
-                } 
-              }}
+          <Box sx={{ display: 'flex', mb: 2 }}>
+            <TextField
+              fullWidth
+              label="添加奖励"
+              variant="outlined"
+              value={newReward}
+              onChange={(e) => setNewReward(e.target.value)}
+              placeholder="例如：完成一周任务后看一部电影，达成目标后去旅行..."
+              inputProps={{ maxLength: 200 }}
             />
-          </LocalizationProvider>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleAddReward}
+              sx={{ ml: 1 }}
+              startIcon={<AddIcon />}
+            >
+              添加
+            </Button>
+          </Box>
+          
+          {rewards.length > 0 && (
+            <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                已添加的奖励 ({rewards.length})
+              </Typography>
+              <List dense>
+                {rewards.map((reward, index) => (
+                  <ListItem 
+                    key={index}
+                    secondaryAction={
+                      <IconButton edge="end" onClick={() => onRemoveReward(index)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    }
+                  >
+                    <ListItemText primary={reward} />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          )}
         </Grid>
       </Grid>
     </Box>

@@ -9,7 +9,7 @@ const MotivationStep = ({ value, onChange }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        我想要实现这个目标，主要是因为
+        我想要实现这个目标，主要是因为 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
@@ -18,6 +18,7 @@ const MotivationStep = ({ value, onChange }) => {
       
       <TextField
         fullWidth
+        required
         multiline
         rows={4}
         label="动机"

@@ -9,7 +9,7 @@ const TitleStep = ({ value, onChange }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        我最想要实现/完成的目标是
+        我最想要实现/完成的目标是 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
@@ -18,6 +18,7 @@ const TitleStep = ({ value, onChange }) => {
       
       <TextField
         fullWidth
+        required
         label="目标标题"
         variant="outlined"
         value={value}

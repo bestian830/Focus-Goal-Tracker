@@ -9,9 +9,11 @@ import mongoose from "mongoose";
  * - description: Detailed description of the goal
  * - priority: Priority level (High, Medium, Low)
  * - status: Current status (active, completed, archived)
- * - targetDate: Target completion date (optional)
- * - details: Detailed goal information (motivation, resources, rewards, etc.)
- * - currentSettings: Current daily task and reward settings
+ * - motivation: Why the goal is important (moved from details)
+ * - targetDate: Target completion date
+ * - resources: Array of resources that can help achieve the goal (optional)
+ * - dailyTasks: Array of daily tasks related to the goal (optional)
+ * - rewards: Array of rewards for achieving progress or completion (optional)
  * - dailyCards: Array of daily task/reward snapshots
  * - declaration: Goal declaration and vision statement
  * - checkpoints: Array of milestones to track progress
@@ -45,47 +47,24 @@ const GoalSchema = new mongoose.Schema(
       enum: ["active", "completed", "archived"],
       default: "active",
     },
+    motivation: {
+      type: String,
+      maxlength: 500,
+    },
     targetDate: {
       type: Date,
     },
-    details: {
-      motivation: {
-        type: String,
-        maxlength: 500,
-      },
-      resources: {
-        type: String,
-        maxlength: 500,
-      },
-      nextStep: {
-        type: String,
-        maxlength: 200,
-      },
-      visionImage: {
-        type: String, // Cloudinary URL
-      },
-      dailyReward: {
-        type: String,
-        maxlength: 200,
-      },
-      ultimateReward: {
-        type: String,
-        maxlength: 200,
-      },
+    resources: {
+      type: [String], // 改为字符串数组
+      default: [],
     },
-    currentSettings: {
-      dailyTask: {
-        type: String,
-        maxlength: 200,
-      },
-      dailyReward: {
-        type: String,
-        maxlength: 200,
-      },
-      updatedAt: {
-        type: Date,
-        default: Date.now,
-      },
+    dailyTasks: {
+      type: [String], // 改为字符串数组
+      default: [],
+    },
+    rewards: {
+      type: [String], // 改为字符串数组
+      default: [],
     },
     dailyCards: [
       {
@@ -137,10 +116,6 @@ const GoalSchema = new mongoose.Schema(
     ],
     declaration: {
       content: {
-        type: String,
-        default: "",
-      },
-      vision: {
         type: String,
         default: "",
       },

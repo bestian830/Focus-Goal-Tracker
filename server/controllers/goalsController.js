@@ -109,12 +109,14 @@ const createGoal = async (req, res) => {
       userId, 
       title, 
       description, 
-      priority, 
-      targetDate, 
+      priority,
+      motivation,
+      targetDate,
+      resources,
+      dailyTasks,
+      rewards,
       declaration, 
-      checkpoints,
-      details,
-      currentSettings
+      checkpoints
     } = req.body;
     
     console.log(`===== 開始創建目標 =====`);
@@ -248,27 +250,31 @@ const createGoal = async (req, res) => {
       title,
       description,
       priority: priority || "Medium",
-      status: "active"
+      status: "active",
+      // 添加新字段
+      motivation: motivation || "",
+      targetDate: targetDate || null,
+      resources: resources || [],
+      dailyTasks: dailyTasks || [],
+      rewards: rewards || []
     };
     
-    // Add optional fields if provided
-    if (targetDate) goalData.targetDate = targetDate;
+    // 添加可选字段
     if (declaration) goalData.declaration = declaration;
     if (checkpoints) goalData.checkpoints = checkpoints;
     
-    // Add new fields from the updated schema
-    if (details) goalData.details = details;
-    if (currentSettings) goalData.currentSettings = currentSettings;
-    
-    // Initialize dailyCards with an empty array
+    // 初始化dailyCards数组
     goalData.dailyCards = [];
     
-    // Log the goal data being created
+    // 记录创建的目标数据
     console.log("開始創建目標，數據:", {
       userId: goalData.userId,
       title: goalData.title,
-      hasDetails: !!goalData.details,
-      hasSettings: !!goalData.currentSettings,
+      hasMotivation: !!goalData.motivation,
+      hasTargetDate: !!goalData.targetDate,
+      resourcesCount: goalData.resources.length,
+      dailyTasksCount: goalData.dailyTasks.length,
+      rewardsCount: goalData.rewards.length,
       userType: isTemporaryUser ? "臨時用戶" : "註冊用戶"
     });
     
@@ -376,13 +382,15 @@ const updateGoal = async (req, res) => {
     const { 
       title, 
       description, 
-      priority, 
-      targetDate, 
+      priority,
+      motivation,
+      targetDate,
+      resources,
+      dailyTasks,
+      rewards,
       declaration, 
       checkpoints, 
       status,
-      details,
-      currentSettings,
       dailyCards
     } = req.body;
     
@@ -408,34 +416,27 @@ const updateGoal = async (req, res) => {
       });
     }
     
-    console.log(`找到要更新的目標: ${goal.title}`, {
-      當前目標日期: goal.targetDate,
-      當前優先級: goal.priority
-    });
+    console.log(`找到要更新的目標: ${goal.title}`);
     
     // Update fields
     if (title) goal.title = title;
     if (description) goal.description = description;
     if (priority) goal.priority = priority;
-    if (targetDate) {
-      console.log(`更新目標日期: ${targetDate}`);
-      goal.targetDate = targetDate;
-    }
+    if (targetDate) goal.targetDate = targetDate;
     if (declaration) goal.declaration = declaration;
     if (checkpoints) goal.checkpoints = checkpoints;
     if (status) goal.status = status;
     
-    // Update new fields
-    if (details) goal.details = details;
-    if (currentSettings) goal.currentSettings = currentSettings;
+    // 更新新字段
+    if (motivation !== undefined) goal.motivation = motivation;
+    if (resources) goal.resources = resources;
+    if (dailyTasks) goal.dailyTasks = dailyTasks;
+    if (rewards) goal.rewards = rewards;
     if (dailyCards) goal.dailyCards = dailyCards;
     
     // Save updated goal
     await goal.save();
-    console.log(`目標更新成功, ID: ${id}`, {
-      更新後日期: goal.targetDate,
-      更新後優先級: goal.priority
-    });
+    console.log(`目標更新成功, ID: ${id}`);
     
     res.status(200).json({
       success: true,

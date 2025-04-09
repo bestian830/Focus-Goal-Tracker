@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, Stepper, Step, StepLabel, Button, Typography, Paper, Container, CircularProgress } from '@mui/material';
 import TitleStep from './TitleStep';
 import MotivationStep from './MotivationStep';
+import DateStep from './DateStep';
 import ResourcesStep from './ResourcesStep';
-import VisionStep from './VisionStep';
 import RewardsStep from './RewardsStep';
 
 // localStorage 键名
@@ -13,29 +13,19 @@ const STORAGE_KEY = 'focus_goal_setting_draft';
 const steps = [
   '目标设定',
   '动机探索',
+  '日期设定',
   '资源与步骤',
-  '愿景设定',
   '奖励机制'
 ];
 
 // 初始表单数据
 const initialGoalData = {
   title: '',
-  details: {
-    motivation: '',
-    resources: '',
-    nextStep: '',
-    visionImage: '',
-    dailyReward: '',
-    ultimateReward: ''
-  },
-  currentSettings: {
-    dailyTask: '',
-    dailyReward: ''
-  },
-  description: '',
+  motivation: '',
   targetDate: null,
-  priority: 'Medium', // 默认优先级
+  resources: [], // 改为数组，可添加多个
+  dailyTasks: [], // 改为数组，可添加多个
+  rewards: [], // 改为数组，可添加多个
   status: 'active' // 默认状态
 };
 
@@ -74,23 +64,15 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
       case 0: // 标题步骤
         return goalData.title.trim() !== '';
       case 1: // 动机步骤
-        return goalData.details.motivation.trim() !== '';
-      case 2: // 资源步骤
-        return (
-          goalData.details.resources.trim() !== '' && 
-          goalData.details.nextStep.trim() !== '' && 
-          goalData.currentSettings.dailyTask.trim() !== ''
-        );
-      case 3: // 愿景步骤
-        // 第4步：图片是可选的，所以总是返回true
-        // 用户可以选择上传图片或跳过此步骤
+        return goalData.motivation.trim() !== '';
+      case 2: // 日期步骤
+        return goalData.targetDate !== null && goalData.targetDate instanceof Date;
+      case 3: // 资源步骤
+        // resources和dailyTasks是可选的
         return true;
       case 4: // 奖励步骤
-        return (
-          goalData.details.dailyReward.trim() !== '' && 
-          goalData.details.ultimateReward.trim() !== '' && 
-          goalData.targetDate !== null
-        );
+        // rewards是可选的
+        return true;
       default:
         return false;
     }
@@ -98,23 +80,10 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
 
   // 处理数据更新
   const handleDataChange = (field, value) => {
-    let updatedData;
-    
-    if (field.includes('.')) {
-      const [section, key] = field.split('.');
-      updatedData = {
-        ...goalData,
-        [section]: {
-          ...goalData[section],
-          [key]: value
-        }
-      };
-    } else {
-      updatedData = {
-        ...goalData,
-        [field]: value
-      };
-    }
+    const updatedData = {
+      ...goalData,
+      [field]: value
+    };
     
     setGoalData(updatedData);
     
@@ -127,55 +96,42 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
     }
   };
 
+  // 添加多项元素（资源/任务/奖励）
+  const handleAddItem = (field, item) => {
+    if (!item.trim()) return;
+    
+    const items = [...goalData[field], item];
+    handleDataChange(field, items);
+  };
+
+  // 删除多项元素
+  const handleRemoveItem = (field, index) => {
+    const items = [...goalData[field]];
+    items.splice(index, 1);
+    handleDataChange(field, items);
+  };
+
   // 下一步
   const handleNext = () => {
-    // 从愿景页面进入奖励页面时，如果没有选择图片，将visionImage设为null
-    if (activeStep === 3) {
-      if (!goalData.details.visionImage) {
-        handleDataChange('details.visionImage', null);
-      }
-    }
-
     if (activeStep === steps.length - 1) {
       console.log("GoalSettingGuide: Final step, preparing to submit...");
       
-      // 生成详细描述（可以根据累积的信息自动生成）
-      const generatedDescription = `我想要${goalData.title}，因为${goalData.details.motivation}。`;
-      
-      // 验证 targetDate 字段是否有效
-      if (!goalData.targetDate || !(goalData.targetDate instanceof Date) || isNaN(goalData.targetDate.getTime())) {
-        console.error("GoalSettingGuide: 目标日期无效:", goalData.targetDate);
-        // 如果日期无效，设置为一周后
-        const oneWeekLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        handleDataChange('targetDate', oneWeekLater);
-        console.log("GoalSettingGuide: 已设置默认目标日期:", oneWeekLater);
-        
-        // 注意：handleDataChange 是异步的，我们需要在这里手动设置正确的日期值
-        // 以确保提交时使用更新后的值
-        goalData.targetDate = oneWeekLater;
-      } else {
-        console.log("GoalSettingGuide: 目标日期有效:", goalData.targetDate);
-      }
+      // 生成详细描述
+      const generatedDescription = `我想要${goalData.title}，因为${goalData.motivation}。`;
       
       // 確保所有必要的字段都有值
       const finalGoalData = {
         ...goalData,
         description: generatedDescription,
-        priority: goalData.priority || 'Medium',
-        status: 'active',
-        currentSettings: {
-          ...goalData.currentSettings,
-          dailyReward: goalData.details.dailyReward
-        }
       };
       
       console.log("GoalSettingGuide: 目标设置最终数据:", {
         title: finalGoalData.title,
+        hasMotivation: !!finalGoalData.motivation,
         targetDate: finalGoalData.targetDate,
-        hasMotivation: !!finalGoalData.details.motivation,
-        hasResources: !!finalGoalData.details.resources,
-        hasImage: !!finalGoalData.details.visionImage,
-        hasDailyTask: !!finalGoalData.currentSettings.dailyTask
+        resourcesCount: finalGoalData.resources.length,
+        dailyTasksCount: finalGoalData.dailyTasks.length,
+        rewardsCount: finalGoalData.rewards.length
       });
       
       try {
@@ -188,7 +144,6 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
         localStorage.removeItem(STORAGE_KEY);
       } catch (error) {
         console.error("GoalSettingGuide: 提交表单时出错:", error);
-        // 这里不需要额外处理，因为错误应该会在 OnboardingModal 组件中被捕获
       }
     } else {
       setActiveStep(prev => prev + 1);
@@ -224,37 +179,34 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
       case 1:
         return (
           <MotivationStep 
-            value={goalData.details.motivation} 
-            onChange={(value) => handleDataChange('details.motivation', value)} 
+            value={goalData.motivation} 
+            onChange={(value) => handleDataChange('motivation', value)} 
           />
         );
       case 2:
         return (
-          <ResourcesStep 
-            resources={goalData.details.resources}
-            nextStep={goalData.details.nextStep}
-            dailyTask={goalData.currentSettings.dailyTask}
-            onResourcesChange={(value) => handleDataChange('details.resources', value)}
-            onNextStepChange={(value) => handleDataChange('details.nextStep', value)}
-            onDailyTaskChange={(value) => handleDataChange('currentSettings.dailyTask', value)}
+          <DateStep 
+            value={goalData.targetDate} 
+            onChange={(value) => handleDataChange('targetDate', value)} 
           />
         );
       case 3:
         return (
-          <VisionStep 
-            value={goalData.details.visionImage} 
-            onChange={(value) => handleDataChange('details.visionImage', value)} 
+          <ResourcesStep 
+            resources={goalData.resources}
+            dailyTasks={goalData.dailyTasks}
+            onAddResource={(value) => handleAddItem('resources', value)}
+            onRemoveResource={(index) => handleRemoveItem('resources', index)}
+            onAddDailyTask={(value) => handleAddItem('dailyTasks', value)}
+            onRemoveDailyTask={(index) => handleRemoveItem('dailyTasks', index)}
           />
         );
       case 4:
         return (
           <RewardsStep 
-            dailyReward={goalData.details.dailyReward}
-            ultimateReward={goalData.details.ultimateReward}
-            targetDate={goalData.targetDate}
-            onDailyRewardChange={(value) => handleDataChange('details.dailyReward', value)}
-            onUltimateRewardChange={(value) => handleDataChange('details.ultimateReward', value)}
-            onTargetDateChange={(value) => handleDataChange('targetDate', value)}
+            rewards={goalData.rewards}
+            onAddReward={(value) => handleAddItem('rewards', value)}
+            onRemoveReward={(index) => handleRemoveItem('rewards', index)}
           />
         );
       default:
