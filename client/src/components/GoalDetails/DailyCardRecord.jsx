@@ -19,13 +19,19 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Snackbar
+  Snackbar,
+  InputAdornment,
+  Checkbox
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DescriptionIcon from '@mui/icons-material/Description';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import DailyTasks from './DailyTasks';
 import DailyReward from './DailyReward';
 import apiService from '../../services/api';
@@ -83,12 +89,16 @@ export default function DailyCardRecord({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  // State to prevent duplicate save attempts
-  const [lastSaveAttempt, setLastSaveAttempt] = useState(0);
-  
   // State for delete confirmation dialog
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
+
+  // State for new task input and task editing
+  const [newTaskText, setNewTaskText] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTaskText, setEditingTaskText] = useState('');
+  const [taskDeleteConfirmOpen, setTaskDeleteConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   // Handle viewing declaration details
   const handleViewDeclaration = () => {
@@ -107,7 +117,16 @@ export default function DailyCardRecord({
     if (!goal || !date) return;
     
     // Find existing daily card for this date
-    const existingCard = goal.dailyCards && goal.dailyCards.find(card => card.date === date);
+    const existingCard = goal.dailyCards && goal.dailyCards.find(card => {
+      // 比较日期（只比较年月日，不比较时分秒）
+      const cardDate = new Date(card.date);
+      const targetDate = new Date(date);
+      return (
+        cardDate.getFullYear() === targetDate.getFullYear() &&
+        cardDate.getMonth() === targetDate.getMonth() &&
+        cardDate.getDate() === targetDate.getDate()
+      );
+    });
     
     if (existingCard) {
       // 使用本地日期格式處理，而不是 UTC
@@ -151,12 +170,16 @@ export default function DailyCardRecord({
       // 初始化任务完成状态为全部未完成
       const taskCompletions = {};
       if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
-        goal.dailyTasks.forEach((taskText, index) => {
-          taskCompletions[`task-${index}`] = false;
+        goal.dailyTasks.forEach((taskText) => {
+          // 使用与任务列表生成相同的ID逻辑
+          const taskId = `task-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
+          taskCompletions[taskId] = false;
         });
       }
       if (goal && goal.currentSettings?.dailyTask) {
-        taskCompletions[`daily-task-${date}`] = false;
+        // 使用与任务列表生成相同的ID逻辑
+        const taskId = `daily-task-${goal.currentSettings.dailyTask.replace(/\s+/g, '-').toLowerCase()}`;
+        taskCompletions[taskId] = false;
       }
       
       // Create new card with current goal settings
@@ -276,16 +299,176 @@ export default function DailyCardRecord({
     }
   };
 
+  // Handle adding a new daily task
+  const handleAddTask = async () => {
+    if (!newTaskText.trim()) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // 使用与任务列表生成相同的ID逻辑
+      const taskText = newTaskText.trim();
+      const newTaskId = `task-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
+      
+      // Update goal's dailyTasks array
+      const updatedDailyTasks = [...(goal.dailyTasks || []), taskText];
+      
+      // Update local state for task completions
+      setCardData(prev => ({
+        ...prev,
+        taskCompletions: {
+          ...prev.taskCompletions,
+          [newTaskId]: false
+        }
+      }));
+      
+      // Call API to update the goal
+      await apiService.goals.update(goal._id, {
+        dailyTasks: updatedDailyTasks
+      });
+      
+      // Update local goal data
+      goal.dailyTasks = updatedDailyTasks;
+      
+      // Clear input field
+      setNewTaskText('');
+      
+      // Show success message
+      setSuccess('New daily task added successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Failed to add daily task:', error);
+      setError(`Failed to add daily task: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Handle initiating task edit
+  const handleInitiateTaskEdit = (taskId, taskText) => {
+    setEditingTaskId(taskId);
+    setEditingTaskText(taskText);
+  };
+  
+  // Handle canceling task edit
+  const handleCancelTaskEdit = () => {
+    setEditingTaskId(null);
+    setEditingTaskText('');
+  };
+  
+  // Handle saving task edit
+  const handleSaveTaskEdit = async (taskId, taskIndex) => {
+    if (!editingTaskText.trim()) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Update goal's dailyTasks array
+      const updatedDailyTasks = [...goal.dailyTasks];
+      updatedDailyTasks[taskIndex] = editingTaskText.trim();
+      
+      // Call API to update the goal
+      await apiService.goals.update(goal._id, {
+        dailyTasks: updatedDailyTasks
+      });
+      
+      // Update local goal data
+      goal.dailyTasks = updatedDailyTasks;
+      
+      // Reset editing state
+      setEditingTaskId(null);
+      setEditingTaskText('');
+      
+      // Show success message
+      setSuccess('Daily task updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Failed to update daily task:', error);
+      setError(`Failed to update daily task: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Handle initiating task deletion
+  const handleInitiateTaskDelete = (taskId, taskIndex) => {
+    setTaskToDelete({ id: taskId, index: taskIndex });
+    setTaskDeleteConfirmOpen(true);
+  };
+  
+  // Handle canceling task deletion
+  const handleCancelTaskDelete = () => {
+    setTaskToDelete(null);
+    setTaskDeleteConfirmOpen(false);
+  };
+  
+  // Handle confirming task deletion
+  const handleConfirmTaskDelete = async () => {
+    if (!taskToDelete) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Remove task from goal's dailyTasks array
+      const updatedDailyTasks = [...goal.dailyTasks];
+      updatedDailyTasks.splice(taskToDelete.index, 1);
+      
+      // Call API to update the goal
+      await apiService.goals.update(goal._id, {
+        dailyTasks: updatedDailyTasks
+      });
+      
+      // Update local goal data
+      goal.dailyTasks = updatedDailyTasks;
+      
+      // Close dialog and reset state
+      setTaskDeleteConfirmOpen(false);
+      setTaskToDelete(null);
+      
+      // Show success message
+      setSuccess('Daily task deleted successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Failed to delete daily task:', error);
+      setError(`Failed to delete daily task: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Tasks for the DailyTasks component
+  const tasksForComponent = [];
+  
+  // 如果goal有dailyTasks数组，添加到任务列表
+  if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
+    goal.dailyTasks.forEach((taskText, index) => {
+      // 使用任务文本的哈希作为稳定的ID，而不是索引
+      // 这样即使任务顺序改变，同一个任务的ID也会保持一致
+      const taskId = `task-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
+      tasksForComponent.push({
+        id: taskId,
+        text: taskText,
+        completed: cardData.taskCompletions[taskId] || false,
+        index: index // 添加索引以便编辑和删除
+      });
+    });
+  }
+  
+  // 如果cardData有dailyTask，也添加到列表（保持兼容）
+  if (cardData.dailyTask && !tasksForComponent.some(task => task.text === cardData.dailyTask)) {
+    const taskId = `daily-task-${cardData.dailyTask.replace(/\s+/g, '-').toLowerCase()}`;
+    tasksForComponent.push({
+      id: taskId,
+      text: cardData.dailyTask,
+      completed: cardData.taskCompletions[taskId] || false,
+      isLegacy: true // 标记为旧格式的任务
+    });
+  }
+
+  const displayDate = formatDisplayDate(date);
+  
   // Handle saving changes
   const handleSave = async () => {
-    // Prevent duplicate save attempts (debounce)
-    const now = Date.now();
-    if (now - lastSaveAttempt < 2000) { // 2 seconds debounce
-      console.log('Save request debounced. Try again in a moment.');
-      return;
-    }
-    setLastSaveAttempt(now);
-    
     try {
       setIsSaving(true);
       setError('');
@@ -323,6 +506,7 @@ export default function DailyCardRecord({
       };
       
       console.log('Sending updated card to API:', updatedCard);
+      console.log('Task completions being saved:', cardData.taskCompletions);
       
       // Save to API
       const goalId = goal._id || goal.id;
@@ -331,11 +515,14 @@ export default function DailyCardRecord({
       const response = await apiService.goals.addOrUpdateDailyCard(goalId, updatedCard);
       console.log('API response:', response);
       
-      // Show success message
-      setSuccess('Daily progress saved successfully');
+      // Show success message with completed tasks info
+      const completedTasksCount = Object.values(cardData.taskCompletions).filter(Boolean).length;
+      const totalTasksCount = Object.keys(cardData.taskCompletions).length;
+      
+      setSuccess(`Daily progress saved successfully (${completedTasksCount}/${totalTasksCount} tasks completed)`);
       
       // Clear success message after a few seconds
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => setSuccess(''), 5000);
       
       // Call onSave callback if provided
       if (onSave) {
@@ -352,33 +539,6 @@ export default function DailyCardRecord({
     }
   };
 
-  // Tasks for the DailyTasks component
-  const tasksForComponent = [];
-  
-  // 如果goal有dailyTasks数组，添加到任务列表
-  if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
-    goal.dailyTasks.forEach((taskText, index) => {
-      const taskId = `task-${index}`;
-      tasksForComponent.push({
-        id: taskId,
-        text: taskText,
-        completed: cardData.taskCompletions[taskId] || false
-      });
-    });
-  }
-  
-  // 如果cardData有dailyTask，也添加到列表（保持兼容）
-  if (cardData.dailyTask && !tasksForComponent.some(task => task.text === cardData.dailyTask)) {
-    const taskId = `daily-task-${date}`;
-    tasksForComponent.push({
-      id: taskId,
-      text: cardData.dailyTask,
-      completed: cardData.taskCompletions[taskId] || false
-    });
-  }
-
-  const displayDate = formatDisplayDate(date);
-  
   return (
     <Dialog
       open={open}
@@ -435,11 +595,116 @@ export default function DailyCardRecord({
           </Alert>
         )}
         
-        {/* Daily Task Section */}
-        <DailyTasks 
-          tasks={tasksForComponent} 
-          onTaskStatusChange={handleTaskStatusChange}
-        />
+        {/* Daily Tasks Section */}
+        <Box sx={{ my: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Daily Tasks</span>
+          </Typography>
+          
+          {/* Task List */}
+          {tasksForComponent.length > 0 ? (
+            <List>
+              {tasksForComponent.map((task) => (
+                <ListItem key={task.id} sx={{ p: 0, my: 1 }}>
+                  {editingTaskId === task.id ? (
+                    <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                      <TextField
+                        fullWidth
+                        value={editingTaskText}
+                        onChange={(e) => setEditingTaskText(e.target.value)}
+                        size="small"
+                        autoFocus
+                      />
+                      <IconButton 
+                        color="primary" 
+                        onClick={() => handleSaveTaskEdit(task.id, task.index)}
+                        disabled={isSaving}
+                      >
+                        <SaveIcon />
+                      </IconButton>
+                      <IconButton 
+                        color="default" 
+                        onClick={handleCancelTaskEdit}
+                        disabled={isSaving}
+                      >
+                        <CancelIcon />
+                      </IconButton>
+                    </Box>
+                  ) : (
+                    <>
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <Checkbox
+                          checked={task.completed}
+                          onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
+                          color="primary"
+                        />
+                        <Typography 
+                          sx={{ 
+                            flex: 1,
+                            color: task.completed ? 'success.main' : 'text.primary',
+                            textDecoration: task.completed ? 'line-through' : 'none'
+                          }}
+                        >
+                          {task.text}
+                        </Typography>
+                        {!task.isLegacy && (
+                          <Box>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleInitiateTaskEdit(task.id, task.text)}
+                              disabled={isSaving}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              color="error" 
+                              onClick={() => handleInitiateTaskDelete(task.id, task.index)}
+                              disabled={isSaving}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Box>
+                    </>
+                  )}
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 2 }}>
+              No daily tasks set for this goal.
+            </Typography>
+          )}
+          
+          {/* Add New Task Input */}
+          <Box sx={{ display: 'flex', mt: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Add a new daily task..."
+              value={newTaskText}
+              onChange={(e) => setNewTaskText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+              disabled={isSaving}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton 
+                      edge="end" 
+                      color="primary"
+                      onClick={handleAddTask}
+                      disabled={!newTaskText.trim() || isSaving}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+        </Box>
         
         <Divider sx={{ my: 2 }} />
         
@@ -523,6 +788,32 @@ export default function DailyCardRecord({
           {error}
         </Alert>
       </Snackbar>
+      
+      {/* Delete Task Confirmation Dialog */}
+      <Dialog
+        open={taskDeleteConfirmOpen}
+        onClose={handleCancelTaskDelete}
+        aria-labelledby="delete-task-dialog-title"
+      >
+        <DialogTitle id="delete-task-dialog-title">
+          Delete Daily Task
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this daily task? 
+            <br />
+            It will be removed permanently.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelTaskDelete} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmTaskDelete} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
       
       {/* Delete Confirmation Dialog */}
       <Dialog
