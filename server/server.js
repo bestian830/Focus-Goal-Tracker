@@ -16,6 +16,7 @@ import uploadsRoutes from "./routes/uploads.js"; // 添加上傳路由
 // import directly for routes that are immediately used
 import goalsRoutes from "./routes/goals.js";
 import progressRoutes from "./routes/progress.js";
+import reportsRoutes from './routes/reports.js'; // <--- 添加导入
 
 // load env variables
 dotenv.config();
@@ -59,6 +60,7 @@ console.log("Allowed Origins:", allowedOrigins);
 console.log("=======================");
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Set port from environment variables or use default
@@ -82,6 +84,9 @@ app.use("/api/users", userRoutes);
 
 // Uploads routes - handles file uploads to Cloudinary
 app.use("/api/uploads", uploadsRoutes);
+
+// Reports routes - handles AI report generation
+app.use("/api/reports", reportsRoutes);
 
 // Health check endpoint - for client to verify API availability
 app.get("/api/health", (req, res) => {

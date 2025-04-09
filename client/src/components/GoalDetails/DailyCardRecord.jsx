@@ -573,6 +573,9 @@ export default function DailyCardRecord({
         详细状态: safeTaskCompletions
       });
       
+      // 打印即将保存的记录
+      console.log('DailyCardRecord - handleSave - 保存时的记录:', cardData.records);
+      
       // 準備發送給API的數據 - 使用 ISO 格式
       const updatedCard = {
         ...JSON.parse(JSON.stringify(cardData)), // 深拷贝避免引用问题

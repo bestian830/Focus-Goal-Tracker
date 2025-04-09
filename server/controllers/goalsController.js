@@ -646,6 +646,7 @@ const addOrUpdateDailyCard = async (req, res) => {
       
       // 處理記錄（records）字段
       if (records) {
+        console.log('addOrUpdateDailyCard - 收到并更新记录:', records);
         goal.dailyCards[existingCardIndex].records = records;
       }
       

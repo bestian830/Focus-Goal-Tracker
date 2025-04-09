@@ -1,6 +1,10 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import ReportService from '../services/ReportService.js';
+// Remove unused import for ReportService
+// import ReportService from '../services/ReportService.js'; 
+import { generateReport } from '../controllers/reportsController.js';
+import { requireOwnership } from '../middleware/auth.js';
+import Goal from '../models/Goal.js';
 
 const router = express.Router();
 
@@ -23,38 +27,31 @@ router.get('/auth-test', requireAuth, (req, res) => {
   });
 });
 
-// 修改此路由以调用实际服务
-router.post('/:goalId', requireAuth, async (req, res) => {
-  try {
-    const { goalId } = req.params;
-    // 从请求体获取 timeRange，如果未提供则默认为 'daily'
-    // 前端目前固定发送 'daily'
-    const timeRange = req.body.timeRange || 'daily'; 
-    const userId = req.user.id; // 由 requireAuth 中间件提供
-
-    console.log('Received request to generate report:', { goalId, userId, timeRange });
-
-    // 调用 ReportService 来生成报告
-    const report = await ReportService.generateReport(goalId, userId, timeRange);
-
-    console.log(`Report generated successfully for goal ${goalId}, report ID: ${report._id}`);
-
-    // 将生成的报告数据返回给前端
-    res.json({ 
-      success: true, 
-      data: report // 发送完整的报告对象
-    });
-
-  } catch (error) {
-    console.error(`Error in POST /api/reports/${req.params.goalId}:`, error);
-    // 返回 500 错误和错误信息
-    res.status(500).json({ 
-      success: false, 
-      // 在生产环境中考虑返回更通用的错误信息
-      error: error.message || 'Failed to generate report due to an internal server error.' 
-    });
-  }
-});
+/**
+ * @route   POST /api/reports/:goalId
+ * @desc    Generate an AI progress report for a specific goal
+ * @access  Private (Requires authentication and ownership)
+ */
+router.post(
+  '/:goalId',
+  requireAuth,
+  // Add ownership check middleware - ensures the user owns the goal
+  requireOwnership(async (req) => {
+    try {
+      const goal = await Goal.findById(req.params.goalId);
+      if (!goal) {
+        console.warn(`Ownership check failed: Goal not found with ID ${req.params.goalId}`);
+        return null; // Goal not found, ownership check fails
+      }
+      console.log(`Ownership check: User ${req.user.id} attempting to access goal owned by ${goal.userId}`);
+      return goal.userId; // Return the owner's ID for comparison
+    } catch (error) {
+      console.error(`Error during ownership check for goal ${req.params.goalId}:`, error);
+      return null; // Error occurred, treat as ownership failure
+    }
+  }),
+  generateReport
+);
 
 // 获取最新报告
 router.get('/:goalId/latest', requireAuth, async (req, res) => {
