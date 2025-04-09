@@ -18,6 +18,8 @@
     "@mui/x-date-pickers": "^7.28.2",
     "axios": "^1.8.4",
     "date-fns": "^2.30.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
