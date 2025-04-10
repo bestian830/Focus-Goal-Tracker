@@ -445,7 +445,7 @@ export default function AIFeedback({ goalId }) {
 2. 再添加目标宣言的导出功能
 3. 最后优化用户界面和样式处理
 
-## Features that Yan-Bo Implements (2024年5月更新)
+## Features that Yan-Bo Implements (2025年4月更新)
 
 ### 1. 目标切换时保持AI分析报告功能
 
