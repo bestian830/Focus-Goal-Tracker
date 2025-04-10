@@ -5,10 +5,13 @@
 }
 
 .ai-feedback-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.ai-feedback-title {
   margin-bottom: 16px;
+  font-size: 1.5rem;
 }
 
 .ai-feedback-loading-container {
@@ -32,4 +35,46 @@
 
 .ai-feedback-timestamp {
   margin-top: 16px;
+}
+
+/* 時間範圍選擇器相關樣式 */
+.ai-feedback-controls {
+  margin-bottom: 16px;
+}
+
+.ai-feedback-date-range {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.ai-feedback-generate-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.ai-feedback-date-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 300px;
+  padding: 8px 0;
+}
+
+.ai-feedback-date-range-info {
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* 響應式調整 */
+@media (min-width: 768px) {
+  .ai-feedback-date-range {
+    max-width: 300px;
+    margin: 0 auto 16px auto;
+  }
+  
+  .ai-feedback-generate-btn {
+    max-width: 200px;
+    margin: 0 auto;
+  }
 } 

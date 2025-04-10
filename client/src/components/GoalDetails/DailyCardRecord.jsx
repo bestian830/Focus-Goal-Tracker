@@ -46,11 +46,11 @@ import { toast } from 'react-hot-toast';
  * @param {Function} props.onSave - Callback for when changes are saved
  * @param {Function} props.onViewDeclaration - Callback to view declaration
  */
-export default function DailyCardRecord({ 
-  goal, 
-  date, 
-  open, 
-  onClose, 
+export default function DailyCardRecord({
+  goal,
+  date,
+  open,
+  onClose,
   onSave,
   onViewDeclaration 
 }) {
@@ -67,7 +67,7 @@ export default function DailyCardRecord({
     
     return `${month}/${day} ${weekday}`;
   };
-
+  
   // State for the daily card data
   const [cardData, setCardData] = useState({
     date: date,
@@ -81,12 +81,12 @@ export default function DailyCardRecord({
 
   // State for new record input
   const [newRecord, setNewRecord] = useState('');
-  
+
   // Loading and error states
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // State for delete confirmation dialog
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
@@ -113,7 +113,7 @@ export default function DailyCardRecord({
   // Load daily card data when goal or date changes
   useEffect(() => {
     if (!goal || !date) return;
-    
+
     // Find existing daily card for this date
     const existingCard = goal.dailyCards && goal.dailyCards.find(card => {
       // 比较日期（只比较年月日，不比较时分秒）
@@ -125,16 +125,16 @@ export default function DailyCardRecord({
         cardDate.getDate() === targetDate.getDate()
       );
     });
-    
+
     if (existingCard) {
       // 使用本地日期格式處理，而不是 UTC
       const today = new Date();
       const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
+
       // 解析卡片日期
       let cardDateObj = new Date(date);
       const cardDateFormatted = `${cardDateObj.getFullYear()}-${String(cardDateObj.getMonth() + 1).padStart(2, '0')}-${String(cardDateObj.getDate()).padStart(2, '0')}`;
-      
+
       // 記錄日期比較信息
       console.log('Comparing card date with today:', {
         cardDate: cardDateFormatted,
@@ -148,7 +148,7 @@ export default function DailyCardRecord({
       const taskCompletions = existingCard.taskCompletions || {};
       
       console.log('加载已保存的任务完成状态:', taskCompletions);
-      
+
       // Check if the card is for today or a future date
       if (cardDateFormatted >= todayFormatted) {
         // For today or future dates, update with latest settings but preserve completion status
@@ -194,7 +194,7 @@ export default function DailyCardRecord({
         records: []  // Empty array for new cards
       });
     }
-    
+
     // Log the state for debugging
     console.log('Daily card data initialized:', {
       date,
@@ -303,15 +303,15 @@ export default function DailyCardRecord({
       addNewRecord();
     }
   };
-  
+
   // Add new record helper function
   const addNewRecord = () => {
     if (!newRecord.trim()) return;
-    
+
     setCardData(prev => {
       // Ensure records is an array
       const prevRecords = Array.isArray(prev.records) ? prev.records : [];
-      
+
       return {
         ...prev,
         records: [
@@ -331,30 +331,30 @@ export default function DailyCardRecord({
     setRecordToDelete(index);
     setDeleteConfirmOpen(true);
   };
-  
+
   // Handle canceling record deletion
   const handleCancelDelete = () => {
     setRecordToDelete(null);
     setDeleteConfirmOpen(false);
   };
-  
+
   // Handle confirming record deletion
   const handleConfirmDelete = () => {
     if (recordToDelete !== null) {
       setCardData(prev => {
         // Ensure records is an array
         const prevRecords = Array.isArray(prev.records) ? prev.records : [];
-        
+
         return {
           ...prev,
           records: prevRecords.filter((_, i) => i !== recordToDelete)
         };
       });
-      
+
       // Close dialog and reset state
       setDeleteConfirmOpen(false);
       setRecordToDelete(null);
-      
+
       // Show success message
       setSuccess('Record deleted successfully');
       setTimeout(() => setSuccess(''), 3000);
@@ -528,13 +528,13 @@ export default function DailyCardRecord({
   }
 
   const displayDate = formatDisplayDate(date);
-  
+
   // Handle saving changes
   const handleSave = async () => {
     try {
       setIsSaving(true);
       setError('');
-      
+
       if (!goal || !goal._id) {
         console.error('Invalid goal data for save:', goal);
         throw new Error('Invalid goal data');
@@ -612,7 +612,7 @@ export default function DailyCardRecord({
         setTimeout(() => setSuccess(''), 5000);
         
         // Call onSave callback if provided
-        if (onSave) {
+      if (onSave) {
           console.log('Calling onSave callback with updatedCard data');
           // Pass the locally constructed updatedCard, consistent with handleTaskStatusChange
           onSave(updatedCard); 
@@ -633,8 +633,8 @@ export default function DailyCardRecord({
   };
 
   return (
-    <Dialog
-      open={open}
+    <Dialog 
+      open={open} 
       onClose={() => !isSaving && onClose()}
       maxWidth="md"
       fullWidth
@@ -664,7 +664,7 @@ export default function DailyCardRecord({
           <Tooltip title="View and edit goal declaration">
             <IconButton
               color="primary"
-              onClick={handleViewDeclaration}
+                  onClick={handleViewDeclaration}
               size="small"
             >
               <MenuBookIcon />
@@ -676,13 +676,13 @@ export default function DailyCardRecord({
       <Divider />
       
       <DialogContent sx={{ pb: 1 }}>
-        {error && (
+              {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-        )}
-        
-        {success && (
+              )}
+
+              {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
@@ -840,36 +840,36 @@ export default function DailyCardRecord({
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="Enter new record, press Enter to submit..."
-              value={newRecord}
-              onChange={(e) => setNewRecord(e.target.value)}
+                    placeholder="Enter new record, press Enter to submit..."
+                    value={newRecord}
+                    onChange={(e) => setNewRecord(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddRecord(e)}
-              disabled={isSaving}
+                    disabled={isSaving}
               helperText="Suggested format: Spent [time] [activity] — [insight/result]"
               sx={{ mb: 2 }}
-            />
-            <Button 
+                  />
+                  <Button 
               variant="contained" 
               onClick={handleAddRecord}
               sx={{ ml: 1 }}
-              disabled={!newRecord.trim() || isSaving}
-            >
+                    disabled={!newRecord.trim() || isSaving}
+                  >
               {isSaving ? <CircularProgress size={20} /> : 'Add'}
-            </Button>
+                  </Button>
           </Box>
         </Box>
       </DialogContent>
       
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button
+              <Button 
           variant="contained"
           color="primary"
-          onClick={handleSave}
-          disabled={isSaving}
+                onClick={handleSave} 
+                disabled={isSaving}
           startIcon={isSaving ? <CircularProgress size={20} /> : <CheckCircleIcon />}
-        >
+              >
           {isSaving ? 'Saving...' : 'Save Changes'}
-        </Button>
+              </Button>
       </DialogActions>
       
       <Snackbar 
@@ -897,7 +897,7 @@ export default function DailyCardRecord({
             <br />
             It will be removed permanently.
           </DialogContentText>
-        </DialogContent>
+      </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelTaskDelete} color="primary">
             Cancel
@@ -925,13 +925,13 @@ export default function DailyCardRecord({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDelete} color="primary">
-            Cancel
-          </Button>
+                Cancel
+              </Button>
           <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Delete
-          </Button>
+                Delete
+              </Button>
         </DialogActions>
-      </Dialog>
+        </Dialog>
     </Dialog>
   );
 }

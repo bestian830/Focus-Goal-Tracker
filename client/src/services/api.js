@@ -286,9 +286,14 @@ const apiService = {
 
   // report related
   reports: {
-    generate: (goalId) => {
-      console.log('调用生成报告 API，goalId:', goalId);
-      return api.post(`/api/reports/${goalId}`, { timeRange: 'daily' })
+    generate: (goalId, startDate, endDate) => {
+      console.log('调用生成报告 API，goalId:', goalId, '时间范围:', startDate, '至', endDate);
+      return api.post(`/api/reports/${goalId}`, { 
+        timeRange: {
+          startDate: startDate,
+          endDate: endDate
+        }
+      })
         .then(response => {
           console.log('API 响应:', response);
           return response;

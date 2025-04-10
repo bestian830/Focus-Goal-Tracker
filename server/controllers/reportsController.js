@@ -21,23 +21,32 @@ if (!HUGGINGFACE_API_URL) {
  * Builds a prompt for the AI based on goal data.
  * This is a crucial part - tailor the prompt for best results.
  * @param {Object} goal - The goal object from the database.
+ * @param {Date} startDate - The start date for filtered data.
+ * @param {Date} endDate - The end date for filtered data.
  * @returns {string} The constructed prompt string.
  */
-const buildPrompt = (goal) => {
-  let prompt = `Analyze the progress for the goal titled "${goal.title}".\n\n`;
+const buildPrompt = (goal, startDate, endDate) => {
+  const startDateStr = startDate ? new Date(startDate).toLocaleDateString() : 'not specified';
+  const endDateStr = endDate ? new Date(endDate).toLocaleDateString() : 'not specified';
+  
+  let prompt = `Analyze the progress for the goal titled "${goal.title}" from ${startDateStr} to ${endDateStr}.\n\n`;
   prompt += `Goal Description: ${goal.description || 'Not provided'}\n`;
   prompt += `Motivation: ${goal.motivation || 'Not provided'}\n`;
   prompt += `Target Date: ${goal.targetDate ? new Date(goal.targetDate).toLocaleDateString() : 'Not set'}\n\n`;
   prompt += `Daily Tasks Defined:\n${goal.dailyTasks && goal.dailyTasks.length > 0 ? goal.dailyTasks.map(task => `- ${task}`).join('\n') : '- None'}\n\n`;
-  prompt += `Progress Log (Recent Daily Cards):\n`;
+  prompt += `Progress Log (${startDateStr} to ${endDateStr}):\n`;
 
-  // Include data from recent daily cards (e.g., last 7 days)
-  const recentCards = goal.dailyCards
-    .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date descending
-    .slice(0, 7); // Limit to last 7 cards
+  // 過濾日期範圍內的 dailyCards
+  const filteredCards = goal.dailyCards
+    .filter(card => {
+      const cardDate = new Date(card.date);
+      return (!startDate || cardDate >= new Date(startDate)) && 
+             (!endDate || cardDate <= new Date(endDate));
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
 
-  if (recentCards.length > 0) {
-    recentCards.forEach(card => {
+  if (filteredCards.length > 0) {
+    filteredCards.forEach(card => {
       const cardDate = new Date(card.date).toLocaleDateString();
       prompt += `--- ${cardDate} ---\n`;
       const completions = card.taskCompletions || {};
@@ -74,14 +83,14 @@ const buildPrompt = (goal) => {
       }
     });
   } else {
-    prompt += `- No daily progress recorded yet.\n`;
+    prompt += `- No daily progress recorded in the selected date range (${startDateStr} to ${endDateStr}).\n`;
   }
 
   // Updated instruction to specify output structure and exclude achievements
-  prompt += `\nBased on the goal and the recent progress log, provide **only** the following sections:
+  prompt += `\nBased on the goal and the progress log from ${startDateStr} to ${endDateStr}, provide **only** the following sections:
 
 **Progress Analysis:**
-[1-2 sentences analyzing recent progress, focusing on consistency and patterns.]
+[1-2 sentences analyzing progress within this date range, focusing on consistency and patterns.]
 
 **Potential Challenges:**
 [1 sentence identifying potential challenges or areas needing attention.]
@@ -190,11 +199,26 @@ const callAIService = async (prompt) => {
  */
 export const generateReport = async (req, res) => {
   const { goalId } = req.params;
+  const { timeRange } = req.body;
 
   try {
-    console.log(`Generating report for goalId: ${goalId}`);
+    console.log(`Generating report for goalId: ${goalId} with timeRange:`, timeRange);
+    
+    // 設定默認時間範圍（如果沒有提供）
+    let startDate = new Date();
+    startDate.setDate(startDate.getDate() - 7); // 默認過去7天
+    let endDate = new Date();
+    
+    // 如果提供了時間範圍，使用提供的值
+    if (timeRange && timeRange.startDate && timeRange.endDate) {
+      startDate = new Date(timeRange.startDate);
+      endDate = new Date(timeRange.endDate);
+    }
+    
+    console.log(`Using date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
     // 1. Fetch Goal Data
-    const goal = await Goal.findById(goalId).lean(); // Use .lean() for plain JS object
+    const goal = await Goal.findById(goalId).lean();
 
     if (!goal) {
       console.log(`Goal not found for ID: ${goalId}`);
@@ -203,18 +227,13 @@ export const generateReport = async (req, res) => {
 
     console.log(`Goal found: "${goal.title}"`);
 
-    // 2. Build Prompt
-    const prompt = buildPrompt(goal);
+    // 2. Build Prompt with date range
+    const prompt = buildPrompt(goal, startDate, endDate);
 
     // 3. Call AI Service
     const feedbackContent = await callAIService(prompt);
 
-    // 4. (Optional) Save Report to DB - Requires a Report Model
-    // const newReport = new Report({ goalId, userId: req.user.id, content: feedbackContent });
-    // await newReport.save();
-    // console.log('AI report saved to database.');
-
-    // 5. Return Feedback to Frontend
+    // 4. Return Feedback to Frontend
     console.log(`Successfully generated feedback for goal: ${goalId}`);
     res.status(200).json({
       success: true,
@@ -222,7 +241,10 @@ export const generateReport = async (req, res) => {
         goalId: goalId,
         content: feedbackContent,
         generatedAt: new Date(),
-        // reportId: newReport._id // Include if saving report
+        dateRange: {
+          startDate: startDate,
+          endDate: endDate
+        }
       },
     });
 
@@ -232,7 +254,6 @@ export const generateReport = async (req, res) => {
       success: false,
       error: {
         message: `Failed to generate AI report: ${error.message}`,
-        // Avoid sending full stack trace to client in production
         details: process.env.NODE_ENV === 'development' ? error.stack : 'Internal server error' 
       }
     });

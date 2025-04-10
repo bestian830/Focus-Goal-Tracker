@@ -84,7 +84,13 @@ export default function ExportButton() {
       color="success" // Changed color to green
       startIcon={<DownloadIcon />}
       onClick={handleExport}
-      sx={{ mb: 2 }} // Add some margin bottom for spacing
+      sx={{ 
+        mb: 3,      // 增加底部間距
+        width: '100%', // 在小屏幕上佔滿寬度
+        maxWidth: { sm: '200px' }, // 在大屏幕上限制最大寬度
+        display: 'block', // 塊級顯示
+        mx: 'auto'  // 水平居中
+      }}
     >
       Export PDF
     </Button>

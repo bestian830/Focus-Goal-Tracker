@@ -5,4 +5,14 @@
     border-radius: 8px;
     margin-bottom: 16px;
     background-color: #fff;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* 為小屏幕設備增加更多的空間 */
+@media (max-width: 768px) {
+    .reportContainer {
+        padding: 12px;
+    }
 }
