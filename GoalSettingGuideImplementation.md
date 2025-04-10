@@ -432,3 +432,80 @@ app.put('/api/goals/:id/declaration', requireAuth, async (req, res) => {
    - 宣言展示需有正式感
    - 使用与应用主题一致的配色
    - 图标使用MUI库保持一致性 
+
+## 八、目標描述(Description)欄位在數據流中的問題分析
+
+### 1. 問題現象
+當用戶通過 GoalSettingGuide 組件完成目標設置流程時，目標的 description 欄位在保存到數據庫後顯示為空或不正確的內容，而不是預期的生成描述。
+
+### 2. 數據流程檢查
+根據檢查的代碼，我們已經發現了幾個可能導致這個問題的環節：
+
+#### a. 數據產生階段
+- `GoalSettingGuide.jsx` 在最終提交前正確地生成了 description：
+  ```javascript
+  // 生成详细描述
+  const generatedDescription = `我想要${goalData.title}，因为${goalData.motivation}。`;
+  
+  // 確保所有必要的字段都有值
+  const finalGoalData = {
+    ...goalData,
+    description: generatedDescription,
+  };
+  ```
+  日誌顯示這部分代碼有執行，並且生成了包含正確 description 的 finalGoalData 對象。
+
+#### b. 數據傳遞階段
+- `GoalSettingGuide` 將 finalGoalData 傳遞給 `onComplete` 函數 (在 `OnboardingModal` 中定義)
+- `OnboardingModal` 在 `handleGoalSubmit` 中接收這個數據，並添加 userId 等字段後傳遞給 API
+
+#### c. 數據保存階段
+- `apiService.goals.createGoal` 接收完整數據並發送到後端
+- 後端 `goalsController.js` 中的 `createGoal` 函數處理請求
+
+### 3. 可能的問題原因
+
+1. **數據結構映射問題**：
+   - 前端和後端使用的對象屬性名稱可能不匹配
+   - `GoalSettingGuide` 產生的 description 字段可能在提交到後端時丟失或重命名
+
+2. **API 數據處理問題**：
+   - 在 `apiService.js` 的 `goals.createGoal` 方法中可能沒有正確傳遞 description 字段
+   - 將 description 和 motivation 欄位混淆或覆蓋
+
+3. **後端數據處理問題**：
+   - 在 `goalsController.js` 的 `createGoal` 函數中沒有正確從請求體中讀取 description
+   - 由於某種驗證或轉換邏輯，description 被忽略或重置
+
+4. **數據顯示問題**：
+   - `GoalDetails.jsx` 中顯示 description 時可能使用了錯誤的屬性名稱
+   - 顯示邏輯可能優先從另一個屬性獲取內容，而非 description
+
+### 4. 解決方案建議
+
+1. **檢查數據傳遞流程**：
+   - 在 `OnboardingModal.jsx` 的 `handleGoalSubmit` 中添加詳細日誌，確認 description 字段存在並正確
+   - 在 API 調用前後都記錄完整的目標數據，以確定數據何時丟失
+
+2. **檢查後端處理邏輯**：
+   - 確認 `goalsController.js` 中的 `createGoal` 函數正確使用請求中的 description 字段
+   - 檢查是否有任何邏輯會覆蓋或移除 description 值
+
+3. **前後端數據模型同步**：
+   - 重新檢查 Goal 模型的定義，確保 description 是必需字段且正確定義
+   - 確保前端的目標數據對象結構與後端模型一致
+
+4. **增強錯誤處理**：
+   - 在保存過程中添加更多驗證和錯誤處理，確保必需字段不會丟失
+   - 如果 description 為空，使用替代值或根據其他字段動態生成
+
+5. **狀態管理改進**：
+   - 考慮使用 Zustand 或 Redux 等狀態管理工具，取代手動的 props 傳遞
+   - 這樣可以確保數據在不同組件間的一致性，減少傳遞錯誤
+
+### 5. 實施計劃
+1. 添加日誌以跟踪數據流
+2. 修復數據傳遞和處理邏輯中的問題
+3. 加強前後端數據模型的一致性
+4. 改進 UI 顯示邏輯，確保正確渲染 description
+5. 添加單元測試以驗證數據流程 

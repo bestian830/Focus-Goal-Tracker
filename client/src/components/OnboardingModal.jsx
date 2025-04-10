@@ -64,6 +64,10 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         userId: finalGoalData.userId,
         title: finalGoalData.title,
         description: finalGoalData.description,
+        descriptionLength: finalGoalData.description ? finalGoalData.description.length : 0,
+        hasDescription: !!finalGoalData.description,
+        motivationInDesc: finalGoalData.description && finalGoalData.description.includes(finalGoalData.motivation),
+        titleInDesc: finalGoalData.description && finalGoalData.description.includes(finalGoalData.title),
         targetDate: finalGoalData.targetDate,
         hasVisionImage: !!finalGoalData.visionImageUrl,
         visionImageUrl: finalGoalData.visionImageUrl ? `${finalGoalData.visionImageUrl.substring(0, 50)}...` : null,
@@ -75,6 +79,11 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       let response;
       try {
         console.log("Calling API to create goal...");
+        // 确保finalGoalData中的description被传递给API
+        if (!finalGoalData.description && finalGoalData.title && finalGoalData.motivation) {
+          console.log("生成默认description，因为它缺失了");
+          finalGoalData.description = `我想要${finalGoalData.title}，因为${finalGoalData.motivation}。`;
+        }
         response = await apiService.goals.createGoal(finalGoalData);
         console.log("Goal creation API response:", response);
       } catch (apiError) {

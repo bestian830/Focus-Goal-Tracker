@@ -236,81 +236,65 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   };
 
   // 處理打開目標宣言對話框
-  const handleOpenDeclaration = async () => {
-    console.log("開始處理打開宣言流程", { 
-      selectedGoal, 
-      declaration: selectedGoal?.declaration 
-    });
-
-    if (!selectedGoal) {
-      console.warn("沒有選中的目標，無法打開宣言");
-      setDeclarationOpen(true);
-      return;
-    }
-
-    try {
-      setIsLoadingDeclaration(true);
-      const goalId = selectedGoal._id || selectedGoal.id;
-
-      // 強制獲取最新數據
-      try {
-        const response = await apiService.goals.getById(goalId);
+  const handleOpenDeclaration = () => {
+    if (!selectedGoal) return;
+    
+    // 检查目标是否有declaration字段
+    if (!selectedGoal.declaration || !selectedGoal.declaration.content) {
+      console.log("在GoalDetails中: 目标缺少declaration数据，正在生成");
+      
+      // 生成宣言内容函数
+      const generateDeclarationFromGoalData = (goal) => {
+        const formattedDate = goal.targetDate ? new Date(goal.targetDate).toLocaleDateString() : '未设置日期';
+        const dailyTask = goal.dailyTasks && goal.dailyTasks.length > 0 ? goal.dailyTasks[0] : '每日坚持';
+        const reward = goal.rewards && goal.rewards.length > 0 ? goal.rewards[0] : '适当的奖励';
+        const resource = goal.resources && goal.resources.length > 0 ? goal.resources[0] : '必要的准备';
+        const motivation = goal.motivation || goal.description || '这是对我意义深远的追求';
         
-        if (response && response.data && response.data.data) {
-          const freshGoal = response.data.data;
-          console.log("從API獲取最新目標數據:", freshGoal);
+        return `${goal.title}
 
-          // 確保declaration對象存在
-          if (!freshGoal.declaration) {
-            freshGoal.declaration = {
-              content: `This goal isn't just another item on my list–it's something I genuinely want to achieve.
+This goal isn't just another item on my list—it's something I genuinely want to achieve.
 
-我是 User，我踏上這條路是因為：這是一個對我意義深遠的追求，來自內心最真誠的渴望。
+I'm stepping onto this path because ${motivation}. It's something deeply meaningful to me, a desire that comes straight from my heart.
 
-我相信我有能力實現它，因為我已經準備好了。這是我的信心和力量之源。
+I trust that I have what it takes, because I already have ${resource} in my hands—these are my sources of confidence and strength as I move forward.
 
-我不需要等待"完全準備好"。現在就是開始的最佳時刻。接下來，我將邁出第一步，讓動力帶領我前進。
+I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me onward.
 
-我明白，只要我每天堅持，一點一滴，我就會逐漸接近我渴望實現的目標。
+I understand that as long as I commit to ${dailyTask} each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
 
-當我閉上眼睛，我清晰地看到這個畫面：
-[尚未設定願景圖像]
+Every time I complete my daily milestone, I'll reward myself with something small and meaningful: ${reward}.
 
-這不僅僅是我期望結果的願景，更是推動我前進的驅動力。`,
-              updatedAt: new Date(),
-              vision: ""
-            };
-          }
+I've set a deadline for myself: ${formattedDate}. I know there might be ups and downs along the way, but I deeply believe I have enough resources and strength to keep going.
 
-          // 更新本地狀態
-          setSelectedGoal(freshGoal);
-          
-          // 直接打開對話框
+Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
+      };
+      
+      // 创建新的临时declaration对象用于显示
+      const declarationContent = generateDeclarationFromGoalData(selectedGoal);
+      const declarationData = {
+        content: declarationContent,
+        updatedAt: new Date()
+      };
+      
+      // 在这里同时更新数据库
+      const updatedGoal = { ...selectedGoal, declaration: declarationData };
+      apiService.goals.update(updatedGoal._id, { declaration: declarationData })
+        .then(() => {
+          console.log("宣言已成功保存到数据库");
+          // 更新本地状态
+          setSelectedGoal(updatedGoal);
+          // 打开宣言对话框
           setDeclarationOpen(true);
-        } else {
-          console.warn("API返回無效的目標數據");
+        })
+        .catch(error => {
+          console.error("保存宣言时出错:", error);
+          // 尽管保存失败，仍然显示宣言对话框，但使用临时生成的内容
           setDeclarationOpen(true);
-        }
-      } catch (apiError) {
-        console.error("獲取目標詳情失敗", apiError);
-        
-        // 即使API失敗，也嘗試使用本地數據
-        const localGoal = { ...selectedGoal };
-        if (!localGoal.declaration) {
-          localGoal.declaration = {
-            content: `預設宣言內容 - 無法從API獲取`,
-            updatedAt: new Date()
-          };
-        }
-        
-        setDeclarationOpen(true);
-      } finally {
-        setIsLoadingDeclaration(false);
-      }
-    } catch (error) {
-      console.error("打開宣言對話框時發生錯誤", error);
+        });
+    } else {
+      // 目标已有宣言，直接打开对话框
       setDeclarationOpen(true);
-      setIsLoadingDeclaration(false);
     }
   };
   

@@ -125,20 +125,58 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
       // 生成详细描述
       const generatedDescription = `我想要${goalData.title}，因为${goalData.motivation}。`;
       
+      // 生成宣言内容
+      const generateDeclarationText = (data) => {
+        const username = 'User'; // 可以从其他地方获取用户名
+        const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : '';
+        const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : '每日坚持';
+        const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : '适当的奖励';
+        const resource = data.resources && data.resources.length > 0 ? data.resources[0] : '必要的准备';
+        
+        return `${data.title}
+
+This goal isn't just another item on my list—it's something I genuinely want to achieve.
+
+I'm stepping onto this path because ${data.motivation}. It's something deeply meaningful to me, a desire that comes straight from my heart.
+
+I trust that I have what it takes, because I already have ${resource} in my hands—these are my sources of confidence and strength as I move forward.
+
+I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me onward.
+
+I understand that as long as I commit to ${dailyTask} each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
+
+Every time I complete my daily milestone, I'll reward myself with something small and meaningful: ${reward}. 
+
+I've set a deadline for myself: ${formattedDate}. I know there might be ups and downs along the way, but I deeply believe I have enough resources and strength to keep going.
+
+Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
+      };
+      
       // 確保所有必要的字段都有值
       const finalGoalData = {
         ...goalData,
         description: generatedDescription,
+        // 添加宣言对象
+        declaration: {
+          content: generateDeclarationText(goalData),
+          updatedAt: new Date()
+        }
       };
       
       console.log("GoalSettingGuide: 目标设置最终数据:", {
         title: finalGoalData.title,
+        description: finalGoalData.description,
+        hasDescription: !!finalGoalData.description,
+        descriptionLength: finalGoalData.description ? finalGoalData.description.length : 0,
         hasMotivation: !!finalGoalData.motivation,
         targetDate: finalGoalData.targetDate,
         resourcesCount: finalGoalData.resources.length,
         dailyTasksCount: finalGoalData.dailyTasks.length,
         rewardsCount: finalGoalData.rewards.length,
-        hasVisionImage: !!finalGoalData.visionImageUrl
+        hasVisionImage: !!finalGoalData.visionImageUrl,
+        // 添加宣言日志记录
+        hasDeclaration: !!finalGoalData.declaration,
+        declarationLength: finalGoalData.declaration ? finalGoalData.declaration.content.length : 0
       });
       
       try {

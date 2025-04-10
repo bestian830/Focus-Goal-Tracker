@@ -195,10 +195,59 @@ const apiService = {
         return Promise.reject(new Error("目标数据缺少用户ID"));
       }
       
+      // 确保description字段存在
+      if (!goalData.description && goalData.title && goalData.motivation) {
+        console.log("API层: 发现缺少description字段，自动生成");
+        goalData.description = `我想要${goalData.title}，因为${goalData.motivation}。`;
+      }
+      
+      // 确保declaration字段存在
+      if (!goalData.declaration || !goalData.declaration.content) {
+        console.log("API层: 发现缺少declaration字段，自动生成宣言内容");
+        
+        // 生成宣言内容
+        const generateDeclarationText = (data) => {
+          const username = 'User';
+          const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : '未设置日期';
+          const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : '每日坚持';
+          const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : '适当的奖励';
+          const resource = data.resources && data.resources.length > 0 ? data.resources[0] : '必要的准备';
+          const motivation = data.motivation || data.description || '这是对我意义深远的追求';
+          
+          return `${data.title}
+
+This goal isn't just another item on my list—it's something I genuinely want to achieve.
+
+I'm stepping onto this path because ${motivation}. It's something deeply meaningful to me, a desire that comes straight from my heart.
+
+I trust that I have what it takes, because I already have ${resource} in my hands—these are my sources of confidence and strength as I move forward.
+
+I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me onward.
+
+I understand that as long as I commit to ${dailyTask} each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
+
+Every time I complete my daily milestone, I'll reward myself with something small and meaningful: ${reward}.
+
+I've set a deadline for myself: ${formattedDate}. I know there might be ups and downs along the way, but I deeply believe I have enough resources and strength to keep going.
+
+Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
+        };
+        
+        goalData.declaration = {
+          content: generateDeclarationText(goalData),
+          updatedAt: new Date()
+        };
+      }
+      
       const isTemporary = typeof goalData.userId === 'string' && goalData.userId.startsWith('temp_');
       console.log(`调用createGoal API，数据:`, {
         ...goalData,
         userId: goalData.userId,
+        hasDescription: !!goalData.description,
+        descriptionText: goalData.description ? `${goalData.description.substring(0, 50)}${goalData.description.length > 50 ? '...' : ''}` : null,
+        descriptionLength: goalData.description ? goalData.description.length : 0,
+        hasDeclaration: !!goalData.declaration,
+        declarationLength: goalData.declaration ? goalData.declaration.content.length : 0,
         hasVisionImageUrl: !!goalData.visionImageUrl,
         visionImageUrlLength: goalData.visionImageUrl ? goalData.visionImageUrl.length : 0,
         visionImageUrlPreview: goalData.visionImageUrl ? `${goalData.visionImageUrl.substring(0, 50)}...` : null,
