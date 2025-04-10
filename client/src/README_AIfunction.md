@@ -179,3 +179,188 @@ npm install @mui/x-date-pickers date-fns
 *   如果所选时间范围内没有数据，AI 将基于有限信息生成分析，可能会提示数据不足
 *   为获得最佳分析效果，建议选择有足够数据点的时间范围（至少 3-5 天）
 *   过长的时间范围可能导致分析不够聚焦，建议根据目标特性选择适当的时间窗口
+
+## 目标切换时保持 AI 分析报告功能计划（2024年5月更新）
+
+### 问题描述
+
+当前，用户在不同目标之间切换时，AI 分析报告不会保留。每次切换目标，都需要重新点击"生成分析"按钮，导致用户体验不连贯，特别是对于已经生成过分析的目标，应该能够立即看到上次生成的分析结果。
+
+### 解决方案：使用 Zustand 全局状态管理
+
+我们将使用 Zustand 进行全局状态管理，为每个目标缓存生成的 AI 分析报告。这样在目标之间切换时，能够立即显示已生成的报告，提升用户体验。
+
+#### 1. 设计 Zustand 状态存储
+
+```javascript
+// 伪代码：定义 Zustand store
+import create from 'zustand';
+
+const useReportStore = create((set) => ({
+  // 用于存储每个目标的 AI 分析报告
+  reports: {}, // 结构: { goalId1: { content, generatedAt, dateRange }, goalId2: {...}, ... }
+
+  // 设置特定目标的报告
+  setReport: (goalId, reportData) => 
+    set((state) => ({
+      reports: {
+        ...state.reports,
+        [goalId]: reportData
+      }
+    })),
+    
+  // 获取特定目标的报告
+  getReport: (goalId) => useReportStore.getState().reports[goalId] || null,
+  
+  // 清除所有报告（可选，用于重置或登出）
+  clearReports: () => set({ reports: {} })
+}));
+```
+
+#### 2. 集成计划
+
+1. **安装依赖**:
+   ```bash
+   npm install zustand
+   ```
+
+2. **创建 Store**:
+   - 在 `src/store` 目录下创建 `reportStore.js` 文件
+   - 实现上述 Zustand store 逻辑
+   - 添加必要的类型定义（如使用 TypeScript）
+
+3. **更新 AIFeedback 组件**:
+   - 引入 Zustand store
+   - 在组件中使用 store 读取和存储报告
+   - 根据 goalId 变化自动加载已有报告
+   - 生成新报告时更新 store
+
+4. **优化数据流**:
+   - 组件加载时，先检查 store 中是否有该目标的报告
+   - 如有，立即显示
+   - 如没有，显示"生成分析"按钮
+   - 点击"生成分析"后，将新报告保存到 store
+
+#### 3. 实现代码结构
+
+**`reportStore.js`**:
+```javascript
+import create from 'zustand';
+import { persist } from 'zustand/middleware';
+
+// 使用 persist 中间件，可选择是否在浏览器刷新后保留数据
+export const useReportStore = create(
+  persist(
+    (set, get) => ({
+      reports: {},
+      setReport: (goalId, reportData) => 
+        set((state) => ({
+          reports: {
+            ...state.reports,
+            [goalId]: reportData
+          }
+        })),
+      getReport: (goalId) => get().reports[goalId] || null,
+      clearReports: () => set({ reports: {} })
+    }),
+    {
+      name: 'ai-reports-storage', // localStorage 存储名
+      // 可选配置：仅持久化 reports 对象
+      partialize: (state) => ({ reports: state.reports })
+    }
+  )
+);
+```
+
+**`AIFeedback.jsx` 核心逻辑更新**:
+```javascript
+// 伪代码：AIFeedback 组件中的修改
+import { useReportStore } from '../../store/reportStore';
+
+export default function AIFeedback({ goalId }) {
+  // ... 现有代码
+
+  // 使用 Zustand 存储
+  const { reports, setReport, getReport } = useReportStore();
+  
+  // 获取当前目标的报告
+  const currentReport = goalId ? reports[goalId] : null;
+  
+  // 使用 useEffect 在 goalId 变化时更新状态
+  useEffect(() => {
+    if (goalId && reports[goalId]) {
+      setFeedback(reports[goalId]);
+      setLastUpdate(new Date(reports[goalId].generatedAt));
+      setStartDate(new Date(reports[goalId].dateRange.startDate));
+      setEndDate(new Date(reports[goalId].dateRange.endDate));
+    } else {
+      // 重置状态
+      setFeedback(null);
+      setLastUpdate(null);
+    }
+  }, [goalId, reports]);
+  
+  // 修改 generateFeedback 函数，添加保存到 Zustand
+  const generateFeedback = async () => {
+    // ... 现有生成逻辑
+    
+    try {
+      // ... API 调用
+      
+      if (response.data && response.data.success) {
+        const reportData = response.data.data;
+        setFeedback(reportData);
+        setLastUpdate(new Date());
+        
+        // 保存到 Zustand
+        setReport(goalId, reportData);
+      }
+    } catch (err) {
+      // ... 错误处理
+    }
+  };
+  
+  // ... 渲染逻辑
+}
+```
+
+#### 4. 可选扩展功能
+
+1. **定时更新策略**:
+   - 为存储的报告添加时间戳
+   - 如果报告超过一定时间（如 24 小时），自动提示用户重新生成
+
+2. **批量预加载**:
+   - 在用户空闲时，自动为用户经常访问的目标预先生成报告
+   - 使用 Web Workers 或低优先级任务避免影响主线程
+
+3. **导出/导入功能**:
+   - 允许用户导出所有 AI 分析报告
+   - 在新设备上导入报告数据
+
+### 技术考量
+
+1. **性能影响**: 
+   - Zustand 作为轻量级状态管理库，对性能影响极小
+   - 存储的数据量相对较小，不会造成明显的内存压力
+
+2. **权衡分析**:
+   - **优点**: 大幅提升用户体验，减少重复 API 调用，节省服务器资源
+   - **缺点**: 增加代码复杂度，需要处理状态同步问题
+
+3. **备选方案**:
+   - **LocalStorage 直接存储**: 简单但难以与组件状态保持同步
+   - **Context API**: React 自带功能，但对复杂状态更新支持较弱
+   - **Redux**: 功能强大但相对复杂，对此场景可能过重
+   - **MobX**: 响应式更好，但学习曲线较陡
+
+### 实施计划
+
+1. **第一阶段**: 创建基础 Zustand store，实现单个目标报告的存储和读取
+2. **第二阶段**: 完善错误处理，添加数据过期策略
+3. **第三阶段**: 性能优化和边缘情况处理
+4. **测试**: 重点测试目标切换时的报告保留和显示效果
+
+### 总结
+
+通过引入 Zustand 进行状态管理，我们可以有效解决目标切换时 AI 分析报告丢失的问题，提升用户体验，同时减少不必要的 API 调用，节省服务器资源。这一改进将使 AI 分析功能更加实用和友好。

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -18,6 +18,7 @@ import {
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import apiService from '../../services/api';
+import { useReportStore } from '../../store/reportStore';
 import '../../styles/AIFeedback.css';
 
 export default function AIFeedback({ goalId }) {
@@ -31,6 +32,48 @@ export default function AIFeedback({ goalId }) {
   const [customDateOpen, setCustomDateOpen] = useState(false);
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
   const [endDate, setEndDate] = useState(new Date());
+
+  // Use Zustand store
+  const { reports, setReport } = useReportStore();
+
+  // Effect to load report from store when goalId changes
+  useEffect(() => {
+    if (!goalId) {
+      // Reset states if no goalId
+      setFeedback(null);
+      setLastUpdate(null);
+      return;
+    }
+
+    // Check if we have a cached report for this goal
+    const cachedReport = reports[goalId];
+    if (cachedReport) {
+      console.log('Using cached report for goal:', goalId);
+      setFeedback(cachedReport);
+      // Parse the ISO string dates
+      setLastUpdate(new Date(cachedReport.generatedAt));
+      
+      // Set date range from cached data if available
+      if (cachedReport.dateRange) {
+        setStartDate(new Date(cachedReport.dateRange.startDate));
+        setEndDate(new Date(cachedReport.dateRange.endDate));
+        
+        // Determine time range based on dates
+        const daysDiff = Math.round((new Date(cachedReport.dateRange.endDate) - new Date(cachedReport.dateRange.startDate)) / (24 * 60 * 60 * 1000));
+        if (daysDiff === 7) {
+          setTimeRange('last7days');
+        } else if (daysDiff === 30) {
+          setTimeRange('last30days');
+        } else {
+          setTimeRange('custom');
+        }
+      }
+    } else {
+      // No cached report, reset states
+      setFeedback(null);
+      setLastUpdate(null);
+    }
+  }, [goalId, reports]);
 
   // 處理時間範圍變更
   const handleTimeRangeChange = (event) => {
@@ -80,8 +123,17 @@ export default function AIFeedback({ goalId }) {
       
       if (response.data && response.data.success) {
         console.log('报告数据:', response.data.data);
-        setFeedback(response.data.data);
+        const reportData = {
+          ...response.data.data,
+          startDate: startDateStr,
+          endDate: endDateStr
+        };
+        
+        setFeedback(reportData);
         setLastUpdate(new Date());
+        
+        // Save to Zustand store
+        setReport(goalId, reportData);
       } else {
         console.log('生成报告失败，响应:', response);
         setError('生成分析失败，请稍后重试');
@@ -125,7 +177,7 @@ export default function AIFeedback({ goalId }) {
             disabled={loading || !goalId}
             className="ai-feedback-generate-btn"
           >
-            {loading ? '分析中...' : '生成分析'}
+            {loading ? '分析中...' : (feedback ? '重新生成' : '生成分析')}
           </Button>
         </Box>
       </Box>
@@ -140,14 +192,24 @@ export default function AIFeedback({ goalId }) {
                 label="开始日期"
                 value={startDate}
                 onChange={(newValue) => setStartDate(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    margin: "normal"
+                  } 
+                }}
                 maxDate={endDate}
               />
               <DatePicker
                 label="结束日期"
                 value={endDate}
                 onChange={(newValue) => setEndDate(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    margin: "normal"
+                  } 
+                }}
                 minDate={startDate}
                 maxDate={new Date()}
               />
