@@ -257,15 +257,21 @@ export const useReportStore = create(
         set((state) => ({
           reports: {
             ...state.reports,
-            [goalId]: reportData
+            [goalId]: {
+              ...reportData,
+              generatedAt: new Date().toISOString(),
+              dateRange: {
+                startDate: reportData.startDate || new Date().toISOString(),
+                endDate: reportData.endDate || new Date().toISOString()
+              }
+            }
           }
         })),
       getReport: (goalId) => get().reports[goalId] || null,
       clearReports: () => set({ reports: {} })
     }),
     {
-      name: 'ai-reports-storage', // localStorage 存储名
-      // 可选配置：仅持久化 reports 对象
+      name: 'ai-reports-storage',
       partialize: (state) => ({ reports: state.reports })
     }
   )
@@ -364,3 +370,204 @@ export default function AIFeedback({ goalId }) {
 ### 总结
 
 通过引入 Zustand 进行状态管理，我们可以有效解决目标切换时 AI 分析报告丢失的问题，提升用户体验，同时减少不必要的 API 调用，节省服务器资源。这一改进将使 AI 分析功能更加实用和友好。
+
+## 精确导出特定内容区域功能计划（2024年5月更新）
+
+### 功能需求
+
+当前的导出功能会生成包含整个页面的PDF报告，但有时用户可能只想导出特定的内容区域。特别是需要针对性地导出：
+
+1. **AI分析报告内容**：
+   ```
+   #root > div > div > div._reportContainer_hyxpf_2 > div > div.ai-feedback-content.MuiBox-root.css-0
+   ```
+
+2. **目标宣言内容**：
+   ```
+   body > div.MuiDialog-root.MuiModal-root.css-1424xw8-MuiModal-root-MuiDialog-root > div.MuiDialog-container.MuiDialog-scrollPaper.css-19do60a-MuiDialog-container > div > div > div._contentContainer_1iu46_46
+   ```
+
+### 实现思路
+
+我们可以扩展现有的导出功能，添加选择性导出特定内容的能力：
+
+1. **修改ExportButton组件**：
+   - 添加下拉菜单，提供不同的导出选项
+   - 选项包括：「完整报告」、「仅AI分析」、「仅目标宣言」
+
+2. **内容选择性捕获**：
+   - 根据用户选择，使用document.querySelector获取特定DOM元素
+   - 使用精确的CSS选择器定位目标内容
+   - 仅将选定的内容区域传递给html2canvas进行捕获
+
+3. **改进PDF生成逻辑**：
+   - 根据内容类型调整PDF页面设置（如页面大小、方向等）
+   - 为不同类型内容添加适当的标题和页眉
+   - 改进样式处理，确保导出内容美观一致
+
+### 用户界面设计
+
+导出按钮将扩展为带下拉菜单的形式：
+
+```
+导出 ▼
+  ├─ 完整报告
+  ├─ 仅AI分析
+  └─ 仅目标宣言
+```
+
+### 技术考量
+
+1. **DOM选择器**：
+   - 使用精确的CSS选择器可能会对未来的UI更改敏感
+   - 考虑添加特定的data-export-id属性到关键元素，增强选择器的稳定性
+
+2. **异步导出处理**：
+   - 对于目标宣言，需要确保对话框已打开且内容已加载
+   - 考虑添加等待逻辑或回调函数确保内容可用
+
+3. **样式保留**：
+   - 确保html2canvas能正确捕获所有样式，包括自定义字体、颜色等
+   - 可能需要为导出专门优化某些CSS样式
+
+### 后续扩展
+
+此功能实现后，可以进一步考虑：
+
+1. 允许用户选择多个内容区域组合导出
+2. 提供不同的导出格式（PDF、图片、文本等）
+3. 添加自定义导出选项，让用户自行选择页面上的任意区域导出
+
+### 实施优先级
+
+建议按以下顺序实施：
+1. 先实现AI分析报告的选择性导出
+2. 再添加目标宣言的导出功能
+3. 最后优化用户界面和样式处理
+
+## Features that Yan-Bo Implements (2024年5月更新)
+
+### 1. 目标切换时保持AI分析报告功能
+
+根据上述计划成功实现了使用Zustand进行状态管理，确保在不同目标之间切换时保持AI分析报告的功能。
+
+**实现内容**:
+- 创建了Zustand状态存储，用于缓存不同目标的AI分析报告
+- 在AIFeedback组件中整合了状态管理，实现自动加载和保存报告
+- 优化了用户体验，无需每次切换目标都重新生成分析报告
+
+**技术细节**:
+```javascript
+// reportStore.js
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export const useReportStore = create(
+  persist(
+    (set, get) => ({
+      reports: {},
+      setReport: (goalId, reportData) => 
+        set((state) => ({
+          reports: {
+            ...state.reports,
+            [goalId]: {
+              ...reportData,
+              generatedAt: new Date().toISOString(),
+              dateRange: {
+                startDate: reportData.startDate || new Date().toISOString(),
+                endDate: reportData.endDate || new Date().toISOString()
+              }
+            }
+          }
+        })),
+      getReport: (goalId) => get().reports[goalId] || null,
+      clearReports: () => set({ reports: {} })
+    }),
+    {
+      name: 'ai-reports-storage',
+      partialize: (state) => ({ reports: state.reports })
+    }
+  )
+);
+```
+
+### 2. 精确导出特定内容区域功能
+
+实现了针对特定内容区域的PDF导出功能，能够同时导出AI分析报告和目标宣言。
+
+**实现内容**:
+- 重构了ExportButton组件，添加了捕获特定内容区域的能力
+- 使用data-export-id属性标记要导出的内容，提高选择器稳定性
+- 添加了处理目标宣言对话框内容的特殊逻辑
+- 优化了PDF格式和布局，为不同内容添加适当的标题和页眉
+
+**主要实现代码**:
+```javascript
+// 内容区域标记
+<Box className="ai-feedback-content" data-export-id="ai-analysis-content">
+  {feedback.content || '暂无分析内容'}
+</Box>
+
+<div className={styles.contentContainer} data-export-id="goal-declaration-content">
+  {/* 目标宣言内容 */}
+</div>
+
+// ExportButton.jsx 中的导出逻辑
+const handleExport = async () => {
+  try {
+    setExporting(true);
+    
+    // 给目标宣言对话框打开预留时间
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 初始化PDF
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    
+    // 捕获AI分析报告内容
+    const aiAnalysisElement = document.querySelector('[data-export-id="ai-analysis-content"]');
+    if (aiAnalysisElement) {
+      // 使用文本提取方法将内容添加到PDF
+      const textContent = aiAnalysisElement.textContent;
+      // ...添加内容到PDF
+    }
+    
+    // 捕获目标宣言内容
+    const declarationElement = document.querySelector('[data-export-id="goal-declaration-content"]');
+    if (declarationElement) {
+      // ...添加内容到PDF
+    }
+    
+    // 保存PDF
+    pdf.save('GoalReport.pdf');
+  } catch (err) {
+    console.error("Error during PDF export:", err);
+  } finally {
+    setExporting(false);
+  }
+};
+```
+
+### 3. 导出功能增强与优化
+
+对导出功能进行了多处增强和优化，提高了用户体验和导出内容质量。
+
+**改进内容**:
+- 添加了导出过程的加载状态显示
+- 增强了错误处理，提供更详细的错误反馈
+- 优化了内容捕获逻辑，支持文本模式和图像模式双重捕获
+- 添加了详细的调试日志，便于问题诊断
+
+**关键技术**:
+- 使用异步/等待和Promise处理异步操作
+- 使用文本提取作为html2canvas的备选方案
+- 精确控制PDF页面布局，包括分页、页眉和页脚
+
+### 总结
+
+通过这些实现，成功解决了以下问题：
+1. 目标切换时AI分析报告丢失的问题
+2. 精确捕获特定内容区域，而非整个页面
+3. 处理目标宣言内容在模态对话框中的特殊情况
+4. 提高了导出内容的质量和准确性
+
+这些功能的实现大大提升了应用的用户体验，特别是在报告生成和导出方面的效率。

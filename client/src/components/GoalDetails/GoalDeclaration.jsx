@@ -592,14 +592,23 @@ Because the path is already beneath my feet—it's really not that complicated. 
       onClose={() => !isSaving && onClose()}
       maxWidth="md"
       fullWidth
-      classes={{ paper: styles.dialogPaper }}
-      TransitionComponent={Fade}
-      transitionDuration={300}
+      className={styles.declarationDialog}
+      sx={{ 
+        '& .MuiDialog-paper': { 
+          maxHeight: '90vh',
+          // Make sure dialog is visible to html2canvas even if it's normally hidden
+          '&.MuiDialog-paper': {
+            visibility: 'visible !important',
+            position: 'absolute !important',
+            zIndex: 1000
+          }
+        } 
+      }}
     >
       <DialogContent className={styles.dialogContent}>
         {/* Header buttons */}
         <div className={styles.header}>
-          <IconButton className={styles.closeButton} onClick={onClose} disabled={isSaving}>
+          <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose()} disabled={isSaving}>
             <CloseIcon />
           </IconButton>
           
@@ -667,7 +676,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
         )}
         
         {/* Declaration content - Fixed DOM structure */}
-        <div className={styles.contentContainer}>
+        <div className={styles.contentContainer} data-export-id="goal-declaration-content">
           {!goal ? (
             <Box className={styles.emptyState}>
               <Typography variant="body1">

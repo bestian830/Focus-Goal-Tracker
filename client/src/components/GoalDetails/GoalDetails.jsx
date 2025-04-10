@@ -52,6 +52,32 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
   const [declarationOpen, setDeclarationOpen] = useState(false);
   const [isLoadingDeclaration, setIsLoadingDeclaration] = useState(false);
 
+  // New effect to handle export button click for declaration
+  useEffect(() => {
+    // Function to handle export button clicks
+    const handleExportButtonClick = () => {
+      // Check if declaration dialog should be temporarily opened for export
+      const shouldOpenDeclaration = document.querySelector('[data-export-id="goal-declaration-content"]') === null;
+      
+      if (shouldOpenDeclaration && selectedGoal) {
+        console.log("Opening declaration dialog for export");
+        handleOpenDeclaration();
+      }
+    };
+
+    // Add event listener for export button clicks
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('button') && e.target.textContent.includes('Export')) {
+        handleExportButtonClick();
+      }
+    });
+
+    return () => {
+      // Clean up event listener
+      document.removeEventListener('click', handleExportButtonClick);
+    };
+  }, [selectedGoal]);
+
   // 通过 goals 数组选择目标
   useEffect(() => {
     console.log("Goals in GoalDetails:", goals);

@@ -247,7 +247,7 @@ export default function AIFeedback({ goalId }) {
 
       {feedback && (
         <>
-          <Box className="ai-feedback-content">
+          <Box className="ai-feedback-content" data-export-id="ai-analysis-content">
             {feedback.content || '暂无分析内容'}
           </Box>
           <Box className="ai-feedback-timestamp">
