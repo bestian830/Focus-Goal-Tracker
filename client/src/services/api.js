@@ -199,6 +199,9 @@ const apiService = {
       console.log(`调用createGoal API，数据:`, {
         ...goalData,
         userId: goalData.userId,
+        hasVisionImageUrl: !!goalData.visionImageUrl,
+        visionImageUrlLength: goalData.visionImageUrl ? goalData.visionImageUrl.length : 0,
+        visionImageUrlPreview: goalData.visionImageUrl ? `${goalData.visionImageUrl.substring(0, 50)}...` : null,
         isTemporaryUser: isTemporary
       });
       

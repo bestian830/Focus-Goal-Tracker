@@ -385,6 +385,16 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
         const response = await apiService.goals.getById(goalId);
         if (response.data && response.data.data) {
           console.log("获取到最新目标数据:", response.data.data);
+          
+          // 新增願景圖片檢查日誌
+          const goalData = response.data.data;
+          console.log("願景圖片數據檢查:", {
+            有新結構數據: !!goalData.visionImageUrl,
+            新結構數據: goalData.visionImageUrl,
+            有舊結構數據: !!(goalData.details && goalData.details.visionImage),
+            舊結構數據: goalData.details?.visionImage
+          });
+          
           // 更新本地状态
           setSelectedGoal(response.data.data);
         }
@@ -579,11 +589,12 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
 
       {/* Vision Image 與鼓勵名言 */}
       <Box className="vision-section" sx={{ my: 3, textAlign: 'center' }}>
-        {selectedGoal.visionImageUrl ? (
+        {/* 支持新舊兩種數據結構，優先使用新結構 */}
+        {(selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)) ? (
           <Fade in={true} timeout={800}>
             <Box>
               <img
-                src={selectedGoal.visionImageUrl}
+                src={selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)}
                 alt="目標願景"
                 style={{ 
                   maxWidth: "100%", 

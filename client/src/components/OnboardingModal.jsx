@@ -65,6 +65,8 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         title: finalGoalData.title,
         description: finalGoalData.description,
         targetDate: finalGoalData.targetDate,
+        hasVisionImage: !!finalGoalData.visionImageUrl,
+        visionImageUrl: finalGoalData.visionImageUrl ? `${finalGoalData.visionImageUrl.substring(0, 50)}...` : null,
         hasDetails: !!finalGoalData.details,
         hasSettings: !!finalGoalData.currentSettings
       });

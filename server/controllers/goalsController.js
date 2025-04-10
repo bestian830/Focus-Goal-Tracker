@@ -115,6 +115,7 @@ const createGoal = async (req, res) => {
       resources,
       dailyTasks,
       rewards,
+      visionImageUrl,
       declaration, 
       checkpoints
     } = req.body;
@@ -256,7 +257,8 @@ const createGoal = async (req, res) => {
       targetDate: targetDate || null,
       resources: resources || [],
       dailyTasks: dailyTasks || [],
-      rewards: rewards || []
+      rewards: rewards || [],
+      visionImageUrl: visionImageUrl || null
     };
     
     // 添加可选字段
@@ -275,6 +277,7 @@ const createGoal = async (req, res) => {
       resourcesCount: goalData.resources.length,
       dailyTasksCount: goalData.dailyTasks.length,
       rewardsCount: goalData.rewards.length,
+      hasVisionImage: !!goalData.visionImageUrl,
       userType: isTemporaryUser ? "臨時用戶" : "註冊用戶"
     });
     
@@ -388,6 +391,7 @@ const updateGoal = async (req, res) => {
       resources,
       dailyTasks,
       rewards,
+      visionImageUrl,
       declaration, 
       checkpoints, 
       status,
@@ -400,6 +404,15 @@ const updateGoal = async (req, res) => {
         日期類型: typeof targetDate,
         是否有效: !isNaN(new Date(targetDate).getTime()),
         解析結果: new Date(targetDate)
+      });
+    }
+    
+    // 記錄願景圖片更新，這對診斷也很重要
+    if (visionImageUrl !== undefined) {
+      console.log(`願景圖片更新請求:`, {
+        有無圖片: !!visionImageUrl,
+        圖片URL類型: typeof visionImageUrl,
+        圖片URL長度: visionImageUrl ? visionImageUrl.length : 0
       });
     }
     
@@ -432,6 +445,7 @@ const updateGoal = async (req, res) => {
     if (resources) goal.resources = resources;
     if (dailyTasks) goal.dailyTasks = dailyTasks;
     if (rewards) goal.rewards = rewards;
+    if (visionImageUrl !== undefined) goal.visionImageUrl = visionImageUrl;
     if (dailyCards) goal.dailyCards = dailyCards;
     
     // Save updated goal

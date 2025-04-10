@@ -490,6 +490,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
           ultimateReward: editedData.ultimateReward,
           visionImage: editedData.visionImage
         },
+        visionImageUrl: editedData.visionImage || goal.visionImageUrl,
         currentSettings: {
           ...(goal.currentSettings || {}),
           dailyTask: editedData.dailyTask,
@@ -554,6 +555,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
             ultimateReward: editedData.ultimateReward,
             visionImage: editedData.visionImage
           },
+          visionImageUrl: editedData.visionImage || goal.visionImageUrl,
           currentSettings: {
             ...(goal.currentSettings || {}),
             dailyTask: editedData.dailyTask,
