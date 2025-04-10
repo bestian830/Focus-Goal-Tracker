@@ -11,6 +11,7 @@ import mongoose from "mongoose";
  * - status: Current status (active, completed, archived)
  * - motivation: Why the goal is important (moved from details)
  * - targetDate: Target completion date
+ * - visionImageUrl: URL to an image related to the goal
  * - resources: Array of resources that can help achieve the goal (optional)
  * - dailyTasks: Array of daily tasks related to the goal (optional)
  * - rewards: Array of rewards for achieving progress or completion (optional)
@@ -53,6 +54,10 @@ const GoalSchema = new mongoose.Schema(
     },
     targetDate: {
       type: Date,
+    },
+    visionImageUrl: {
+      type: String,
+      default: null,
     },
     resources: {
       type: [String], // 改为字符串数组

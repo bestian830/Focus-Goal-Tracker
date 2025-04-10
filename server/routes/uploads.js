@@ -17,32 +17,33 @@ cloudinary.config({
 /**
  * gain Cloudinary upload signature
  * @route GET /api/uploads/signature
- * @access Public - temporary test use
+ * @access Private - requires authentication
  */
-router.get('/signature', (req, res) => {
+router.get('/signature', requireAuth, (req, res) => {
   try {
-    // use fixed user ID for testing, in production environment, use requireAuth middleware
-    const userId = 'test_user';
-    // set upload folder, classified by user ID
+    // 獲取用戶ID (支持正式用戶和臨時用戶)
+    const userId = req.user?.id || req.user?.tempId || 'unknown';
+    // 設置上傳文件夾，按用戶ID分類
     const folder = `focus_vision_images/${userId}`;
-    // generate timestamp
+    // 生成時間戳
     const timestamp = Math.round(new Date().getTime() / 1000);
 
-    // generate upload signature, and set limit
+    // 生成上傳簽名，並設置限制
     const signature = cloudinary.utils.api_sign_request({
       timestamp,
       folder,
       allowed_formats: 'jpg,jpeg,png,gif,webp',
-      max_file_size: 1000000 // limit to 1MB
+      max_file_size: 1000000 // 限制為1MB
     }, process.env.CLOUDINARY_API_SECRET);
 
-    console.log('generate signature successfully:', {
+    console.log('生成簽名成功:', {
+      userId,
       timestamp,
       folder,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME
     });
 
-    // return signature and other needed parameters
+    // 返回簽名和其他需要的參數
     res.json({
       signature,
       timestamp,
@@ -82,9 +83,9 @@ router.get('/health', (req, res) => {
 /**
  * upload image directly to Cloudinary (server-side upload)
  * @route POST /api/uploads/direct
- * @access Public - for testing
+ * @access Private - requires authentication
  */
-router.post('/direct', express.raw({ type: 'image/*', limit: '1mb' }), async (req, res) => {
+router.post('/direct', requireAuth, express.raw({ type: 'image/*', limit: '1mb' }), async (req, res) => {
   try {
     if (!req.body || !req.body.length) {
       return res.status(400).json({ 
@@ -93,7 +94,11 @@ router.post('/direct', express.raw({ type: 'image/*', limit: '1mb' }), async (re
       });
     }
 
+    // 獲取用戶ID (支持正式用戶和臨時用戶)
+    const userId = req.user?.id || req.user?.tempId || 'unknown';
+    
     console.log('received direct upload request', {
+      userId,
       contentType: req.headers['content-type'],
       dataSize: req.body.length,
     });
@@ -103,7 +108,7 @@ router.post('/direct', express.raw({ type: 'image/*', limit: '1mb' }), async (re
     
     // use official method to upload
     const uploadResult = await cloudinary.uploader.upload(base64Data, {
-      folder: 'focus_vision_images/test_user',
+      folder: `focus_vision_images/${userId}`,
       resource_type: 'image',
     });
 

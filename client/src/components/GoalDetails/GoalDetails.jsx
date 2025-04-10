@@ -579,11 +579,11 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
 
       {/* Vision Image 與鼓勵名言 */}
       <Box className="vision-section" sx={{ my: 3, textAlign: 'center' }}>
-        {selectedGoal.details && selectedGoal.details.visionImage ? (
+        {selectedGoal.visionImageUrl ? (
           <Fade in={true} timeout={800}>
             <Box>
               <img
-                src={selectedGoal.details.visionImage}
+                src={selectedGoal.visionImageUrl}
                 alt="目標願景"
                 style={{ 
                   maxWidth: "100%", 

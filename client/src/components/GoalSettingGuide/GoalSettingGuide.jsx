@@ -5,6 +5,7 @@ import MotivationStep from './MotivationStep';
 import DateStep from './DateStep';
 import ResourcesStep from './ResourcesStep';
 import RewardsStep from './RewardsStep';
+import VisionStep from './VisionStep';
 
 // localStorage 键名
 const STORAGE_KEY = 'focus_goal_setting_draft';
@@ -15,7 +16,8 @@ const steps = [
   '动机探索',
   '日期设定',
   '资源与步骤',
-  '奖励机制'
+  '奖励机制',
+  '願景圖片'
 ];
 
 // 初始表单数据
@@ -26,6 +28,7 @@ const initialGoalData = {
   resources: [], // 改为数组，可添加多个
   dailyTasks: [], // 改为数组，可添加多个
   rewards: [], // 改为数组，可添加多个
+  visionImageUrl: null,
   status: 'active' // 默认状态
 };
 
@@ -72,6 +75,9 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
         return true;
       case 4: // 奖励步骤
         // rewards是可选的
+        return true;
+      case 5: // 願景圖片步骤
+        // 願景圖片是可選的
         return true;
       default:
         return false;
@@ -131,7 +137,8 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
         targetDate: finalGoalData.targetDate,
         resourcesCount: finalGoalData.resources.length,
         dailyTasksCount: finalGoalData.dailyTasks.length,
-        rewardsCount: finalGoalData.rewards.length
+        rewardsCount: finalGoalData.rewards.length,
+        hasVisionImage: !!finalGoalData.visionImageUrl
       });
       
       try {
@@ -207,6 +214,13 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
             rewards={goalData.rewards}
             onAddReward={(value) => handleAddItem('rewards', value)}
             onRemoveReward={(index) => handleRemoveItem('rewards', index)}
+          />
+        );
+      case 5:
+        return (
+          <VisionStep 
+            value={goalData.visionImageUrl} 
+            onChange={(value) => handleDataChange('visionImageUrl', value)} 
           />
         );
       default:
