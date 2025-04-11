@@ -32,7 +32,7 @@ During the deployment process, we encountered several key issues and successfull
        origin: function(origin, callback) {
          const allowedOrigins = [
            process.env.CLIENT_URL || "http://localhost:5173",
-           "https://focusappdeploy-frontend.onrender.com"
+           "https://focusappdeploy-frontend.onrender.com","https://focusfinalproject-frontend-original.onrender.com"
          ];
          if(!origin || allowedOrigins.indexOf(origin) !== -1) {
            callback(null, true);

@@ -129,6 +129,7 @@ const apiService = {
       allowedOrigins: [
         "http://localhost:5173",
         "https://focusappdeploy-frontend.onrender.com",
+        "https://focusfinalproject-frontend-original.onrender.com",
       ],
     };
   },

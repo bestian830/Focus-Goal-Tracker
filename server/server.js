@@ -30,6 +30,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173", // local frontend
   "https://focusappdeploy-frontend.onrender.com", // Render deployment frontend
+  "https://focusfinalproject-frontend-original.onrender.com", // Render deployment frontend (new)
   process.env.CLIENT_URL, // client URL from env
 ].filter(Boolean); // filter undefined or null
 
