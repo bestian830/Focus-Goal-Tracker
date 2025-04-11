@@ -1,0 +1,591 @@
+/* 
+* Home.css
+* Styles for the main home page and goal tracker interface
+*/
+
+/* Container layout */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Header styles */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.logged-in-user {
+  display: flex;
+  align-items: center;
+}
+
+.logged-in-user span {
+  margin-right: 1rem;
+}
+
+/* 頭像容器和圖標樣式 */
+.avatar-container {
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 1rem;
+  transition: background-color 0.2s;
+}
+
+.avatar-container:hover {
+  background-color: #d0d0d0;
+}
+
+.avatar-icon {
+  font-size: 1.5rem;
+  color: #555;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 按鈕樣式 */
+.logout-button,
+.login-button,
+.guest-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.logout-button:hover {
+  background-color: #d32f2f;
+}
+
+.login-button {
+  background-color: #2196f3;
+  color: white;
+  margin-right: 0.5rem;
+}
+
+.login-button:hover {
+  background-color: #1976d2;
+}
+
+.guest-button {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+.guest-button:hover {
+  background-color: #757575;
+}
+
+/* Main content area */
+.main-content {
+  /* padding: 2rem; */ /* Removed padding to allow children to fill space */
+  display: flex;
+  /* flex-wrap: wrap; */ /* Remove wrap to keep items in one row */
+  /* gap: 2rem; */ /* Remove gap, control spacing with flex properties */
+  flex-grow: 1; /* Allow main content to fill remaining vertical space */
+  width: 100%; /* Ensure it takes full width */
+}
+
+/* Assign flex ratios to children */
+.main-content > :nth-child(1) { /* Sidebar */
+  flex: 1 1 0%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
+  min-width: 250px; /* Optional: Ensure sidebar has a minimum width */
+  overflow-y: auto; /* Allow sidebar to scroll if content overflows */
+}
+
+.main-content > :nth-child(2) { /* GoalDetails */
+  flex: 2 1 0%; /* flex-grow: 2, flex-shrink: 1, flex-basis: 0% */
+  overflow-y: auto; /* Allow details to scroll */
+  border-left: 1px solid #eee; /* Optional separator */
+  border-right: 1px solid #eee; /* Optional separator */
+}
+
+.main-content > :nth-child(3) { /* ProgressReport */
+  flex: 1 1 0%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
+  min-width: 250px; /* Optional: Ensure report has a minimum width */
+  overflow-y: auto; /* Allow report to scroll */
+}
+
+/* Style adjustments for children if needed */
+.main-content > * { 
+  padding: 1rem; /* Add padding back to individual children */
+}
+
+.welcome-message {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-message h2 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.welcome-message p {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Goals list section */
+.goal-list-section {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.add-goal-button {
+  padding: 0.5rem 1rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-goal-button:hover {
+  background-color: #388e3c;
+}
+
+.goal-placeholder,
+.details-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  color: #888;
+  text-align: center;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+/* Goal details section */
+.goal-details-section {
+  flex: 2;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.goal-details-section h2 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.goal-details-section h3 {
+  font-size: 1.2rem;
+  margin-top: 25px;
+  margin-bottom: 15px;
+  color: #444;
+}
+
+/* Timeline styles */
+.timeline-bar {
+  display: flex;
+  height: 30px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.timeline-day {
+  flex: 1;
+  border-right: 1px solid #ddd;
+}
+
+.timeline-day:last-child {
+  border-right: none;
+}
+
+/* Daily tasks styles */
+.tasks-placeholder {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.task-item {
+  display: block;
+  padding: 0.5rem;
+  cursor: not-allowed;
+}
+
+/* Loading and error states */
+.loading, .error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #cc0000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .goal-list-section {
+    max-width: none;
+  }
+}
+
+/* 標題區域 */
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.welcome-text {
+  font-size: 1.8rem;
+  color: #333;
+  margin: 0;
+}
+
+.user-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.profile-btn:hover {
+  background-color: #1976d2;
+}
+
+.logout-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* Sidebar 樣式 */
+.sidebar {
+  width: 300px;
+  height: 100%;
+  background-color: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.goal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.goal-item {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.goal-item:hover {
+  transform: translateY(-2px);
+}
+
+.goal-item.active {
+  background-color: rgba(25, 118, 210, 0.08);
+  border-left: 3px solid #1976d2;
+}
+
+.no-goals {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* GoalCard 樣式 */
+.goal-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.goal-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.goal-card.active {
+  border-left-color: #1976d2;
+  background-color: #f3f8ff;
+}
+
+.goal-card-header {
+  margin-bottom: 10px;
+}
+
+.goal-card-header h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #343a40;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.goal-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.priority-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.priority-chip {
+  font-size: 0.75rem !important;
+  height: 24px !important;
+  border-radius: 12px !important;
+  margin-right: 8px !important;
+}
+
+.priority-chip.priority-high {
+  background-color: #ffebee !important;
+  color: #d32f2f !important;
+  border: 1px solid #ffcdd2 !important;
+}
+
+.priority-chip.priority-medium {
+  background-color: #fff8e1 !important;
+  color: #ff8f00 !important;
+  border: 1px solid #ffecb3 !important;
+}
+
+.priority-chip.priority-low {
+  background-color: #e8f5e9 !important;
+  color: #2e7d32 !important;
+  border: 1px solid #c8e6c9 !important;
+}
+
+.due-date-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* 調整 DatePicker 在 GoalCard 中的樣式 */
+.due-date-container .MuiFormControl-root {
+  width: 100%;
+}
+
+.due-date-container .MuiInputBase-root {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.due-date-container .MuiInputLabel-root {
+  font-size: 0.85rem;
+}
+
+.due-date-container .MuiFormHelperText-root {
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: #f1f3f5;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+  cursor: pointer;
+}
+
+.date-display:hover {
+  background-color: #e9ecef;
+}
+
+.date-icon {
+  color: #6c757d;
+  font-size: 14px !important;
+}
+
+.edit-priority-btn,
+.edit-date-btn {
+  padding: 4px !important;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.edit-priority-btn:hover,
+.edit-date-btn:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 日期選擇器彈出樣式 */
+.date-picker-popup {
+  position: fixed;
+  z-index: 9999;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  animation: fadeIn 0.1s ease-out;
+  border: 1px solid #e9ecef;
+}
+
+/* 添加卡片内日期选择器样式 */
+.card-date-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 9999;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  margin-top: 5px;
+  animation: fadeIn 0.1s ease-out;
+  border: 1px solid #e9ecef;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 移除遮罩層 */
+.date-picker-overlay {
+  display: none;
+} 
