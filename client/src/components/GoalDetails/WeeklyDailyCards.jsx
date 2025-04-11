@@ -5,6 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DailyCard from './DailyCard';
 import styles from './WeeklyDailyCards.module.css';
+import apiService from '../../services/api';
 
 /**
  * WeeklyDailyCards - Displays a week of daily cards for a goal
@@ -171,11 +172,17 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       updatedCards[index] = JSON.parse(JSON.stringify(updatedCard));
       setCurrentWeekCards(updatedCards);
       
-      // // Call API to save the update - REMOVED as DailyCardRecord handles saving
-      // if (goal && goal._id) {
-      //   const response = await apiService.goals.addOrUpdateDailyCard(goal._id, updatedCard);
-      //   console.log('API响应:', response);
-      // }
+      // Call API to save the update - Restored to ensure data persistence
+      if (goal && goal._id) {
+        console.log('WeeklyDailyCards - handleCardUpdate - Calling API to save card data to database');
+        try {
+          const response = await apiService.goals.addOrUpdateDailyCard(goal._id, updatedCard);
+          console.log('API response success:', response.data.success);
+        } catch (apiError) {
+          console.error('API save error:', apiError);
+          // Continue with local update even if API call fails
+        }
+      }
         
       // Notify parent component of update
       if (onCardsUpdate) {

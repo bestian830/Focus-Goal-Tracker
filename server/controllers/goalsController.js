@@ -594,32 +594,40 @@ const addOrUpdateDailyCard = async (req, res) => {
       });
     }
     
-    // Convert date string to Date object
+    // Convert date string to Date object and normalize to UTC midnight
     const cardDate = date ? new Date(date) : new Date();
+    
+    // Extract YYYY-MM-DD portion only for comparison
+    const cardDateStr = `${cardDate.getFullYear()}-${String(cardDate.getMonth() + 1).padStart(2, '0')}-${String(cardDate.getDate()).padStart(2, '0')}`;
     
     console.log('處理日卡請求:', {
       目標ID: id,
       請求日期: date,
       解析日期: cardDate,
-      現有卡片數量: goal.dailyCards.length
+      標準化日期字符串: cardDateStr,
+      現有卡片數量: goal.dailyCards?.length || 0
     });
     
-    // 改進日期比較邏輯，更準確地處理日期比較
+    // Improved date comparison logic using normalized YYYY-MM-DD strings
     const existingCardIndex = goal.dailyCards.findIndex(card => {
-      // 轉換兩個日期為本地日期字符串 YYYY-MM-DD 進行比較
-      const cardLocalDate = new Date(card.date);
-      const targetLocalDate = new Date(cardDate);
+      if (!card.date) return false;
       
-      const cardDateStr = `${cardLocalDate.getFullYear()}-${String(cardLocalDate.getMonth() + 1).padStart(2, '0')}-${String(cardLocalDate.getDate()).padStart(2, '0')}`;
-      const targetDateStr = `${targetLocalDate.getFullYear()}-${String(targetLocalDate.getMonth() + 1).padStart(2, '0')}-${String(targetLocalDate.getDate()).padStart(2, '0')}`;
-      
-      console.log('日期比較:', {
-        卡片日期: cardDateStr,
-        目標日期: targetDateStr,
-        相等: cardDateStr === targetDateStr
-      });
-      
-      return cardDateStr === targetDateStr;
+      try {
+        // Convert card date to YYYY-MM-DD string format
+        const existingDate = new Date(card.date);
+        const existingDateStr = `${existingDate.getFullYear()}-${String(existingDate.getMonth() + 1).padStart(2, '0')}-${String(existingDate.getDate()).padStart(2, '0')}`;
+        
+        console.log('日期比較:', {
+          卡片日期: existingDateStr,
+          目標日期: cardDateStr,
+          相等: existingDateStr === cardDateStr
+        });
+        
+        return existingDateStr === cardDateStr;
+      } catch (err) {
+        console.error('Error parsing card date:', err);
+        return false;
+      }
     });
     
     console.log('日期比較結果:', {

@@ -93,6 +93,37 @@ export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refresh
     console.log("goalId in GoalDetails:", goalId);
     if (!goalId) return;
 
+    // Save current goal data before switching to prevent data loss
+    if (selectedGoal && selectedGoal._id !== goalId && selectedGoal.dailyCards) {
+      console.log("Saving current goal data before switching to new goal");
+      
+      // Save selected goal data to database to prevent record loss when switching goals
+      const saveCurrentGoalData = async () => {
+        try {
+          console.log("Attempting to save goal data before switch", selectedGoal._id);
+          // Ensure we've saved any pending dailyCards updates
+          if (dailyCards && dailyCards.length > 0) {
+            // We don't need to update the whole goal, just ensure dailyCards are saved
+            const latestGoal = {
+              ...selectedGoal,
+              dailyCards: JSON.parse(JSON.stringify(dailyCards)) // Deep copy to avoid reference issues
+            };
+            
+            // Update goal with latest dailyCards data
+            await apiService.goals.update(selectedGoal._id, { 
+              dailyCards: latestGoal.dailyCards 
+            });
+            console.log("Successfully saved goal data before switching");
+          }
+        } catch (error) {
+          console.error("Error saving goal data before switch:", error);
+        }
+      };
+      
+      // Execute the save operation
+      saveCurrentGoalData();
+    }
+
     // get current user ID
     const getCurrentUserId = () => {
       const userId = localStorage.getItem("userId");
@@ -338,56 +369,54 @@ Because the path is already beneath my feet—it's really not that complicated. 
     }
   };
   
-  // refresh goal data
+  // Function to refresh goal data from API
   const refreshGoalData = async (goalId) => {
+    console.log(`Refreshing goal data for ID: ${goalId}`);
+    if (!goalId) {
+      console.warn('Cannot refresh goal data: No goalId provided');
+      return;
+    }
+    
     try {
-      console.log("refresh goal data:", goalId);
+      // Use the getById endpoint which returns complete goal data
+      const response = await apiService.goals.getById(goalId);
       
-      // check if goalId is valid
-      if (!goalId) {
-        console.error("failed to refresh goal data: goalId is invalid");
-        return;
-      }
-      
-      // use the refresh method passed from the parent component
-      if (parentRefreshGoalData) {
-        try {
-          const updatedGoal = await parentRefreshGoalData(goalId);
-          if (updatedGoal) {
-            // directly set the updated goal
-            setSelectedGoal(updatedGoal);
-            return;
-          }
-        } catch (refreshError) {
-          console.error("failed to refresh goal data: parent refresh method failed", refreshError);
-          // continue using the default method
-        }
-      }
-      
-      // if the parent component does not provide a refresh method or the refresh fails, use the default get method
-      try {
-        const response = await apiService.goals.getById(goalId);
-        if (response.data && response.data.data) {
-          console.log("got latest goal data:", response.data.data);
-          
-          // add vision image check log
-          const goalData = response.data.data;
-          console.log("vision image data check:", {
-            newStructureData: !!goalData.visionImageUrl,
-            newStructureData: goalData.visionImageUrl,
-            oldStructureData: !!(goalData.details && goalData.details.visionImage),
-            oldStructureData: goalData.details?.visionImage
+      if (response && response.data && response.data.data) {
+        const refreshedGoal = response.data.data;
+        console.log('Successfully refreshed goal data:', {
+          title: refreshedGoal.title,
+          dailyCardsCount: refreshedGoal.dailyCards ? refreshedGoal.dailyCards.length : 0
+        });
+        
+        // Log a sample of the dailyCards for debugging
+        if (refreshedGoal.dailyCards && refreshedGoal.dailyCards.length > 0) {
+          console.log('Sample of refreshed dailyCards:', {
+            firstCard: {
+              date: refreshedGoal.dailyCards[0].date,
+              hasTaskCompletions: !!refreshedGoal.dailyCards[0].taskCompletions,
+              recordsCount: refreshedGoal.dailyCards[0].records ? refreshedGoal.dailyCards[0].records.length : 0
+            }
           });
-          
-          // update local state
-          setSelectedGoal(response.data.data);
         }
-      } catch (error) {
-        console.error(`failed to get goal details, ID: ${goalId}`, error);
+        
+        // Update local state with refreshed data
+        setSelectedGoal(refreshedGoal);
+        setDailyCards(refreshedGoal.dailyCards || []);
+        
+        // Also call parent refresh if available
+        if (parentRefreshGoalData) {
+          parentRefreshGoalData(goalId);
+        }
+        
+        return refreshedGoal; // Return the updated goal data
+      } else {
+        console.error('Failed to refresh goal data: Invalid response format');
       }
     } catch (error) {
-      console.error("failed to refresh goal data:", error);
+      console.error('Error refreshing goal data:', error);
     }
+    
+    return null;
   };
   
   // 

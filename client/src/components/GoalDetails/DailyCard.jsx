@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Badge } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import styles from './DailyCard.module.css';
 import DailyCardRecord from './DailyCardRecord';
+import apiService from '../../services/api';
 
 /**
  * DailyCard - Displays a single date's card showing task completion status
@@ -16,6 +17,7 @@ import DailyCardRecord from './DailyCardRecord';
  */
 export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Format the date for display
   const formatDate = (dateString) => {
@@ -58,8 +60,51 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
   };
 
   // Handle card click to open details
-  const handleCardClick = () => {
-    setDetailsOpen(true);
+  const handleCardClick = async () => {
+    // Show loading state while we prepare to open the dialog
+    setLoading(true);
+    
+    try {
+      // If we have an onUpdate callback (which should come from WeeklyDailyCards),
+      // we can use it to refresh the goal data before opening the dialog
+      if (onUpdate && goal && goal._id) {
+        console.log('DailyCard - Refreshing goal data before opening record dialog');
+        
+        try {
+          // This helps ensure we have the most up-to-date card data
+          const response = await apiService.goals.getById(goal._id);
+          if (response?.data?.data) {
+            console.log('DailyCard - Retrieved latest goal data');
+            
+            // Find the card for this date in the fresh data
+            const refreshedGoal = response.data.data;
+            const targetDate = new Date(card.date);
+            const targetDateStr = targetDate.toISOString().split('T')[0];
+            
+            // Look for matching card in the refreshed data
+            let foundCard = false;
+            refreshedGoal.dailyCards?.forEach(card => {
+              const cardDate = new Date(card.date);
+              const cardDateStr = cardDate.toISOString().split('T')[0];
+              
+              if (cardDateStr === targetDateStr) {
+                console.log('DailyCard - Found matching card in refreshed data');
+                foundCard = true;
+              }
+            });
+            
+            console.log('DailyCard - Data refresh completed, found card:', foundCard);
+          }
+        } catch (error) {
+          console.error('DailyCard - Error refreshing data before opening dialog:', error);
+          // Continue opening the dialog even if refresh fails
+        }
+      }
+    } finally {
+      // Open the dialog and hide loading indicator
+      setLoading(false);
+      setDetailsOpen(true);
+    }
   };
 
   // Handle closing the details view

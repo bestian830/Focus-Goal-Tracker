@@ -98,6 +98,28 @@ export default function DailyCardRecord({
   const [taskDeleteConfirmOpen, setTaskDeleteConfirmOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
 
+  // State for tracking changes
+  const [hasUserMadeChanges, setHasUserMadeChanges] = useState(false);
+  
+  // When a new record is added or tasks are changed, mark as having changes
+  const markAsChanged = () => {
+    setHasUserMadeChanges(true);
+  };
+  
+  // Update markAsChanged for newRecord change
+  useEffect(() => {
+    if (newRecord.trim()) {
+      markAsChanged();
+    }
+  }, [newRecord]);
+  
+  // Reset change tracking when component mounts with new data
+  useEffect(() => {
+    if (open) {
+      setHasUserMadeChanges(false);
+    }
+  }, [open, date]);
+
   // Handle viewing declaration details
   const handleViewDeclaration = () => {
     // Check if callback exists and call it with the goal object
@@ -222,6 +244,9 @@ export default function DailyCardRecord({
         return;
       }
 
+      // Mark that user has made changes
+      markAsChanged();
+      
       // 先创建新的任务完成状态对象，再更新本地状态
       // 这确保我们不会修改引用同一对象
       const newTaskCompletions = {
@@ -308,6 +333,9 @@ export default function DailyCardRecord({
   const addNewRecord = () => {
     if (!newRecord.trim()) return;
 
+    // Mark that user has made changes
+    markAsChanged();
+    
     setCardData(prev => {
       // Ensure records is an array
       const prevRecords = Array.isArray(prev.records) ? prev.records : [];
@@ -341,6 +369,9 @@ export default function DailyCardRecord({
   // Handle confirming record deletion
   const handleConfirmDelete = () => {
     if (recordToDelete !== null) {
+      // Mark that user has made changes
+      markAsChanged();
+      
       setCardData(prev => {
         // Ensure records is an array
         const prevRecords = Array.isArray(prev.records) ? prev.records : [];
@@ -367,6 +398,9 @@ export default function DailyCardRecord({
     
     try {
       setIsSaving(true);
+      
+      // Mark that user has made changes
+      markAsChanged();
       
       // 使用与任务列表生成相同的ID逻辑
       const taskText = newTaskText.trim();
@@ -425,6 +459,9 @@ export default function DailyCardRecord({
     try {
       setIsSaving(true);
       
+      // Mark that user has made changes
+      markAsChanged();
+      
       // Update goal's dailyTasks array
       const updatedDailyTasks = [...goal.dailyTasks];
       updatedDailyTasks[taskIndex] = editingTaskText.trim();
@@ -470,6 +507,9 @@ export default function DailyCardRecord({
     
     try {
       setIsSaving(true);
+      
+      // Mark that user has made changes
+      markAsChanged();
       
       // Remove task from goal's dailyTasks array
       const updatedDailyTasks = [...goal.dailyTasks];
@@ -635,7 +675,22 @@ export default function DailyCardRecord({
   return (
     <Dialog 
       open={open} 
-      onClose={() => !isSaving && onClose()}
+      onClose={() => {
+        // Check if we need to save before closing
+        if (hasUserMadeChanges && !isSaving) {
+          console.log('DailyCardRecord - Dialog closing with unsaved changes, saving first');
+          handleSave().then(() => {
+            console.log('DailyCardRecord - Saved changes before closing');
+            onClose();
+          }).catch(err => {
+            console.error('DailyCardRecord - Error saving before close:', err);
+            // Still close even if save fails
+            onClose();
+          });
+        } else {
+          if (!isSaving) onClose();
+        }
+      }}
       maxWidth="md"
       fullWidth
     >
