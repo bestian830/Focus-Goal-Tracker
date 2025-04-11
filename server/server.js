@@ -26,38 +26,34 @@ connectDB();
 
 const app = express();
 
-// CORS Configuration
-const allowedOrigins = [
-  "http://localhost:5173", // local frontend
-  "https://focusappdeploy-frontend.onrender.com", // Render deployment frontend
-  "https://focusfinalproject-frontend-original.onrender.com", // Render deployment frontend (new)
-  process.env.CLIENT_URL, // client URL from env
-].filter(Boolean); // filter undefined or null
+// CORS Configuration - Simplified and more permissive for debugging
+app.use(cors({
+  origin: ["http://localhost:5173", "https://focusappdeploy-frontend.onrender.com", "https://focusfinalproject-frontend-original.onrender.com"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Set-Cookie"]
+}));
 
-// Middleware
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`Blocked request from unauthorized origin: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // Allow cross-origin requests to carry cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["Set-Cookie"],
-  })
-);
+// Add a middleware to log every request for debugging CORS issues
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Request received:`, {
+    method: req.method,
+    url: req.url,
+    origin: req.headers.origin,
+    host: req.headers.host
+  });
+  
+  // Add CORS headers directly as a backup
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  next();
+});
 
 // Log CORS configuration (for debugging)
 console.log("=== CORS Configuration ===");
-console.log("Allowed Origins:", allowedOrigins);
+console.log("Using simplified CORS with direct origins");
 console.log("=======================");
 
 app.use(express.json());
@@ -101,6 +97,16 @@ app.get("/api/health", (req, res) => {
 // Test API - simple endpoint to verify server is running
 app.get("/", (req, res) => {
   res.send("Hello from Express Server!");
+});
+
+// CORS test endpoint - to verify CORS is working
+app.get("/api/test-cors", (req, res) => {
+  res.json({
+    success: true, 
+    message: "CORS is working correctly",
+    origin: req.headers.origin,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Global error handler middleware
