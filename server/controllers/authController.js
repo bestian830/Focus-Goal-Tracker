@@ -147,7 +147,7 @@ const registerUser = async (req, res) => {
   try {
     const { username, email, password, tempId } = req.body;
     
-    console.log(`开始注册用户 - 邮箱: ${email}, 用户名: ${username}, 临时ID: ${tempId || '无'}`);
+    console.log(`registerUser: starting user registration, email: ${email}, username: ${username}, tempId: ${tempId || 'none'}`);
 
     // Validate input
     if (!username || !email || !password) {
@@ -160,7 +160,7 @@ const registerUser = async (req, res) => {
     // Check if email is already in use
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.log(`注册失败 - 邮箱已存在: ${email}`);
+      console.log(`registerUser: email already in use, email: ${email}`);
       return res.status(400).json({
         success: false,
         error: { message: "Email is already in use" },
@@ -173,70 +173,70 @@ const registerUser = async (req, res) => {
       email,
       password,
     });
-    console.log(`新用户创建成功 - ID: ${user._id}, 邮箱: ${email}`);
+    console.log(`registerUser: new user created successfully, ID: ${user._id}, email: ${email}`);
 
     // If tempId is provided, find and migrate temp user data
     if (tempId) {
-      console.log(`检测到临时用户ID: ${tempId}，准备数据迁移`);
+      console.log(`registerUser: detected temp user ID: ${tempId}, preparing data migration`);
       try {
         const tempUser = await TempUser.findOne({ tempId });
         
         if (tempUser) {
-          console.log(`找到临时用户记录 - ID: ${tempUser._id}, 临时ID: ${tempId}`);
+          console.log(`registerUser: found temp user record, ID: ${tempUser._id}, tempId: ${tempId}`);
           
           // Associate tempId with the new user
           user.tempId = tempId;
           await user.save();
-          console.log(`已关联临时ID ${tempId} 到用户 ${user._id}`);
+          console.log(`registerUser: associated tempId ${tempId} with user ${user._id}`);
           
-          // 迁移目标数据
-          console.log(`开始迁移临时用户 ${tempId} 的目标数据到注册用户 ${user._id}`);
+          // target data migration
+          console.log(`registerUser: starting data migration from temp user ${tempId} to registered user ${user._id}`);
           
-          // 导入Goal模型
+          // import Goal model
           const Goal = await import("../models/Goal.js").then(module => module.default);
-          console.log(`已加载Goal模型，准备查询临时用户目标`);
+          console.log(`registerUser: loaded Goal model, preparing to query temp user goals`);
           
-          // 查找所有属于该临时用户的目标
+          // find all goals belong to the temp user
           const goals = await Goal.find({ userId: tempId });
-          console.log(`找到 ${goals.length} 个需要迁移的目标，目标IDs: ${goals.map(g => g._id).join(', ')}`);
+          console.log(`registerUser: found ${goals.length} goals to migrate, goal IDs: ${goals.map(g => g._id).join(', ')}`);
           
-          // 检查userId字段的类型以解决潜在问题
+          // check the type of userId field to solve potential issues
           if (goals.length > 0) {
-            console.log(`第一个目标的userId类型: ${typeof goals[0].userId}, 值: ${goals[0].userId}`);
-            console.log(`目标模型结构: ${JSON.stringify(Goal.schema.paths.userId)}`);
+            console.log(`registerUser: the type of userId field of the first goal: ${typeof goals[0].userId}, value: ${goals[0].userId}`);
+            console.log(`registerUser: the structure of the Goal model: ${JSON.stringify(Goal.schema.paths.userId)}`);
           }
           
-          // 更新每个目标的userId为新注册用户的ID
+          // update the userId of each goal to the new registered user's ID
           let migratedCount = 0;
           for (const goal of goals) {
-            console.log(`迁移目标 ${goal._id} 从 ${tempId} 到 ${user._id}`);
-            // 将userId从tempId更改为注册用户的ID（以字符串形式存储）
+            console.log(`registerUser: migrating goal ${goal._id} from ${tempId} to ${user._id}`);
+            // update the userId of each goal to the new registered user's ID
             goal.userId = user._id.toString();
             await goal.save();
             migratedCount++;
           }
-          console.log(`成功迁移 ${migratedCount}/${goals.length} 个目标`);
+          console.log(`registerUser: successfully migrated ${migratedCount}/${goals.length} goals`);
           
-          // 成功迁移后删除临时用户
+          // delete the temp user after successful migration
           await TempUser.findOneAndDelete({ tempId });
-          console.log(`临时用户 ${tempId} 数据迁移完成并删除`);
+          console.log(`registerUser: temp user ${tempId} data migration completed and deleted`);
         } else {
-          console.log(`找不到临时用户: ${tempId}，无数据需要迁移`);
+          console.log(`registerUser: temp user not found, no data to migrate, tempId: ${tempId}`);
         }
       } catch (migrationError) {
-        console.error("迁移临时用户数据时出错:", migrationError);
-        console.error(`迁移错误详情: ${migrationError.stack}`);
-        // 继续注册流程，不因为迁移错误而中断
+        console.error("registerUser: error migrating temp user data:", migrationError);
+        console.error(`registerUser: migration error details: ${migrationError.stack}`);
+        // continue the registration process, do not interrupt due to migration error
       }
     }
 
     // Generate JWT token
     const token = generateUserToken(user._id);
-    console.log(`生成用户令牌成功`);
+    console.log(`registerUser: successfully generated user token, token: ${token}`);
 
     // Set JWT token as HttpOnly cookie
     setTokenCookie(res, token, 30 * 24 * 60 * 60 * 1000); // 30 days
-    console.log(`已设置认证Cookie，30天有效`);
+    console.log(`registerUser: successfully set user token as HttpOnly cookie, 30 days valid`);
 
     res.status(201).json({
       success: true,
@@ -246,10 +246,10 @@ const registerUser = async (req, res) => {
         email: user.email,
       },
     });
-    console.log(`用户注册完成 - ID: ${user._id}`);
+    console.log(`registerUser: user registration completed, ID: ${user._id}`);
   } catch (error) {
-    console.error("Error registering user:", error);
-    console.error(`注册错误详情: ${error.stack}`);
+    console.error("registerUser: error registering user:", error);
+    console.error(`registerUser: registration error details: ${error.stack}`);
     res.status(500).json({
       success: false,
       error: {

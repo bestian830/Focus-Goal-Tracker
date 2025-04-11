@@ -4,7 +4,7 @@ import axios from "axios";
 import App from "./App.jsx";
 
 // 檢查環境變量
-console.log("=== 主入口環境檢查 ===");
+console.log("=== Main entry environment check ===");
 console.log("MODE:", import.meta.env.MODE);
 console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
 console.log("======================");
