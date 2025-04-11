@@ -118,8 +118,10 @@ function Home() {
         console.log("User information in localStorage:", { userId, tempId });
 
         if (!userId && !tempId) {
-          console.log("No user information found, displaying welcome page");
+          console.log("No user information found, redirecting to login page");
           setLoading(false);
+          // Redirect to login page instead of showing welcome message
+          navigate("/login");
           return;
         }
 
@@ -515,11 +517,9 @@ function Home() {
             <ProgressReport goalId={selectedGoalId} />
           </>
         ) : (
-          <div className="welcome-message">
-            <h2>Welcome to Focus</h2>
-            <p>
-              Please log in or continue as a guest to start tracking your goals.
-            </p>
+          // Show loading indicator instead of welcome message when not authenticated
+          <div className="loading-container">
+            <p>Loading user data...</p>
           </div>
         )}
       </div>

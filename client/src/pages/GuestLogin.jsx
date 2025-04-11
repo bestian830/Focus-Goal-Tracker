@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import apiService from '../services/api';
@@ -24,6 +24,19 @@ function GuestLogin() {
   
   // Navigation hook to redirect after login
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    // Only check for userId here, not tempId, since this is the guest login page
+    // and we want to allow users to get a new tempId if they want
+    
+    // If userId exists, redirect to home page
+    if (userId) {
+      console.log("User already logged in as registered user, redirecting to home page");
+      navigate("/");
+    }
+  }, [navigate]);
 
   /**
    * Handle guest login button click

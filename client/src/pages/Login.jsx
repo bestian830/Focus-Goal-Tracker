@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import apiService from "../services/api";
 import "../styles/Login.css"; // We'll create this CSS file later
@@ -30,6 +30,18 @@ function Login() {
 
   // Navigation hook for redirect after login
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    const tempId = localStorage.getItem("tempId");
+    
+    // If userId or tempId exists, redirect to home page
+    if (userId || tempId) {
+      console.log("User already logged in, redirecting to home page");
+      navigate("/");
+    }
+  }, [navigate]);
 
   /**
    * Update form data when inputs change
