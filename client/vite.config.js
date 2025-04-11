@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
   };
 
   return {
-    plugins: [react()],
+    plugins: [react(), htmlPlugin()],
     ...(mode === "production" ? prodConfig : devConfig),
   };
 });

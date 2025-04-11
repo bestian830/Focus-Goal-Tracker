@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// set backend API URL
-const PRODUCTION_API_URL = "https://focusappdeploy-backend.onrender.com";
+// set backend API URL - use environment variable for production
+const PRODUCTION_API_URL = import.meta.env.VITE_API_URL || "https://focusfinalproject-backend-original-repo.onrender.com";
 const DEVELOPMENT_API_URL = "http://localhost:5050";
 
 // choose API URL based on environment - optimize environment detection logic
@@ -13,6 +13,7 @@ const API_URL = isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
 console.log("=== API configuration information ===");
 console.log("Running mode:", import.meta.env.MODE);
 console.log("Is production environment:", import.meta.env.PROD);
+console.log("Environment variable VITE_API_URL:", import.meta.env.VITE_API_URL);
 console.log("Environment detection result:", isProduction ? "Production environment" : "Development environment");
 console.log("Used API URL:", API_URL);
 console.log("====================");
