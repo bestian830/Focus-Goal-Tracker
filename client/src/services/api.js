@@ -139,17 +139,17 @@ const apiService = {
   // authentication related
   auth: {
     register: (userData) => {
-      console.log(`發送註冊請求，數據:`, {
+      console.log(`register: sending registration request, data:`, {
         ...userData,
         password: userData.password ? '******' : undefined
       });
       return api.post("/api/auth/register", userData)
         .then(response => {
-          console.log(`註冊成功，響應:`, response.data);
+          console.log(`register: registration successful, response:`, response.data);
           return response;
         })
         .catch(error => {
-          console.error(`註冊失敗:`, error.response ? error.response.data : error.message);
+          console.error(`register: registration failed, error:`, error.response ? error.response.data : error.message);
           throw error;
         });
     },
@@ -189,30 +189,30 @@ const apiService = {
     getById: (id) => api.get(`/api/goals/detail/${id}`),
     create: (goalData) => api.post("/api/goals", goalData),
     createGoal: (goalData) => {
-      // 确保goalData包含有效的userId
+      // ensure goalData contains a valid userId
       if (!goalData.userId) {
-        console.error("创建目标错误: 缺少userId");
+        console.error("createGoal: missing userId");
         return Promise.reject(new Error("目标数据缺少用户ID"));
       }
       
-      // 确保description字段存在
+      // ensure description field exists
       if (!goalData.description && goalData.title && goalData.motivation) {
-        console.log("API层: 发现缺少description字段，自动生成");
-        goalData.description = `我想要${goalData.title}，因为${goalData.motivation}。`;
+        console.log("API layer: found missing description field, generating automatically");
+        goalData.description = `I want to ${goalData.title}, because ${goalData.motivation}.`;
       }
       
-      // 确保declaration字段存在
+      // ensure declaration field exists
       if (!goalData.declaration || !goalData.declaration.content) {
-        console.log("API层: 发现缺少declaration字段，自动生成宣言内容");
+        console.log("API layer: found missing declaration field, generating declaration content automatically");
         
-        // 生成宣言内容
+        // generate declaration content
         const generateDeclarationText = (data) => {
           const username = 'User';
           const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : '未设置日期';
-          const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : '每日坚持';
-          const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : '适当的奖励';
-          const resource = data.resources && data.resources.length > 0 ? data.resources[0] : '必要的准备';
-          const motivation = data.motivation || data.description || '这是对我意义深远的追求';
+          const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : 'daily commitment';
+          const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : 'appropriate reward';
+          const resource = data.resources && data.resources.length > 0 ? data.resources[0] : 'necessary preparation';
+          const motivation = data.motivation || data.description || 'this is a deeply meaningful pursuit for me';
           
           return `${data.title}
 
@@ -240,7 +240,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       }
       
       const isTemporary = typeof goalData.userId === 'string' && goalData.userId.startsWith('temp_');
-      console.log(`调用createGoal API，数据:`, {
+      console.log(`calling createGoal API, data:`, {
         ...goalData,
         userId: goalData.userId,
         hasDescription: !!goalData.description,
@@ -256,13 +256,13 @@ Because the path is already beneath my feet—it's really not that complicated. 
       
       return api.post("/api/goals", goalData)
         .then(response => {
-          console.log(`创建目标成功，响应:`, response.data);
+          console.log(`createGoal: goal created successfully, response:`, response.data);
           return response;
         })
         .catch(error => {
-          console.error(`创建目标失败:`, {
+          console.error(`createGoal: goal creation failed, error:`, {
             error: error.response ? error.response.data : error.message,
-            status: error.response ? error.response.status : '未知',
+            status: error.response ? error.response.status : 'unknown',
             userId: goalData.userId,
             isTemporaryUser: isTemporary
           });
@@ -270,29 +270,29 @@ Because the path is already beneath my feet—it's really not that complicated. 
         });
     },
     update: (id, goalData) => {
-      console.log(`[API] 更新目標請求，ID: ${id}，數據:`, goalData);
+      console.log(`update: updating goal request, ID: ${id}, data:`, goalData);
       
-      // 特別檢查是否包含目標日期欄位，這個欄位常見問題
+      // check if targetDate field exists
       if (goalData.targetDate) {
-        console.log(`[API] 目標日期更新檢查:`, {
-          原始值: goalData.targetDate,
-          類型: typeof goalData.targetDate,
-          是日期對象: goalData.targetDate instanceof Date,
-          ISO字符串: goalData.targetDate instanceof Date ? goalData.targetDate.toISOString() : goalData.targetDate
+        console.log(`update: targetDate field exists, checking value:`, {
+          originalValue: goalData.targetDate,
+          type: typeof goalData.targetDate,
+          isDateObject: goalData.targetDate instanceof Date,
+          isoString: goalData.targetDate instanceof Date ? goalData.targetDate.toISOString() : goalData.targetDate
         });
       }
       
       return api.put(`/api/goals/${id}`, goalData)
         .then(response => {
-          console.log(`[API] 目標更新成功，ID: ${id}`, response.data);
+          console.log(`update: goal updated successfully, ID: ${id}`, response.data);
           return response;
         })
         .catch(error => {
-          console.error(`[API] 目標更新失敗，ID: ${id}`, error);
-          console.error(`[API] 錯誤詳情:`, {
-            訊息: error.message,
-            狀態: error.response?.status,
-            響應: error.response?.data
+          console.error(`update: goal update failed, ID: ${id}`, error);
+          console.error(`update: error details:`, {
+            message: error.message,
+            status: error.response?.status,
+            response: error.response?.data
           });
           throw error;
         });
@@ -305,18 +305,16 @@ Because the path is already beneath my feet—it's really not that complicated. 
     addOrUpdateDailyCard: (id, cardData) =>
       api.post(`/api/goals/${id}/daily-card`, cardData)
         .then(response => {
-          console.log('每日卡片保存成功:', {
-            goalId: id,
-            response: response.data
-          });
+          console.log('addOrUpdateDailyCard: daily card saved successfully, goalId:', id, 'response:', response.data);
           return response;
         })
         .catch(error => {
-          console.error('保存每日卡片失败:', {
+          console.error('addOrUpdateDailyCard: daily card save failed, goalId:', id, 'error:', error.message);
+          console.error('addOrUpdateDailyCard: error details:', {
             goalId: id,
-            错误: error.message,
-            状态: error.response?.status,
-            响应: error.response?.data
+            error: error.message,
+            status: error.response?.status,
+            response: error.response?.data
           });
           throw error;
         }),
@@ -339,7 +337,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
   // report related
   reports: {
     generate: (goalId, startDate, endDate) => {
-      console.log('调用生成报告 API，goalId:', goalId, '时间范围:', startDate, '至', endDate);
+      console.log('reports: calling generate report API, goalId:', goalId, 'time range:', startDate, 'to', endDate);
       return api.post(`/api/reports/${goalId}`, { 
         timeRange: {
           startDate: startDate,
@@ -347,11 +345,11 @@ Because the path is already beneath my feet—it's really not that complicated. 
         }
       })
         .then(response => {
-          console.log('API 响应:', response);
+          console.log('reports: report generated successfully, response:', response);
           return response;
         })
         .catch(error => {
-          console.error('API 错误:', error);
+          console.error('reports: report generation failed, error:', error);
           throw error;
         });
     },
