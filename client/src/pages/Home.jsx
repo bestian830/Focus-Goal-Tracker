@@ -182,7 +182,7 @@ function Home() {
 
     fetchUserData();
 
-    // set up a scheduled refresh mechanism, refresh every 30 seconds
+    // set up a scheduled refresh mechanism, refresh every 5 minutes instead of 30 seconds
     const refreshInterval = setInterval(() => {
       if (user) {
         console.log("Running scheduled refresh of goals data");
@@ -191,7 +191,7 @@ function Home() {
           console.error("Scheduled refresh failed:", err);
         });
       }
-    }, 30000); // refresh every 30 seconds
+    }, 300000); // refresh every 5 minutes (300000ms)
 
     return () => {
       // clear timer when component unmounts
@@ -290,8 +290,9 @@ function Home() {
   };
 
   // handle goal selection from sidebar
-  const handleGoalSelect = (goalId) => {
-    console.log("Goal selected:", goalId);
+  const handleGoalSelect = (goal) => {
+    console.log("Goal selected:", goal);
+    const goalId = goal._id || goal.id;
     setSelectedGoalId(goalId);
   };
 
