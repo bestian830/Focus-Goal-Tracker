@@ -26,9 +26,29 @@ connectDB();
 
 const app = express();
 
-// CORS Configuration - Simplified and more permissive for debugging
+// CORS Configuration - Using function version for more flexibility
 app.use(cors({
-  origin: ["http://localhost:5173", "https://focusappdeploy-frontend.onrender.com", "https://focusfinalproject-frontend-original.onrender.com"],
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173", 
+      "https://focusappdeploy-frontend.onrender.com", 
+      "https://focusfinalproject-frontend-original.onrender.com", 
+      "https://focusfinalproject-frontend-original-repo.onrender.com"
+    ];
+    
+    // Add CLIENT_URL from environment variable if available
+    if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+      allowedOrigins.push(process.env.CLIENT_URL);
+    }
+    
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`Origin ${origin} not allowed by CORS`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
