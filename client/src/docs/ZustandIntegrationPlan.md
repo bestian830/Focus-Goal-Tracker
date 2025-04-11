@@ -1,94 +1,94 @@
-# Zustand集成计划
+# Zustand Integration Plan
 
-## 目标
-将Focus应用从基于Props的状态管理升级为使用Zustand进行全局状态管理，以实现更高效、可扩展的代码组织。
+## Objective
+Upgrade the Focus application from Props-based state management to using Zustand for global state management, to achieve more efficient, scalable code organization.
 
-## 关键文件
-- `focus-app/client/src/store/goalStore.js` - Zustand存储定义
-- `focus-app/client/src/components/GoalSettingGuide/*.jsx` - 目标设置向导组件
-- `focus-app/client/src/components/GoalDeclaration/*.jsx` - 目标宣言组件
-- `focus-app/client/src/components/DailyCard/*.jsx` - 每日卡片组件
+## Key Files
+- `focus-app/client/src/store/goalStore.js` - Zustand store definition
+- `focus-app/client/src/components/GoalSettingGuide/*.jsx` - Goal setting guide components
+- `focus-app/client/src/components/GoalDeclaration/*.jsx` - Goal declaration components
+- `focus-app/client/src/components/DailyCard/*.jsx` - Daily card components
 
-## 实施计划
+## Implementation Plan
 
-### 阶段一：基础设置与目标存储 ✓
-1. 添加Zustand依赖 ✓
-2. 创建基本goalStore结构 ✓
-3. 实现goalStore的基本功能 ✓
-   - 目标列表管理
-   - 选定目标管理
-   - 目标CRUD操作
-   - 与API集成
+### Phase 1: Basic Setup and Goal Store ✓
+1. Add Zustand dependency ✓
+2. Create basic goalStore structure ✓
+3. Implement basic functionality of goalStore ✓
+   - Goal list management
+   - Selected goal management
+   - Goal CRUD operations
+   - API integration
 
-### 阶段二：GoalSettingGuide组件集成 ✓
-1. 修改GoalSettingGuide组件使用Zustand ✓
-2. 修改所有步骤组件：
+### Phase 2: GoalSettingGuide Component Integration ✓
+1. Modify GoalSettingGuide component to use Zustand ✓
+2. Modify all step components:
    - TitleStep ✓
    - MotivationStep ✓
    - ResourcesStep ✓
    - VisionStep ✓
    - RewardsStep ✓
 
-### 阶段三：GoalDeclaration组件集成 ✓
-1. 修改GoalDeclaration组件使用Zustand ✓
-2. 实现宣言文本生成功能 ✓
-3. 提供编辑和更新功能 ✓
+### Phase 3: GoalDeclaration Component Integration ✓
+1. Modify GoalDeclaration component to use Zustand ✓
+2. Implement declaration text generation functionality ✓
+3. Provide editing and updating functionality ✓
 
-### 阶段四：Review与优化
-1. 在DailyCard中集成Zustand
-2. 优化组件之间的数据流
-3. 移除不必要的prop drilling
-4. 添加适当的加载和错误状态处理
+### Phase 4: Review and Optimization
+1. Integrate Zustand in DailyCard
+2. Optimize data flow between components
+3. Remove unnecessary prop drilling
+4. Add appropriate loading and error state handling
 
-### 阶段五：测试计划
-以下是需要测试的功能列表：
+### Phase 5: Testing Plan
+Here is a list of functionalities that need to be tested:
 
-#### 5.1 Zustand存储功能测试
-- [ ] 获取所有目标数据（`useGoalStore.getState().fetchGoals`）
-- [ ] 获取单个目标（`useGoalStore.getState().getGoalById`）
-- [ ] 创建新目标（`useGoalStore.getState().createGoal`）
-- [ ] 更新现有目标（`useGoalStore.getState().updateGoal`）
-- [ ] 删除目标（`useGoalStore.getState().deleteGoal`）
-- [ ] 本地存储持久化功能（刷新页面后状态保持）
-- [ ] 重置存储状态（`useGoalStore.getState().resetStore`）
+#### 5.1 Zustand Store Functionality Tests
+- [ ] Fetch all goal data (`useGoalStore.getState().fetchGoals`)
+- [ ] Get a single goal (`useGoalStore.getState().getGoalById`)
+- [ ] Create a new goal (`useGoalStore.getState().createGoal`)
+- [ ] Update existing goal (`useGoalStore.getState().updateGoal`)
+- [ ] Delete goal (`useGoalStore.getState().deleteGoal`)
+- [ ] Local storage persistence functionality (state remains after page refresh)
+- [ ] Reset store state (`useGoalStore.getState().resetStore`)
 
-#### 5.2 目标设置向导组件测试
-- [ ] TitleStep字段验证和状态保存
-- [ ] MotivationStep表单验证和字符限制
-- [ ] ResourcesStep资源和步骤添加功能
-- [ ] VisionStep图片上传和预览功能
-- [ ] RewardsStep奖励设置和日期选择
-- [ ] 整体向导的步骤导航和数据保存
-- [ ] 表单验证错误处理
-- [ ] 向导完成后目标创建过程
+#### 5.2 Goal Setting Guide Component Tests
+- [ ] TitleStep field validation and state saving
+- [ ] MotivationStep form validation and character limit
+- [ ] ResourcesStep resource and step addition functionality
+- [ ] VisionStep image upload and preview functionality
+- [ ] RewardsStep reward setting and date selection
+- [ ] Overall guide step navigation and data saving
+- [ ] Form validation error handling
+- [ ] Goal creation process after guide completion
 
-#### 5.3 目标宣言组件测试
-- [ ] 基于存储数据生成宣言文本
-- [ ] 宣言文本格式化和排版
-- [ ] 编辑模式切换功能
-- [ ] 宣言更新与保存
-- [ ] 图片显示功能
+#### 5.3 Goal Declaration Component Tests
+- [ ] Declaration text generation based on store data
+- [ ] Declaration text formatting and layout
+- [ ] Edit mode toggle functionality
+- [ ] Declaration update and saving
+- [ ] Image display functionality
 
-#### 5.4 API集成测试
-- [ ] API请求错误处理
-- [ ] 网络延迟处理
-- [ ] 未授权请求处理
-- [ ] 服务器端数据验证错误处理
+#### 5.4 API Integration Tests
+- [ ] API request error handling
+- [ ] Network delay handling
+- [ ] Unauthorized request handling
+- [ ] Server-side data validation error handling
 
-#### 5.5 跨组件集成测试
-- [ ] 创建目标并在目标列表中显示
-- [ ] 从列表选择目标并显示详情
-- [ ] 更新目标并验证UI更新
-- [ ] 删除目标并验证从列表移除
+#### 5.5 Cross-Component Integration Tests
+- [ ] Create goal and display in goal list
+- [ ] Select goal from list and display details
+- [ ] Update goal and verify UI update
+- [ ] Delete goal and verify removal from list
 
-#### 5.6 性能测试
-- [ ] 大量目标数据下的渲染性能
-- [ ] 状态更新的响应时间
-- [ ] 内存使用分析
-- [ ] 重复渲染检查
+#### 5.6 Performance Tests
+- [ ] Rendering performance with large amounts of goal data
+- [ ] State update response time
+- [ ] Memory usage analysis
+- [ ] Repeated rendering check
 
-## 完成标准
-- 所有组件都使用Zustand进行状态管理，不再依赖prop drilling
-- 所有API调用通过goalStore进行，提供统一的数据获取和更新机制
-- 应用状态在刷新后仍能持久保存
-- 所有测试项目通过，功能正常工作 
+## Completion Criteria
+- All components use Zustand for state management, no longer relying on prop drilling
+- All API calls are made through goalStore, providing a unified mechanism for data retrieval and updates
+- Application state persists after refresh
+- All test items pass, functionality works correctly 

@@ -57,30 +57,30 @@ function Login() {
     }
 
     setLoading(true);
-    console.log("開始登錄流程...");
+    console.log("Starting login process...");
 
     try {
-      // 使用封裝的API服務進行登錄
-      console.log("發送登錄請求...");
+      // use wrapped API service for login
+      console.log("Sending login request...");
       const response = await apiService.auth.login(formData);
-      console.log("登錄成功，回應:", response.data);
+      console.log("Login successful, response:", response.data);
 
-      // 檢查 cookie 是否設置成功
+      // check if cookie is set successfully
       const hasCookie = document.cookie.includes('token=');
-      console.log("Cookie 檢查:", {
+      console.log("Cookie check:", {
         hasCookie: hasCookie,
         cookies: document.cookie
       });
 
       // Store user ID in localStorage
       localStorage.setItem("userId", response.data.data.id);
-      console.log("用戶 ID 已保存到 localStorage:", response.data.data.id);
+      console.log("User ID saved to localStorage:", response.data.data.id);
 
       // Redirect to home page
-      console.log("重定向到首頁...");
+      console.log("Redirecting to home page...");
       navigate("/");
     } catch (error) {
-      console.error("登錄失敗:", error);
+      console.error("Login failed:", error);
 
       // Display appropriate error message
       if (error.response && error.response.data && error.response.data.error) {

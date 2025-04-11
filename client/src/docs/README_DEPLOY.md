@@ -1,31 +1,31 @@
-# Focus App 部署指南與經驗總結
+# Focus App Deployment Guide and Experience Summary
 
-本指南將幫助您設置和部署 Focus App 的前端和後端部分，並總結了部署過程中遇到的問題和解決方案。
+This guide will help you set up and deploy the frontend and backend of Focus App, and summarizes the issues encountered during deployment and their solutions.
 
-## 部署經驗總結
+## Deployment Experience Summary
 
-在部署過程中，我們遇到了一些關鍵問題並成功解決：
+During the deployment process, we encountered several key issues and successfully resolved them:
 
-### 後端部署挑戰
+### Backend Deployment Challenges
 
-1. **CommonJS 轉換為 ES 模塊**：
-   - 問題：後端最初使用 CommonJS (`require`/`module.exports`) 格式，但需要轉換為 ES 模塊 (`import`/`export`) 以適應 Vite 和現代 JavaScript。
-   - 解決方案：系統地將所有 `require` 語句改為 `import`，將 `module.exports` 改為 `export default` 或具名 `export`。
-   - 示例：
+1. **Converting CommonJS to ES Modules**:
+   - Problem: The backend initially used CommonJS (`require`/`module.exports`) format, but needed to be converted to ES Modules (`import`/`export`) to accommodate Vite and modern JavaScript.
+   - Solution: We systematically changed all `require` statements to `import`, and `module.exports` to `export default` or named `export`.
+   - Example:
      ```javascript
-     // 從
+     // From
      const mongoose = require("mongoose");
      module.exports = mongoose.model("User", UserSchema);
      
-     // 轉換為
+     // Changed to
      import mongoose from "mongoose";
      const User = mongoose.model("User", UserSchema);
      export default User;
      ```
 
-2. **跨域 (CORS) 設置**：
-   - 問題：前端和後端部署在不同的域上，導致 CORS 錯誤。
-   - 解決方案：更新 CORS 配置以允許來自生產前端的請求，並確保 cookie 可以跨域傳輸。
+2. **Cross-Origin Resource Sharing (CORS) Setup**:
+   - Problem: The frontend and backend were deployed on different domains, causing CORS errors.
+   - Solution: Updated the CORS configuration to allow requests from the production frontend and ensure cookies could be transmitted across domains.
    ```javascript
    app.use(
      cors({
@@ -47,9 +47,9 @@
    );
    ```
 
-3. **Cookie 設置**：
-   - 問題：在清除 cookie 時沒有應用與設置時相同的參數，導致跨域 cookie 處理問題。
-   - 解決方案：確保清除 cookie 時使用與設置時相同的選項：
+3. **Cookie Settings**:
+   - Problem: When clearing cookies, the same parameters as when setting them were not applied, leading to cross-domain cookie handling issues.
+   - Solution: Ensured that the same options were used when clearing cookies as when setting them:
    ```javascript
    const clearTokenCookie = (res) => {
      res.clearCookie('token', {
@@ -61,26 +61,26 @@
    };
    ```
 
-4. **環境變量**：
-   - 問題：未正確設置 NODE_ENV 為 production，導致 cookie 安全設置不正確。
-   - 解決方案：確保在生產環境中設置 `NODE_ENV=production`。
+4. **Environment Variables**:
+   - Problem: NODE_ENV was not correctly set to production, causing incorrect cookie security settings.
+   - Solution: Ensured `NODE_ENV=production` was set in the production environment.
 
-### 前端部署挑戰
+### Frontend Deployment Challenges
 
-1. **硬編碼的 API URL**：
-   - 問題：前端代碼中直接硬編碼了後端 API 的本地地址 (`http://localhost:5050`)。
-   - 解決方案：創建一個集中的 API 服務文件 (`api.js`)，使用環境變量設置基礎 URL。
+1. **Hardcoded API URLs**:
+   - Problem: The frontend code directly hardcoded the local address of the backend API (`http://localhost:5050`).
+   - Solution: Created a centralized API service file (`api.js`) that uses environment variables to set the base URL.
    ```javascript
    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050';
    ```
 
-2. **環境變量配置**：
-   - 問題：缺少適當的環境變量設置，導致開發和生產環境之間的切換困難。
-   - 解決方案：創建 `.env` 和 `.env.production` 文件，並在 Render 部署配置中設置相應的環境變量。
+2. **Environment Variable Configuration**:
+   - Problem: Lack of proper environment variable setup made switching between development and production environments difficult.
+   - Solution: Created `.env` and `.env.production` files, and set corresponding environment variables in the Render deployment configuration.
 
-3. **Vite 配置**：
-   - 問題：Vite 配置中的代理設置使用硬編碼的 URL。
-   - 解決方案：更新 `vite.config.js` 以使用環境變量：
+3. **Vite Configuration**:
+   - Problem: The proxy settings in the Vite configuration used hardcoded URLs.
+   - Solution: Updated `vite.config.js` to use environment variables:
    ```javascript
    export default defineConfig(({ mode }) => {
      const env = loadEnv(mode, process.cwd())
@@ -98,33 +98,33 @@
    });
    ```
 
-## 環境變量配置
+## Environment Variable Configuration
 
-### 前端環境變量
+### Frontend Environment Variables
 
-Focus App 前端使用環境變量來確定 API 服務器的 URL。您需要設置以下環境變量：
+Focus App frontend uses environment variables to determine the API server URL. You need to set the following environment variables:
 
-- `VITE_API_URL`: API 服務器的 URL
+- `VITE_API_URL`: The URL of the API server
 
-#### 開發環境
+#### Development Environment
 
-對於開發環境，我們已經創建了一個 `.env` 文件，其中包含默認設置：
+For the development environment, we've created a `.env` file containing default settings:
 
 ```
 VITE_API_URL=http://localhost:5050
 ```
 
-#### 生產環境
+#### Production Environment
 
-對於生產環境，我們已經創建了一個 `.env.production` 文件，其中包含生產設置：
+For the production environment, we've created a `.env.production` file containing production settings:
 
 ```
 VITE_API_URL=https://focusappdeploy-backend.onrender.com
 ```
 
-### 後端環境變量
+### Backend Environment Variables
 
-後端需要設置以下環境變量：
+The backend needs the following environment variables:
 
 ```
 PORT=5050
@@ -134,112 +134,112 @@ CLIENT_URL=https://focusappdeploy-frontend.onrender.com
 JWT_SECRET=your_jwt_secret_key
 ```
 
-## 手動部署步驟
+## Manual Deployment Steps
 
-### 前端部署
+### Frontend Deployment
 
-1. **安裝依賴**：
+1. **Install Dependencies**:
    ```bash
    cd client
    npm install
    ```
 
-2. **構建應用**：
+2. **Build the Application**:
    ```bash
    npm run build
    ```
-   這將生成一個包含靜態文件的 `dist` 目錄。
+   This will generate a `dist` directory containing static files.
 
-3. **部署靜態文件**：
-   將 `dist` 目錄中的文件上傳到您的靜態文件服務器（如 Render、Netlify、Vercel 等）。
+3. **Deploy Static Files**:
+   Upload the files in the `dist` directory to your static file server (such as Render, Netlify, Vercel, etc.).
 
-### 後端部署
+### Backend Deployment
 
-1. **安裝依賴**：
+1. **Install Dependencies**:
    ```bash
    cd server
    npm install
    ```
 
-2. **構建應用**（如果需要）：
+2. **Build the Application** (if needed):
    ```bash
    npm run build
    ```
 
-3. **部署服務**：
-   將後端代碼部署到支持 Node.js 的平台（如 Render、Heroku 等）。
+3. **Deploy the Service**:
+   Deploy the backend code to a platform that supports Node.js (such as Render, Heroku, etc.).
 
-## 在 Render 上部署
+## Deploying on Render
 
-### 前端部署
+### Frontend Deployment
 
-1. 登錄到您的 Render 帳戶並創建一個新的 Static Site 服務。
+1. Log in to your Render account and create a new Static Site service.
 
-2. **連接您的 GitHub 存儲庫，或上傳項目文件**。
+2. **Connect your GitHub repository, or upload project files**.
 
-3. 設置以下配置：
-   - **名稱**: `focus-app-frontend`（或您喜歡的任何名稱）
-   - **建置命令**: `cd client && npm install && npm run build`
-   - **發布目錄**: `client/dist`
-   - **環境變量**:
-     - 添加環境變量 `VITE_API_URL` 並將其設置為您的後端服務 URL（如 `https://focusappdeploy-backend.onrender.com`）
+3. Set the following configuration:
+   - **Name**: `focus-app-frontend` (or any name you prefer)
+   - **Build Command**: `cd client && npm install && npm run build`
+   - **Publish Directory**: `client/dist`
+   - **Environment Variables**:
+     - Add the environment variable `VITE_API_URL` and set it to your backend service URL (such as `https://focusappdeploy-backend.onrender.com`)
 
-4. 點擊 "Create Static Site" 按鈕。
+4. Click the "Create Static Site" button.
 
-### 後端部署
+### Backend Deployment
 
-1. 登錄到您的 Render 帳戶並創建一個新的 Web Service。
+1. Log in to your Render account and create a new Web Service.
 
-2. 連接您的 GitHub 存儲庫，或上傳項目文件。
+2. Connect your GitHub repository, or upload project files.
 
-3. 設置以下配置：
-   - **名稱**: `focusappdeploy-backend`（或您喜歡的任何名稱）
-   - **建置命令**: `cd server && npm install`
-   - **啟動命令**: `cd server && node server.js`
-   - **環境變量**:
-     - 添加所有必要的環境變量，包括 `NODE_ENV=production`、`CLIENT_URL` 等。
+3. Set the following configuration:
+   - **Name**: `focusappdeploy-backend` (or any name you prefer)
+   - **Build Command**: `cd server && npm install`
+   - **Start Command**: `cd server && node server.js`
+   - **Environment Variables**:
+     - Add all necessary environment variables, including `NODE_ENV=production`, `CLIENT_URL`, etc.
 
-4. 點擊 "Create Web Service" 按鈕。
+4. Click the "Create Web Service" button.
 
-## 測試部署
+## Testing the Deployment
 
-部署完成後，通過以下步驟測試應用是否正常工作：
+After deployment is complete, test whether the application is working properly with the following steps:
 
-1. 訪問部署的前端 URL（例如，`https://focusappdeploy-frontend.onrender.com`）。
-2. 嘗試登錄或以訪客身份繼續。
-3. 驗證與後端 API 的通信是否正常工作。
-4. 檢查控制台是否有任何錯誤或 CORS 問題。
+1. Visit the deployed frontend URL (e.g., `https://focusappdeploy-frontend.onrender.com`).
+2. Try to log in or continue as a guest.
+3. Verify that communication with the backend API is working correctly.
+4. Check the console for any errors or CORS issues.
 
-## 故障排除
+## Troubleshooting
 
-### CORS 問題
+### CORS Issues
 
-如果您遇到 CORS 錯誤：
+If you encounter CORS errors:
 
-1. 確保後端的 CORS 配置正確並包含前端域名。
-2. 確保 cookie 設置允許跨域（`secure: true` 和 `sameSite: 'none'`）。
-3. 檢查前端 API 調用是否包含 `withCredentials: true`。
+1. Ensure the CORS configuration in the backend is correct and includes the frontend domain.
+2. Make sure cookie settings allow cross-domain (with `secure: true` and `sameSite: 'none'`).
+3. Check if frontend API calls include `withCredentials: true`.
 
-### 認證問題
+### Authentication Issues
 
-如果您遇到 401 未授權錯誤：
+If you encounter 401 Unauthorized errors:
 
-1. 檢查 cookie 設置是否正確。
-2. 確保環境變量 `NODE_ENV` 設置為 `production`。
-3. 檢查前端請求是否使用正確的 API URL。
+1. Check that cookie settings are correct.
+2. Make sure the environment variable `NODE_ENV` is set to `production`.
+3. Check if frontend requests are using the correct API URL.
 
-### API 連接問題
+### API Connection Issues
 
-如果前端無法連接到後端：
+If the frontend cannot connect to the backend:
 
-1. 確保環境變量 `VITE_API_URL` 正確設置。
-2. 檢查網絡請求是否到達了後端服務器。
-3. 驗證後端服務是否正常運行。
+1. Ensure the environment variable `VITE_API_URL` is set correctly.
+2. Check if network requests are reaching the backend server.
+3. Verify that the backend service is running properly.
 
-## 最佳實踐總結
+## Best Practices Summary
 
-1. **環境變量**：使用環境變量來管理不同環境之間的配置差異。
-2. **API 服務封裝**：創建集中的 API 服務文件，而不是在組件中直接使用 axios。
-3. **CORS 配置**：正確設置 CORS 以允許跨域請求和 cookie。
-4. **Cookie 設置**：確保在跨域環境中使用 `secure: true` 和 `sameSite: 'none'`。
-5. **ES 模塊**：現代 JavaScript 應用推薦使用 ES 模塊語法 (`import`/`export`)。 
+1. **Environment Variables**: Use environment variables to manage configuration differences between different environments.
+2. **API Service Encapsulation**: Create a centralized API service file instead of using axios directly in components.
+3. **CORS Configuration**: Correctly set up CORS to allow cross-domain requests and cookies.
+4. **Cookie Settings**: Ensure `secure: true` and `sameSite: 'none'` are used in cross-domain environments.
+5. **ES Modules**: Modern JavaScript applications recommend using ES module syntax (`import`/`export`). 

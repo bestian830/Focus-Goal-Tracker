@@ -22,7 +22,7 @@ The `handleCardUpdate` function in `WeeklyDailyCards.jsx` had a critical API cal
 // Before: API call was commented out
 // if (goal && goal._id) {
 //   const response = await apiService.goals.addOrUpdateDailyCard(goal._id, updatedCard);
-//   console.log('API响应:', response);
+//   console.log('API response:', response);
 // }
 
 // After: API call restored with improved error handling
@@ -146,10 +146,10 @@ const existingCardIndex = goal.dailyCards.findIndex(card => {
     const existingDate = new Date(card.date);
     const existingDateStr = `${existingDate.getFullYear()}-${String(existingDate.getMonth() + 1).padStart(2, '0')}-${String(existingDate.getDate()).padStart(2, '0')}`;
     
-    console.log('日期比較:', {
-      卡片日期: existingDateStr,
-      目標日期: cardDateStr,
-      相等: existingDateStr === cardDateStr
+    console.log('Date comparison:', {
+      cardDate: existingDateStr,
+      targetDate: cardDateStr,
+      isEqual: existingDateStr === cardDateStr
     });
     
     return existingDateStr === cardDateStr;

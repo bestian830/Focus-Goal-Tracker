@@ -16,7 +16,7 @@ import { zhCN } from "date-fns/locale";
 import apiService from "../../services/api";
 
 export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
-  // 增強的安全檢查，確保 goal 是有效對象
+  // enhanced security check, ensure goal is a valid object
   if (!goal || typeof goal !== "object") {
     console.error("Invalid goal object received by GoalCard:", goal);
     return (
@@ -26,7 +26,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     );
   }
 
-  // 詳細的日誌記錄，幫助調試
+  // detailed logging for debugging
   console.log("Rendering GoalCard for:", {
     id: goal._id || goal.id,
     title: goal.title,
@@ -46,7 +46,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
       : null
   );
 
-  // 當目標屬性變化時更新本地狀態
+  // when goal properties change, update local state
   useEffect(() => {
     if (goal.priority && goal.priority !== priority && hasLoaded) {
       console.log(
@@ -57,20 +57,20 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
       setHasLoaded(true);
     }
 
-    // 更新目標日期 - 增強日誌記錄以幫助調試
+    // update target date - enhanced logging for debugging
     const newDate = goal.targetDate || goal.dueDate;
     if (newDate) {
       const newDateObj = new Date(newDate);
 
-      // 檢查當前日期是否與新日期不同
+      // check if current date is different from new date
       const needsUpdate =
         !targetDate || targetDate.getTime() !== newDateObj.getTime();
 
       if (needsUpdate) {
-        console.log(`[日期] 目標屬性變化，更新日期狀態`, {
-          目標ID: goal._id || goal.id,
-          新日期: newDateObj.toISOString(),
-          舊日期: targetDate ? targetDate.toISOString() : "無",
+        console.log(`[date] goal property changed, updating date state`, {
+          goalID: goal._id || goal.id,
+          newDate: newDateObj.toISOString(),
+          oldDate: targetDate ? targetDate.toISOString() : "none",
         });
         setTargetDate(newDateObj);
       }
@@ -84,7 +84,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     targetDate,
   ]);
 
-  // 優先級映射 - 文字到顯示數字
+  // priority mapping - text to display number
   const priorityMap = {
     High: 1,
     Medium: 2,
@@ -94,44 +94,44 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
   const priorityClass = priority.toLowerCase();
   const priorityNumber = priorityMap[priority] || 2;
 
-  // 處理打開優先級編輯菜單
+  // handle opening priority edit menu
   const handleOpenMenu = (event) => {
-    event.stopPropagation(); // 防止觸發目標選擇
+    event.stopPropagation(); // prevent triggering goal selection
     setAnchorEl(event.currentTarget);
   };
 
-  // 處理關閉優先級編輯菜單
+  // handle closing priority edit menu
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
 
-  // 處理優先級更改
+  // handle priority change
   const handlePriorityChange = async (newPriority) => {
     try {
-      // 關閉菜單
+      // close menu
       handleCloseMenu();
 
-      // 如果優先級沒有變化，不做任何事情
+      // if priority didn't change, do nothing
       if (newPriority === priority) return;
 
       console.log(`Changing priority from ${priority} to ${newPriority}`);
 
-      // 確保有 goal id
+      // ensure goal id exists
       const goalId = goal._id || goal.id;
       if (!goalId) {
         console.error("Cannot update priority: missing goal ID");
         return;
       }
 
-      // 先更新本地狀態提供快速反饋
+      // update local state for quick feedback
       setPriority(newPriority);
 
-      // 通知父組件優先級已變更 (先用舊數據進行初步更新)
+      // notify parent component priority has changed (use old data for initial update)
       if (onPriorityChange) {
         onPriorityChange(goalId, newPriority);
       }
 
-      // 通過 API 更新目標優先級
+      // update goal priority via API
       try {
         const response = await apiService.goals.update(goalId, {
           priority: newPriority,
@@ -141,23 +141,23 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
           response
         );
 
-        // 如果 API 返回更新後的數據，再次通知父組件
+        // if API returns updated data, notify parent component again
         if (
           response &&
           response.data &&
           response.data.success &&
           response.data.data
         ) {
-          // 通知父組件更新後的目標數據，觸發重新渲染
+          // notify parent component updated goal data, trigger re-render
           if (onPriorityChange) {
             onPriorityChange(goalId, newPriority, response.data.data);
           }
         }
       } catch (apiError) {
         console.error("API failed to update goal priority:", apiError);
-        // 回滾本地狀態
+        // rollback local state
         setPriority(priority);
-        // 通知父組件優先級更新失敗
+        // notify parent component priority update failed
         if (onPriorityChange) {
           onPriorityChange(goalId, priority);
         }
@@ -167,7 +167,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     }
   };
 
-  // 處理日期變更 - 完全像 RewardsStep 那樣實現
+  // handle date change - fully implemented like RewardsStep
   const handleDateChange = async (newDate) => {
     if (!newDate) return;
 
@@ -177,25 +177,25 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
       return;
     }
 
-    console.log(`日期變更: ${goalId}, 從 ${targetDate} 到 ${newDate}`);
+    console.log(`date changed: ${goalId}, from ${targetDate} to ${newDate}`);
 
-    // 更新本地狀態
+    // update local state
     setTargetDate(newDate);
 
-    // 通知父組件（可選）
+    // notify parent component (optional)
     if (onDateChange) {
       onDateChange(goalId, newDate);
     }
 
-    // 直接通過 API 更新
+    // update directly via API
     try {
       const response = await apiService.goals.update(goalId, {
-        targetDate: newDate, // 直接傳遞 Date 對象
+        targetDate: newDate, // pass Date object directly
       });
 
-      console.log("日期更新成功:", response.data);
+      console.log("date updated successfully:", response.data);
 
-      // 可選：如果 API 返回更新後的數據，通知父組件
+      // optional: if API returns updated data, notify parent component
       if (
         response.data &&
         response.data.success &&
@@ -205,8 +205,8 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
         onDateChange(goalId, newDate, response.data.data);
       }
     } catch (error) {
-      console.error("日期更新失敗:", error);
-      // 回滾本地狀態（可選）
+      console.error("date update failed:", error);
+      // rollback local state (optional)
       const originalDate = goal.targetDate
         ? new Date(goal.targetDate)
         : goal.dueDate
@@ -216,7 +216,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     }
   };
 
-  // 安全獲取標題和狀態
+  // safe get goal title and status
   const goalTitle = goal.title || "Unnamed Goal";
   const goalStatus = goal.status || "active";
 
@@ -230,16 +230,16 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
         <div className="priority-container">
           <Chip
             size="small"
-            label={`優先級: ${priorityNumber} (${priority})`}
+            label={`Priority: ${priorityNumber} (${priority})`}
             className={`priority-chip priority-${priorityClass}`}
           />
 
-          <Tooltip title="編輯優先級" arrow>
+          <Tooltip title="Edit Priority" arrow>
             <IconButton
               size="small"
               className="edit-priority-btn"
               onClick={handleOpenMenu}
-              aria-label="編輯優先級"
+              aria-label="Edit Priority"
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -251,13 +251,13 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
             onClose={handleCloseMenu}
           >
             <MenuItem onClick={() => handlePriorityChange("High")}>
-              優先級: 1 (High 高)
+              Priority: 1 (High)
             </MenuItem>
             <MenuItem onClick={() => handlePriorityChange("Medium")}>
-              優先級: 2 (Medium 中)
+              Priority: 2 (Medium)
             </MenuItem>
             <MenuItem onClick={() => handlePriorityChange("Low")}>
-              優先級: 3 (Low 低)
+              Priority: 3 (Low)
             </MenuItem>
           </Menu>
         </div>
@@ -265,7 +265,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
         <div className="due-date-container">
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
-              label="目標日期"
+              label="Target Date"
               value={targetDate}
               onChange={handleDateChange}
               disablePast
@@ -274,7 +274,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
                   fullWidth: true,
                   variant: "outlined",
                   size: "small",
-                  helperText: "選擇目標完成日期",
+                  helperText: "Select target completion date",
                 },
               }}
             />

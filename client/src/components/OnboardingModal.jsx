@@ -104,14 +104,14 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       let response;
       try {
         console.log("Calling API to create goal...");
-        // 确保finalGoalData中的description被传递给API
+        // ensure description is passed to API
         if (
           !finalGoalData.description &&
           finalGoalData.title &&
           finalGoalData.motivation
         ) {
-          console.log("生成默认description，因为它缺失了");
-          finalGoalData.description = `我想要${finalGoalData.title}，因为${finalGoalData.motivation}。`;
+          console.log("Generating default description, because it's missing");
+          finalGoalData.description = `I want to ${finalGoalData.title}, because ${finalGoalData.motivation}.`;
         }
         response = await apiService.goals.createGoal(finalGoalData);
         console.log("Goal creation API response:", response);
@@ -167,7 +167,7 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       if (response.data && response.data.success) {
         console.log("Goal created successfully:", response.data);
 
-        // 確保我們有完整的目標數據
+        // ensure we have complete goal data
         const newGoal = response.data.data;
 
         if (newGoal && (newGoal._id || newGoal.id)) {
@@ -176,7 +176,7 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
             newGoal._id || newGoal.id
           );
 
-          // 新增一個延遲，確保後端處理完成
+          // add a delay to ensure backend processing is complete
           setTimeout(() => {
             // Notify parent component after successful goal creation
             onComplete(newGoal);

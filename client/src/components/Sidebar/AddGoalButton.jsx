@@ -7,7 +7,7 @@ export default function AddGoalButton({ onAddGoalClick, disabled }) {
       onClick={onAddGoalClick}
       disabled={disabled}
     >
-      添加目標
+      Add Goal
     </button>
   );
 }

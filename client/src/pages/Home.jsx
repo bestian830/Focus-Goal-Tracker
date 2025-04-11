@@ -91,7 +91,7 @@ function Home() {
         }
       } catch (apiError) {
         console.error("Failed to fetch user goals:", apiError);
-        // 如果API调用失败，也显示引导流程
+        // if API call fails, also show onboarding
         setShowOnboarding(true);
         setUserGoals([]);
         return [];
@@ -140,7 +140,7 @@ function Home() {
                 isGuest: false,
               });
 
-              // 获取用户目标
+              // get user goals
               await fetchUserGoals(userId, false);
             }
           } catch (apiError) {
@@ -156,7 +156,7 @@ function Home() {
                 isGuest: false,
               });
 
-              // 获取用户目标
+              // get user goals
               await fetchUserGoals(userId, false);
             }
           }
@@ -168,7 +168,7 @@ function Home() {
             isGuest: true,
           });
 
-          // 获取临时用户目标
+          // get temporary user goals
           await fetchUserGoals(tempId, true);
         }
       } catch (error) {
@@ -180,7 +180,7 @@ function Home() {
 
     fetchUserData();
 
-    // 設置定期刷新機制，每 30 秒從後端獲取一次最新目標數據
+    // set up a scheduled refresh mechanism, refresh every 30 seconds
     const refreshInterval = setInterval(() => {
       if (user) {
         console.log("Running scheduled refresh of goals data");
@@ -189,10 +189,10 @@ function Home() {
           console.error("Scheduled refresh failed:", err);
         });
       }
-    }, 30000); // 每 30 秒刷新一次
+    }, 30000); // refresh every 30 seconds
 
     return () => {
-      // 組件卸載時清除定時器
+      // clear timer when component unmounts
       clearInterval(refreshInterval);
     };
   }, [navigate]);
@@ -254,40 +254,40 @@ function Home() {
     setShowProfileModal(!showProfileModal);
   };
 
-  // 处理引导完成
+  // handle onboarding complete
   const handleOnboardingComplete = async (newGoal) => {
     console.log("Onboarding complete, new goal created:", newGoal);
     setShowOnboarding(false);
 
-    // 立即刷新目標列表而不是簡單地添加新目標
+    // refresh goals list immediately instead of simply adding new goal
     if (user) {
       console.log("Refreshing goals list after new goal creation");
       const userId = user.id || user._id;
       await fetchUserGoals(userId, user.isGuest);
 
-      // 選擇新創建的目標
+      // select newly created goal
       if (newGoal && (newGoal._id || newGoal.id)) {
         setSelectedGoalId(newGoal._id || newGoal.id);
       }
     } else {
       console.warn("User information not available, cannot refresh goals");
-      // 如果沒有用戶信息，至少將新目標添加到列表中
+      // if no user information, at least add new goal to list
       setUserGoals((prev) => [...prev, newGoal]);
 
-      // 選擇新創建的目標
+      // select newly created goal
       if (newGoal && (newGoal._id || newGoal.id)) {
         setSelectedGoalId(newGoal._id || newGoal.id);
       }
     }
   };
 
-  // 关闭引导模态框
+  // close onboarding modal
   const handleCloseOnboarding = () => {
     console.log("Onboarding modal closed");
     setShowOnboarding(false);
   };
 
-  // 处理从侧边栏选择目标
+  // handle goal selection from sidebar
   const handleGoalSelect = (goalId) => {
     console.log("Goal selected:", goalId);
     setSelectedGoalId(goalId);
@@ -299,20 +299,20 @@ function Home() {
     setUserGoals([]);
     setSelectedGoalId(null);
 
-    // 如果用戶沒有目標，顯示引導流程
+    // if user has no goals, show onboarding
     if (user) {
       console.log("No goals, showing onboarding modal");
       setShowOnboarding(true);
     }
   };
 
-  // 添加處理優先級變更的函數
+  // handle priority change
   const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
     console.log(
       `Home handling priority change for goal ${goalId} to ${newPriority}`
     );
 
-    // 如果有更新後的目標對象，則使用它直接更新狀態
+    // if updated goal object is received, update the whole goal
     if (updatedGoal) {
       console.log("Updated goal received from API:", updatedGoal);
 
@@ -320,14 +320,14 @@ function Home() {
         return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
           if (currentGoalId === goalId) {
-            // 保留現有屬性，但更新優先級和其他API返回的字段
+            // keep existing properties, but update priority and other fields returned by API
             return { ...goal, ...updatedGoal };
           }
           return goal;
         });
       });
     } else {
-      // 如果沒有更新後的目標對象，則僅更新優先級
+      // if no updated goal object, only update priority
       setUserGoals((prevGoals) => {
         return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
@@ -340,11 +340,11 @@ function Home() {
     }
   };
 
-  // 添加處理目標日期變更的函數
+  // handle goal date change
   const handleDateChange = (goalId, newDate, updatedGoal) => {
     console.log(`Home handling date change for goal ${goalId} to ${newDate}`);
 
-    // 如果有更新後的目標對象，則使用它直接更新狀態
+    // if updated goal object is received, update the whole goal
     if (updatedGoal) {
       console.log("Updated goal with new date received from API:", updatedGoal);
 
@@ -352,14 +352,14 @@ function Home() {
         return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
           if (currentGoalId === goalId) {
-            // 保留現有屬性，但更新目標日期和其他API返回的字段
+            // keep existing properties, but update target date and other fields returned by API
             return { ...goal, ...updatedGoal };
           }
           return goal;
         });
       });
     } else {
-      // 如果沒有更新後的目標對象，則僅更新目標日期
+      // if no updated goal object, only update target date
       setUserGoals((prevGoals) => {
         return prevGoals.map((goal) => {
           const currentGoalId = goal._id || goal.id;
@@ -378,17 +378,17 @@ function Home() {
       `Goal deleted, updating goals list. Deleted ID: ${deletedGoalId}`
     );
 
-    // 暫時移除刪除的目標（用於立即反饋）
+    // temporarily remove deleted goal (for immediate feedback)
     const updatedGoals = userGoals.filter((g) => {
       const goalId = g._id || g.id;
       return goalId !== deletedGoalId;
     });
     setUserGoals(updatedGoals);
 
-    // 檢查是否刪除了最後一個目標
+    // check if the last goal is deleted
     const isLastGoal = updatedGoals.length === 0;
 
-    // 從後端重新獲取完整的目標列表（確保與數據庫同步）
+    // refresh goals list from backend (ensure synchronization with database)
     if (user) {
       console.log("Refreshing goals list after deletion");
       const userId = user.id || user._id;
@@ -399,29 +399,29 @@ function Home() {
           goals.length
         );
 
-        // 如果沒有目標了，重置狀態
+        // if no goals, reset state
         if (goals.length === 0) {
           resetGoals();
-          return; // 不繼續執行
+          return; // do not continue
         }
       } catch (error) {
         console.error("Failed to refresh goals after deletion:", error);
 
-        // 如果API調用失敗但我們的本地狀態顯示沒有目標了，仍然重置
+        // if API call fails but our local state shows no goals, still reset
         if (isLastGoal) {
           resetGoals();
           return;
         }
       }
     } else if (isLastGoal) {
-      // 如果沒有用戶信息但是刪除了最後一個目標，也需要重置
+      // if no user information but the last goal is deleted, also reset
       resetGoals();
       return;
     }
 
-    // 如果被刪除的目標是當前選中的目標，選擇另一個目標
+    // if the deleted goal is the currently selected goal, select another goal
     if (selectedGoalId === deletedGoalId) {
-      // 立即選擇另一個目標，不需要等待
+      // immediately select another goal, no need to wait
       if (updatedGoals.length > 0) {
         console.log(
           "Selecting another goal after deletion:",
@@ -435,26 +435,26 @@ function Home() {
     }
   };
 
-  // 刷新单个目标数据
+  // refresh single goal data
   const refreshSingleGoal = async (goalId) => {
     try {
-      console.log(`刷新单个目标数据: ${goalId}`);
+      console.log(`Refreshing single goal data: ${goalId}`);
 
-      // 检查goalId是否有效
+      // check if goalId is valid
       if (!goalId) {
-        console.error("无法刷新目标数据：goalId无效");
+        console.error("Cannot refresh goal data: goalId is invalid");
         return null;
       }
 
-      // 调用API获取最新的目标数据
+      // call API to get the latest goal data
       try {
         const response = await apiService.goals.getById(goalId);
 
         if (response.data && response.data.data) {
           const updatedGoal = response.data.data;
-          console.log("获取到最新目标数据:", updatedGoal);
+          console.log("Got latest goal data:", updatedGoal);
 
-          // 更新goals数组中的目标数据
+          // update goal data in goals array
           setUserGoals((prevGoals) => {
             return prevGoals.map((goal) => {
               const currentGoalId = goal._id || goal.id;
@@ -468,19 +468,19 @@ function Home() {
           return updatedGoal;
         }
       } catch (apiError) {
-        console.error(`API调用失败，goalId: ${goalId}`, apiError);
+        console.error(`API call failed, goalId: ${goalId}`, apiError);
 
-        // 尝试从现有数据中返回
+        // try to return existing goal data
         const existingGoal = userGoals.find(
           (g) => g._id === goalId || g.id === goalId
         );
         if (existingGoal) {
-          console.log("返回现有目标数据:", existingGoal);
+          console.log("Returned existing goal data:", existingGoal);
           return existingGoal;
         }
       }
     } catch (error) {
-      console.error("刷新单个目标数据失败:", error);
+      console.error("Failed to refresh goal data:", error);
     }
 
     return null;

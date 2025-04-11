@@ -45,7 +45,7 @@ function Profile() {
     confirmPassword: '',
   });
   
-  // 檢查API連接
+  // check API connection
   useEffect(() => {
     const checkApiConnection = async () => {
       try {
@@ -66,21 +66,21 @@ function Profile() {
       setLoading(true);
       setError('');
       
-      console.log("=== 開始獲取用戶資料 ===");
-      console.log("API連接狀態:", apiConnected);
+      console.log("=== Starting to get user data ===");
+      console.log("API connection status:", apiConnected);
       
-      // 檢查 cookie 和本地存儲
+      // check cookie and local storage
       const hasCookie = document.cookie.includes('token=');
       const userId = localStorage.getItem('userId');
-      console.log("認證狀態檢查:", {
+      console.log("Authentication status check:", {
         userId: userId,
         hasCookie: hasCookie
       });
       
       // if the API connection fails, display the error message
       if (!apiConnected) {
-        console.error("API連接失敗");
-        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        console.error("API connection failed");
+        setError('Cannot connect to server. Please check your network connection or try again later.');
         setLoading(false);
         return;
       }
@@ -89,8 +89,8 @@ function Profile() {
         // check if there is a temp user ID
         const tempId = localStorage.getItem('tempId');
         if (tempId) {
-          console.log("檢測到臨時用戶ID:", tempId);
-          setError('臨時用戶不能訪問此頁面。請先註冊或登錄。');
+          console.log("Detected temporary user ID:", tempId);
+          setError('Temporary user cannot access this page. Please register or login first.');
           setLoading(false);
           setTimeout(() => navigate('/login'), 2000);
           return;
@@ -98,21 +98,21 @@ function Profile() {
         
         // get the user ID
         if (!userId) {
-          console.log("未找到用戶ID，重定向到登錄頁面");
+          console.log("No user ID found, redirecting to login page");
           navigate('/login');
           return;
         }
         
         if (!hasCookie) {
-          console.error("檢測到 userId 但未找到認證 cookie，可能需要重新登錄");
+          console.error("Detected userId but no authentication cookie, possibly need to login again");
         }
         
-        console.log("開始請求用戶資料...");
+        console.log("Starting to request user data...");
         // get the user data
         const response = await apiService.users.getProfile();
         
         if (response.data && response.data.success) {
-          console.log("成功獲取用戶資料:", response.data.data);
+          console.log("Successfully got user data:", response.data.data);
           const userData = response.data.data;
           setProfile(userData);
           setFormData({
@@ -120,27 +120,27 @@ function Profile() {
             email: userData.email,
           });
         } else {
-          console.error("API返回數據格式錯誤:", response);
-          setError('獲取用戶資料失敗：服務器返回數據格式錯誤');
+          console.error("API returned data format error:", response);
+          setError('Failed to get user data: server returned data format error');
         }
       } catch (error) {
-        console.error('獲取用戶資料失敗:', error);
+        console.error('Failed to get user data:', error);
         if (error.code === 'ERR_NETWORK') {
-          console.error("網絡錯誤詳情:", {
+          console.error("Network error details:", {
             message: error.message,
             config: error.config
           });
-          setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+          setError('Cannot connect to server. Please check your network connection or try again later.');
         } else if (error.response && error.response.status === 401) {
-          console.log("未授權訪問，重定向到登錄頁面");
-          setError('您需要登錄才能訪問個人資料頁面。');
+          console.log("Unauthorized access, redirecting to login page");
+          setError('You need to login to access the profile page.');
           setTimeout(() => navigate('/login'), 2000);
         } else if (error.response && error.response.data && error.response.data.error) {
-          console.error("API錯誤響應:", error.response.data.error);
+          console.error("API error response:", error.response.data.error);
           setError(error.response.data.error.message);
         } else {
-          console.error("未知錯誤:", error);
-          setError('獲取用戶資料失敗。請稍後再試。');
+          console.error("Unknown error:", error);
+          setError('Failed to get user data. Please try again later.');
         }
       } finally {
         setLoading(false);
@@ -177,17 +177,17 @@ function Profile() {
       
       if (response.data && response.data.success) {
         setProfile(response.data.data);
-        setSuccessMessage('個人資料更新成功！');
+        setSuccessMessage('Profile updated successfully!');
         setIsEditing(false);
       }
     } catch (error) {
       console.error('Failed to update profile:', error);
       if (error.code === 'ERR_NETWORK') {
-        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        setError('Cannot connect to server. Please check your network connection or try again later.');
       } else if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('更新資料失敗。請稍後再試。');
+        setError('Failed to update profile. Please try again later.');
       }
     }
   };
@@ -200,7 +200,7 @@ function Profile() {
     
     // validate if the new password and confirm password match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('新密碼和確認密碼不一致。');
+      setError('New password and confirm password do not match.');
       return;
     }
     
@@ -211,7 +211,7 @@ function Profile() {
       });
       
       if (response.data && response.data.success) {
-        setSuccessMessage('密碼更新成功！');
+        setSuccessMessage('Password updated successfully!');
         setIsChangingPassword(false);
         setPasswordData({
           currentPassword: '',
@@ -222,11 +222,11 @@ function Profile() {
     } catch (error) {
       console.error('Failed to update password:', error);
       if (error.code === 'ERR_NETWORK') {
-        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        setError('Cannot connect to server. Please check your network connection or try again later.');
       } else if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('更新密碼失敗。請稍後再試。');
+        setError('Failed to update password. Please try again later.');
       }
     }
   };
@@ -243,7 +243,7 @@ function Profile() {
         // remove the user ID from the local storage
         localStorage.removeItem('userId');
         
-        setSuccessMessage('您的帳戶已成功刪除。正在重定向到首頁...');
+        setSuccessMessage('Your account has been deleted successfully. Redirecting to home page...');
         
         // delay redirecting, so the user can read the success message
         setTimeout(() => {
@@ -253,11 +253,11 @@ function Profile() {
     } catch (error) {
       console.error('Failed to delete account:', error);
       if (error.code === 'ERR_NETWORK') {
-        setError('無法連接到服務器。請檢查您的網絡連接或稍後再試。');
+        setError('Cannot connect to server. Please check your network connection or try again later.');
       } else if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError('刪除帳戶失敗。請稍後再試。');
+        setError('Failed to delete account. Please try again later.');
       }
       setShowDeleteConfirm(false);
     }
@@ -270,16 +270,16 @@ function Profile() {
   
   // loading state
   if (loading) {
-    return <div className="profile-container"><p>載入中...</p></div>;
+    return <div className="profile-container"><p>Loading...</p></div>;
   }
   
-  // 顯示API連接錯誤
+  // display API connection error
   if (!apiConnected) {
     return (
       <div className="profile-container">
-        <h2>連接錯誤</h2>
-        <p className="error-message">無法連接到服務器。請檢查您的網絡連接或稍後再試。</p>
-        <button onClick={handleRetry} className="btn">重試</button>
+        <h2>Connection error</h2>
+        <p className="error-message">Cannot connect to server. Please check your network connection or try again later.</p>
+        <button onClick={handleRetry} className="btn">Retry</button>
       </div>
     );
   }
@@ -289,7 +289,7 @@ function Profile() {
     return (
       <div className="profile-container">
         <p className="error-message">{error}</p>
-        <button onClick={() => navigate('/')} className="btn">返回首頁</button>
+        <button onClick={() => navigate('/')} className="btn">Back to Home</button>
       </div>
     );
   }
@@ -318,7 +318,7 @@ function Profile() {
                 <span className="info-value">{new Date(profile.createdAt).toLocaleDateString()}</span>
               </div>
               <div className="info-row">
-                <span className="info-label">最後登錄：</span>
+                <span className="info-label">Last Login：</span>
                 <span className="info-value">{profile.lastLogin ? new Date(profile.lastLogin).toLocaleDateString() : '無記錄'}</span>
               </div>
               

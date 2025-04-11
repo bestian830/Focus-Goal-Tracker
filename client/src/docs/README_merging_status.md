@@ -1,73 +1,73 @@
-# Focus Goal Tracker - 合并状态说明
+# Focus Goal Tracker - Merge Status Description
 
-## 已完成的合并工作
+## Completed Merge Work
 
-### 1. 文件合并
-- ✅ `Home.jsx`：保留原有认证逻辑，整合搭档的组件结构
-- ✅ `App.jsx`：整合两个版本的路由配置
-- ✅ 样式文件：创建了`ComponentStyles.css`整合搭档组件样式
-- ✅ `Header.jsx`：将`Home.jsx`中的header部分提取为可重用组件
-- ✅ `main.jsx`：解决合并冲突，移除重复的样式导入
+### 1. File Merging
+- ✅ `Home.jsx`: Retained original authentication logic, integrated partner's component structure
+- ✅ `App.jsx`: Integrated route configurations from both versions
+- ✅ Style files: Created `ComponentStyles.css` to integrate partner's component styles
+- ✅ `Header.jsx`: Extracted the header portion from `Home.jsx` as a reusable component
+- ✅ `main.jsx`: Resolved merge conflicts, removed duplicate style imports
 
-### 2. 样式处理
-- ✅ 创建新的`styles/ComponentStyles.css`文件，替代原来的`style/style.css`
-- ✅ 保留原有的`Home.css`用于主页布局和header样式
-- ✅ 保留`App.css`用于全局样式
-- ✅ 删除`style/style.css`，其内容已迁移到`styles/ComponentStyles.css`
-- ✅ 删除不必要的`index.css`，因为它与`App.css`功能重复
+### 2. Style Processing
+- ✅ Created new `styles/ComponentStyles.css` file, replacing the original `style/style.css`
+- ✅ Retained original `Home.css` for main page layout and header styles
+- ✅ Retained `App.css` for global styles
+- ✅ Deleted `style/style.css`, its content has been migrated to `styles/ComponentStyles.css`
+- ✅ Deleted unnecessary `index.css`, as it duplicated the functionality of `App.css`
 
-### 3. 功能修复
-- ✅ 修复登出功能401 Unauthorized错误问题
-  - 改进了`Home.jsx`中的`handleLogout`函数，优化了错误处理
-  - 确保即使API调用失败，本地状态也能正确清理
-  - 确保在所有情况下都能正确导航到登录页面
-  - 为临时用户和注册用户提供更健壮的登出流程
+### 3. Functionality Fixes
+- ✅ Fixed logout functionality 401 Unauthorized error issue
+  - Improved the `handleLogout` function in `Home.jsx`, enhancing error handling
+  - Ensured correct local state cleanup even when API calls fail
+  - Ensured correct navigation to the login page in all situations
+  - Provided more robust logout processes for both temporary users and registered users
 
-### 4. UI优化
-- ✅ 改进卡片设计，增加圆角和阴影效果
-- ✅ 优化任务列表展示，改进复选框和文本样式
-- ✅ 调整进度时间轴样式，使其更符合现代UI设计
-- ✅ 增强组件间距和内边距，提高整体可读性
-- ✅ 添加鼠标悬停效果和过渡动画，增强用户体验
-- ✅ 调整字体大小和颜色，提高对比度和可读性
+### 4. UI Optimization
+- ✅ Improved card design, adding rounded corners and shadow effects
+- ✅ Optimized task list display, improved checkbox and text styles
+- ✅ Adjusted progress timeline styles to better align with modern UI design
+- ✅ Enhanced component spacing and padding, improving overall readability
+- ✅ Added hover effects and transition animations, enhancing user experience
+- ✅ Adjusted font sizes and colors, improving contrast and readability
 
-## 下一步工作
+## Next Steps
 
-### 1. 测试工作
-- ✅ 测试登出功能修复是否有效
-- 测试合并后的主页功能是否正常
-- 检查用户认证流程（登录、登出、访客访问）
-- 验证Profile功能是否正常工作
-- 测试响应式设计在不同设备上的表现
-- 确认Header组件是否正常工作并能正确接收props
-- 确认样式正常加载，没有因为删除样式文件而出现问题
-- 检查新的UI优化在各种屏幕尺寸上的表现
+### 1. Testing Work
+- ✅ Test if the logout function fix is effective
+- Test if the merged main page functionality works properly
+- Check user authentication flow (login, logout, guest access)
+- Verify if Profile functionality works correctly
+- Test responsive design performance on different devices
+- Confirm that the Header component works correctly and can receive props properly
+- Confirm that styles load correctly, with no issues caused by deleted style files
+- Check the performance of new UI optimizations on various screen sizes
 
-### 2. 样式优化
-- 可能需要进一步微调`ComponentStyles.css`中的样式以更好地适配您的设计
-- 检查并解决可能的样式冲突
-- 优化移动端显示效果
-- 考虑为应用添加更多品牌色彩和主题一致性
+### 2. Style Optimization
+- May need to further fine-tune styles in `ComponentStyles.css` to better fit your design
+- Check and resolve potential style conflicts
+- Optimize mobile display effects
+- Consider adding more brand colors and theme consistency to the application
 
-### 3. 建议的文件夹结构调整
+### 3. Suggested Folder Structure Adjustments
 ```
 focus-app/client/src/
-├── components/         # 可重用组件
-│   ├── Header/         # 新的Header组件目录
+├── components/         # Reusable components
+│   ├── Header/         # New Header component directory
 │   ├── Sidebar/
 │   ├── GoalDetails/
 │   ├── ProgressReport/
 │   └── ProfileModal.jsx
-├── pages/              # 完整页面
+├── pages/              # Complete pages
 │   ├── Home.jsx
 │   ├── Login.jsx
 │   ├── Register.jsx
 │   ├── GuestLogin.jsx
 │   └── Profile.jsx
-└── styles/             # 所有样式文件
-    ├── App.css         # 全局样式
-    ├── Home.css        # 主页样式
-    ├── ComponentStyles.css  # 组件样式（替代原style.css）
+└── styles/             # All style files
+    ├── App.css         # Global styles
+    ├── Home.css        # Home page styles
+    ├── ComponentStyles.css  # Component styles (replacing original style.css)
     ├── Login.css
     ├── Register.css
     ├── GuestLogin.css
@@ -75,13 +75,13 @@ focus-app/client/src/
     └── ProfileModal.css
 ```
 
-### 4. 注意事项
-- 确保组件之间的props传递正确，特别是新提取的Header组件
-- 检查`Sidebar`、`GoalDetails`和`ProgressReport`组件中可能存在的硬编码路径，以确保它们正确引用样式文件
-- 所有组件都应该使用`styles/ComponentStyles.css`中的样式，不再使用已删除的样式文件
-- 登出功能已经增强，可以更好地处理网络错误和会话失效的情况
-- 新的UI样式已经优化，但可能需要根据用户反馈进一步调整
+### 4. Notes
+- Ensure correct props passing between components, especially for the newly extracted Header component
+- Check for potential hardcoded paths in the `Sidebar`, `GoalDetails`, and `ProgressReport` components to ensure they correctly reference style files
+- All components should use styles from `styles/ComponentStyles.css`, no longer using deleted style files
+- The logout function has been enhanced to better handle network errors and session expiration situations
+- New UI styles have been optimized, but may need further adjustment based on user feedback
 
-## 总结
+## Summary
 
-本次合并工作保留了您原有的用户认证和交互逻辑，同时整合了搭档的组件化结构。优化了样式文件组织，删除了重复的样式文件，提高了代码的可维护性和避免样式冲突，为后续开发提供了清晰的结构。此外，修复了登出功能的错误处理，确保用户能够在各种情况下都能顺利登出并导航到登录页面。最后，通过UI优化提升了应用的视觉吸引力和用户体验，使整个应用更加现代化和专业。 
+This merge work preserved your original user authentication and interaction logic while integrating your partner's component structure. It optimized style file organization, deleted duplicate style files, improved code maintainability and avoided style conflicts, providing a clear structure for subsequent development. Additionally, it fixed error handling in the logout function, ensuring users can successfully log out and navigate to the login page in various situations. Finally, UI optimization improved the application's visual appeal and user experience, making the entire application more modern and professional. 

@@ -2,11 +2,11 @@ import React from 'react';
 import { Card, CardContent, Checkbox, Typography, Chip } from '@mui/material';
 
 /**
- * TaskCard 組件 - 顯示單個任務
+ * TaskCard - display a single task
  * 
  * @param {Object} props
- * @param {Object} props.task - 任務對象
- * @param {Function} props.onTaskStatusChange - 任務狀態變更回調
+ * @param {Object} props.task - task object
+ * @param {Function} props.onTaskStatusChange - task status change callback
  * @returns {JSX.Element}
  */
 function TaskCard({ task, onTaskStatusChange }) {
@@ -18,7 +18,7 @@ function TaskCard({ task, onTaskStatusChange }) {
     }
   };
 
-  // 處理任務狀態標籤的顏色
+  // handle task status color
   const getStatusColor = (status) => {
     switch(status) {
       case 'completed': return 'success';

@@ -28,12 +28,12 @@ export default function Sidebar({
   const isAddGoalDisabled = hasTempUserGoal || hasMaxRegularUserGoals;
 
   useEffect(() => {
-    // 每次 goals 變化時都輸出詳細日誌
+    // every time goals change, output detailed logs
     console.log("Goals prop changed in Sidebar:", goals);
     console.log("Current goals count:", goals?.length || 0);
     console.log("Active goal ID:", activeGoalId);
 
-    // 通過深度比較檢查 goals 是否真的變化了
+    // check if goals really changed by deep comparison
     const goalsString = JSON.stringify(goals);
     console.log("Goals data hash:", goalsString.length);
 
@@ -50,7 +50,7 @@ export default function Sidebar({
         );
 
         try {
-          // 確保深度拷貝，防止意外修改原始數據
+          // ensure deep copy, prevent accidental modification of original data
           const goalsCopy = JSON.parse(JSON.stringify(goals));
           const sorted = sortGoals(goalsCopy);
           console.log(
@@ -59,7 +59,7 @@ export default function Sidebar({
           );
           setSortedGoals(sorted);
 
-          // 如果有目標且未選擇目標，則自動選擇第一個
+          // if there are goals and no active goal, automatically select the first one
           if (sorted.length > 0 && onGoalSelect && !activeGoalId) {
             const firstGoalId = sorted[0]._id || sorted[0].id;
             console.log("Auto-selecting first goal:", firstGoalId);
@@ -67,12 +67,12 @@ export default function Sidebar({
           }
         } catch (error) {
           console.error("Error processing goals:", error);
-          // 嘗試以更簡單的方式處理
+          // try to handle simpler
           setSortedGoals([...goals]);
           console.log("Falling back to unprocessed goals");
         }
       } else {
-        // 清空目標列表
+        // clear goal list
         console.log(
           "No goals available to display, clearing sorted goals list"
         );
@@ -95,22 +95,22 @@ export default function Sidebar({
     try {
       const priorityMap = { High: 1, Medium: 2, Low: 3 };
       return [...goalList].sort((a, b) => {
-        // 確保目標對象有效
+        // ensure goal objects are valid
         if (!a || !b) {
           console.error("Invalid goal objects in sort function:", { a, b });
           return 0;
         }
 
-        // 先按優先級排序
+        // sort by priority first
         const aPriority = a.priority || "Medium";
         const bPriority = b.priority || "Medium";
 
-        // 按數值排序
+        // sort by priority
         if (priorityMap[aPriority] !== priorityMap[bPriority]) {
           return priorityMap[aPriority] - priorityMap[bPriority];
         }
 
-        // 再按目標日期排序
+        // sort by target date
         const aDate = a.targetDate || a.dueDate || new Date();
         const bDate = b.targetDate || b.dueDate || new Date();
 
@@ -118,7 +118,7 @@ export default function Sidebar({
       });
     } catch (error) {
       console.error("Error sorting goals:", error);
-      return goalList; // 出錯時返回原始列表
+      return goalList; // return original list if error
     }
   };
 
@@ -150,18 +150,18 @@ export default function Sidebar({
   const handleGoalComplete = (newGoal) => {
     console.log("New goal created in Sidebar:", newGoal);
 
-    // 關閉模態框
+    // close modal
     setShowGoalModal(false);
 
-    // 添加新目標到本地列表並重新排序
-    // 注意: Home 組件也會刷新目標列表，這只是一個快速更新
+    // add new goal to local list and re-sort
+    // note: Home component will also refresh goal list, this is a quick update
     if (newGoal && (newGoal._id || newGoal.id)) {
       const updatedGoals = [...sortedGoals, newGoal];
       const newSorted = sortGoals(updatedGoals);
       console.log("Updated goal list with new goal:", newGoal.title);
       setSortedGoals(newSorted);
 
-      // 選擇新創建的目標
+      // select newly created goal
       if (onGoalSelect) {
         console.log("Selecting newly created goal:", newGoal._id || newGoal.id);
         onGoalSelect(newGoal._id || newGoal.id);
@@ -219,14 +219,14 @@ export default function Sidebar({
       `Sidebar handling priority change for goal ${goalId} to ${newPriority}`
     );
 
-    // 優先使用父組件提供的 onPriorityChange 函數
+    // use parent component's onPriorityChange function first
     if (onPriorityChange) {
       onPriorityChange(goalId, newPriority, updatedGoal);
     }
 
-    // 僅在沒有獲得更新的目標數據時進行本地排序
+    // only sort locally if no updated goal data is received
     if (!updatedGoal) {
-      // 本地優先級更新，保持排序一致性
+      // local priority update, maintain consistency
       const updatedGoals = sortedGoals.map((goal) => {
         if (
           (goal._id && goal._id === goalId) ||
@@ -237,7 +237,7 @@ export default function Sidebar({
         return goal;
       });
 
-      // 重新排序目標
+      // re-sort goals
       const newSorted = sortGoals(updatedGoals);
       setSortedGoals(newSorted);
     }
@@ -250,7 +250,7 @@ export default function Sidebar({
       <div className="goal-list">
         {sortedGoals.length > 0 ? (
           sortedGoals.map((goal) => {
-            // 獲取目標 ID
+            // get goal ID
             const goalId = goal._id || goal.id;
             if (!goalId) {
               console.error("Goal is missing ID:", goal);
@@ -273,19 +273,19 @@ export default function Sidebar({
                   onPriorityChange={handlePriorityChange}
                   onDateChange={(goalId, newDate, updatedGoal) => {
                     console.log(
-                      `[重要] GoalCard 日期變更: ${goalId} -> ${newDate}`
+                      `[important] GoalCard date changed: ${goalId} -> ${newDate}`
                     );
 
-                    // 如果已經收到更新後的目標對象，直接更新整個目標
+                    // if updated goal object is received, update the whole goal
                     if (updatedGoal) {
-                      console.log(`使用完整數據更新目標`);
+                      console.log(`using full data to update goal`);
 
-                      // 通知父組件
+                      // notify parent component
                       if (onDateChange) {
                         onDateChange(goalId, newDate, updatedGoal);
                       }
 
-                      // 本地更新
+                      // local update
                       const updatedGoals = sortedGoals.map((g) => {
                         if (g._id === goalId || g.id === goalId) {
                           return { ...g, ...updatedGoal };
@@ -295,15 +295,15 @@ export default function Sidebar({
                       const newSorted = sortGoals(updatedGoals);
                       setSortedGoals(newSorted);
                     } else {
-                      // 只更新日期
-                      console.log(`僅更新目標日期`);
+                      // only update date
+                      console.log(`only update goal date`);
 
-                      // 通知父組件
+                      // notify parent component
                       if (onDateChange) {
                         onDateChange(goalId, newDate);
                       }
 
-                      // 本地更新
+                      // local update
                       const updatedGoals = sortedGoals.map((g) => {
                         if (g._id === goalId || g.id === goalId) {
                           return { ...g, targetDate: newDate };
