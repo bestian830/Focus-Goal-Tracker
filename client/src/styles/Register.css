@@ -8,15 +8,17 @@
   min-height: 100vh;
   padding: 2rem;
   background-color: #f5f7fa;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-h1 {
+.register-container h1 {
   font-size: 2.5rem;
   color: #333;
   margin-bottom: 0.5rem;
 }
 
-.subtitle {
+.register-container .subtitle {
   font-size: 1.1rem;
   color: #666;
   margin-bottom: 2rem;
@@ -32,26 +34,27 @@ h1 {
   margin-bottom: 2rem;
 }
 
-.form-group {
+.register-container .form-group {
   margin-bottom: 1.5rem;
 }
 
-label {
+.register-container label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
   color: #333;
 }
 
-input {
+.register-container input {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
-input:focus {
+.register-container input:focus {
   outline: none;
   border-color: #4a6fa5;
   box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
@@ -78,7 +81,7 @@ input:focus {
   cursor: not-allowed;
 }
 
-.error-message {
+.register-container .error-message {
   width: 100%;
   max-width: 400px;
   margin-bottom: 1rem;

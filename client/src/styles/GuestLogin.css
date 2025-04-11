@@ -12,15 +12,17 @@
   padding: 2rem;
   background-color: #f5f7fa;
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-h1 {
+.guest-login-container h1 {
   font-size: 2.5rem;
   color: #333;
   margin-bottom: 0.5rem;
 }
 
-.subtitle {
+.guest-login-container .subtitle {
   font-size: 1.1rem;
   color: #666;
   margin-bottom: 2rem;
@@ -47,18 +49,18 @@ h1 {
   cursor: not-allowed;
 }
 
-.login-options {
+.guest-login-container .login-options {
   margin-top: 1rem;
 }
 
-.or-divider {
+.guest-login-container .or-divider {
   margin: 1rem 0;
   color: #666;
   position: relative;
 }
 
-.or-divider::before,
-.or-divider::after {
+.guest-login-container .or-divider::before,
+.guest-login-container .or-divider::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -67,17 +69,17 @@ h1 {
   background-color: #ddd;
 }
 
-.or-divider::before {
+.guest-login-container .or-divider::before {
   right: 100%;
   margin-right: 15px;
 }
 
-.or-divider::after {
+.guest-login-container .or-divider::after {
   left: 100%;
   margin-left: 15px;
 }
 
-.auth-links {
+.guest-login-container .auth-links {
   margin-top: 1rem;
 }
 
@@ -99,7 +101,7 @@ h1 {
 }
 
 /* Error message styles */
-.error-message {
+.guest-login-container .error-message {
   width: 100%;
   max-width: 400px;
   margin-bottom: 1rem;
