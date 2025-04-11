@@ -122,17 +122,24 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
           setIsEditing(false);
         }
         
-        // Get data from the goal object for edit mode
+        // Try to extract variables from declaration content if it exists
+        let extractedVariables = {};
+        if (goal.declaration?.content) {
+          extractedVariables = extractVariablesFromDeclaration(goal.declaration.content);
+          console.log("Extracted variables from declaration:", extractedVariables);
+        }
+        
+        // Get data from the goal object for edit mode, with fallbacks to extracted variables
         setEditedData({
-          title: goal.title || '',
-          motivation: goal.details?.motivation || '',
-          resources: goal.details?.resources || '',
-          nextStep: goal.details?.nextStep || '',
-          dailyTask: goal.currentSettings?.dailyTask || '',
-          dailyReward: goal.currentSettings?.dailyReward || '',
-          ultimateReward: goal.details?.ultimateReward || '',
+          title: goal.title || extractedVariables.title || '',
+          motivation: goal.details?.motivation || extractedVariables.motivation || '',
+          resources: goal.details?.resources || extractedVariables.resources || '',
+          nextStep: goal.details?.nextStep || extractedVariables.nextStep || '',
+          dailyTask: goal.currentSettings?.dailyTask || extractedVariables.dailyTask || '',
+          dailyReward: goal.currentSettings?.dailyReward || extractedVariables.dailyReward || '',
+          ultimateReward: goal.details?.ultimateReward || extractedVariables.ultimateReward || '',
           targetDate: goal.targetDate ? new Date(goal.targetDate) : new Date(),
-          visionImage: goal.details?.visionImage || null
+          visionImage: goal.details?.visionImage || goal.visionImageUrl || null
         });
       }
     } catch (error) {
@@ -151,6 +158,45 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
       });
     }
   }, [goal, isOpen]);
+  
+  // Extract variables from declaration content
+  const extractVariablesFromDeclaration = (content) => {
+    if (!content || typeof content !== 'string') {
+      return {};
+    }
+    
+    try {
+      const variables = {};
+      
+      // Extract title (usually the first line)
+      const lines = content.split('\n');
+      if (lines.length > 0 && lines[0].trim()) {
+        variables.title = lines[0].trim();
+      }
+      
+      // Extract other variables using regex patterns
+      const patterns = [
+        { name: 'motivation', regex: /stepping onto this path because (.*?)(?:\.|\n)/s, group: 1 },
+        { name: 'resources', regex: /I (?:already )?hold (.*?) in my hands/s, group: 1 },
+        { name: 'nextStep', regex: /Next, I'll (.*?)(?:,|\n)/s, group: 1 },
+        { name: 'dailyTask', regex: /I commit to (.*?) each day/s, group: 1 },
+        { name: 'dailyReward', regex: /something small and meaningful: (.*?)(?:\.|\n)/s, group: 1 },
+        { name: 'ultimateReward', regex: /treating myself to (.*?)(?:,|\n)/s, group: 1 }
+      ];
+      
+      patterns.forEach(pattern => {
+        const match = content.match(pattern.regex);
+        if (match && match[pattern.group]) {
+          variables[pattern.name] = match[pattern.group].trim();
+        }
+      });
+      
+      return variables;
+    } catch (error) {
+      console.error("Failed to extract variables from declaration:", error);
+      return {};
+    }
+  };
   
   // Handle field updates
   const handleFieldChange = (field, value) => {
