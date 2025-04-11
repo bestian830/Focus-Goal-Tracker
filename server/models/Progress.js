@@ -89,7 +89,7 @@ const ProgressSchema = new mongoose.Schema(
   }
 );
 
-// 注释掉这个索引，避免在 goals 集合中创建相同的索引
+// Comment out this index to avoid creating the same index in the goals collection
 // ProgressSchema.index({ userId: 1, goalId: 1, date: 1 }, { unique: true });
 
 // Create and export the Progress model

@@ -21,19 +21,19 @@ cloudinary.config({
  */
 router.get('/signature', requireAuth, (req, res) => {
   try {
-    // 獲取用戶ID (支持正式用戶和臨時用戶)
+    // get user ID (support registered and temp users)
     const userId = req.user?.id || req.user?.tempId || 'unknown';
-    // 設置上傳文件夾，按用戶ID分類
+    // set upload folder, categorized by user ID
     const folder = `focus_vision_images/${userId}`;
-    // 生成時間戳
+    // generate timestamp
     const timestamp = Math.round(new Date().getTime() / 1000);
 
-    // 生成上傳簽名，並設置限制
+    // generate upload signature, and set limits
     const signature = cloudinary.utils.api_sign_request({
       timestamp,
       folder,
       allowed_formats: 'jpg,jpeg,png,gif,webp',
-      max_file_size: 1000000 // 限制為1MB
+      max_file_size: 1000000 // limit to 1MB
     }, process.env.CLOUDINARY_API_SECRET);
 
     console.log('生成簽名成功:', {
@@ -43,7 +43,7 @@ router.get('/signature', requireAuth, (req, res) => {
       cloudName: process.env.CLOUDINARY_CLOUD_NAME
     });
 
-    // 返回簽名和其他需要的參數
+    // return signature and other required parameters
     res.json({
       signature,
       timestamp,

@@ -23,9 +23,9 @@ import mongoose from "mongoose";
 const GoalSchema = new mongoose.Schema(
   {
     userId: {
-      type: String,  // 使用String类型存储用户ID (ObjectId或tempId)
+      type: String,  // Use String type to store user ID (ObjectId or tempId)
       required: true,
-      index: true  // 普通非唯一索引
+      index: true  // Normal non-unique index
     },
     title: {
       type: String,
@@ -60,15 +60,15 @@ const GoalSchema = new mongoose.Schema(
       default: null,
     },
     resources: {
-      type: [String], // 改为字符串数组
+      type: [String], // Change to string array
       default: [],
     },
     dailyTasks: {
-      type: [String], // 改为字符串数组
+      type: [String], // Change to string array
       default: [],
     },
     rewards: {
-      type: [String], // 改为字符串数组
+      type: [String], // Change to string array
       default: [],
     },
     dailyCards: [

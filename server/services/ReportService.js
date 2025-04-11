@@ -3,18 +3,18 @@ import Progress from '../models/Progress.js';
 import Goal from '../models/Goal.js';
 import Report from '../models/Report.js';
 import NodeCache from 'node-cache';
-const cache = new NodeCache({ stdTTL: 3600 }); // 缓存1小时
+const cache = new NodeCache({ stdTTL: 3600 }); // cache 1 hour
 
 class ReportService {
   static async generateReport(goalId, userId, timeRange = 'daily') {
     try {
-      // 1. 获取目标信息
+      // 1. get goal information
       const goal = await Goal.findById(goalId);
       if (!goal) {
-        throw new Error('目标不存在');
+        throw new Error('goal does not exist');
       }
 
-      // 2. 获取进度记录
+      // 2. get progress records
       const progress = await Progress.find({
         goalId,
         date: {
@@ -23,7 +23,7 @@ class ReportService {
         }
       }).sort({ date: -1 });
 
-      // 3. 分析数据
+      // 3. analyze data
       const analysis = {
         totalRecords: progress.length,
         completedTasks: progress.filter(p => p.completed).length,
@@ -32,13 +32,13 @@ class ReportService {
         lastUpdate: progress.length > 0 ? progress[0].date : new Date()
       };
 
-      // 4. 准备提示词
+      // 4. prepare prompt
       const prompt = this._preparePrompt(goal, progress, analysis);
       
-      // 5. 生成AI分析
+      // 5. generate AI analysis
       const aiAnalysis = await this._generateAIAnalysis(prompt);
 
-      // 6. 创建报告
+      // 6. create report
       const report = new Report({
         goalId,
         userId,
@@ -55,7 +55,7 @@ class ReportService {
       await report.save();
       return report;
     } catch (error) {
-      console.error('生成报告失败:', error);
+      console.error('generate report failed:', error);
       throw error;
     }
   }
@@ -65,7 +65,7 @@ class ReportService {
       return await Report.findOne({ goalId, userId })
         .sort({ createdAt: -1 });
     } catch (error) {
-      console.error('获取最新报告失败:', error);
+      console.error('get latest report failed:', error);
       throw error;
     }
   }
@@ -75,7 +75,7 @@ class ReportService {
       const hf = new HfInference(process.env.HUGGING_FACE_API_KEY);
       
       const result = await hf.textGeneration({
-        model: 'gpt2', // 或其他适合的模型
+        model: 'gpt2', // or other suitable models
         inputs: prompt,
         parameters: {
           max_new_tokens: 500,
@@ -87,35 +87,35 @@ class ReportService {
 
       return result.generated_text;
     } catch (error) {
-      console.error('AI 分析生成失败:', error);
-      throw new Error('AI分析生成失败，请稍后重试');
+      console.error('AI analysis generation failed:', error);
+      throw new Error('AI analysis generation failed, please try again later');
     }
   }
 
   static _preparePrompt(goal, progress, analysis) {
     return `
-作为一个专业的目标分析助手，请根据以下信息生成一份详细的分析报告：
+As a professional goal analysis assistant, please generate a detailed analysis report based on the following information:
 
-目标信息：
-标题：${goal.title}
-当前任务：${goal.currentSettings?.dailyTask || '无'}
-优先级：${goal.priority || '未设置'}
+Goal Information:
+Title: ${goal.title}
+Current Task: ${goal.currentSettings?.dailyTask || 'None'}
+Priority: ${goal.priority || 'Not set'}
 
-今日进度数据：
-- 总记录数：${analysis.totalRecords}
-- 已完成任务：${analysis.completedTasks}
-- 完成率：${analysis.completionRate.toFixed(1)}%
+Today's Progress Data:
+- Total Records: ${analysis.totalRecords}
+- Completed Tasks: ${analysis.completedTasks}
+- Completion Rate: ${analysis.completionRate.toFixed(1)}%
 
-详细记录：
-${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || '无内容'}`).join('\n')}
+Detailed Records:
+${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || 'No content'}`).join('\n')}
 
-请从以下几个方面进行分析：
-1. 进度评估：分析当前进度情况，包括完成度和效率
-2. 模式识别：分析用户的工作/学习模式，找出规律
-3. 改进建议：根据分析提出具体的改进建议
-4. 激励反馈：给出积极的反馈和鼓励
+Please analyze from the following aspects:
+1. Progress Assessment: Analyze the current progress, including completion rate and efficiency
+2. Pattern Recognition: Analyze the user's work/study pattern, find the规律
+3. Improvement Suggestions: Based on the analysis, propose specific improvement suggestions
+4. Encouraging Feedback: Give positive feedback and encouragement
 
-请用中文回复，语气要积极正面，建议要具体可行。
+Please reply in English, with a positive and encouraging tone, and specific suggestions that are easy to follow.
     `.trim();
   }
 
@@ -123,17 +123,17 @@ ${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || 
     const suggestions = [];
 
     if (analysis.totalRecords === 0) {
-      suggestions.push('• 今天还没有任何进度记录，建议及时记录您的进展。');
+      suggestions.push('• Today there is no progress record, please record your progress及时记录您的进展。');
     } else if (analysis.completionRate < 50) {
-      suggestions.push('• 当前完成率较低，建议制定更具体的行动计划。');
-      suggestions.push('• 考虑将任务拆分成更小的步骤，逐步完成。');
+      suggestions.push('• The current completion rate is low, please make a more specific action plan.');
+      suggestions.push('• Consider breaking the task into smaller steps and completing it step by step.');
     } else if (analysis.completionRate >= 80) {
-      suggestions.push('• 完成情况良好，继续保持这样的节奏！');
-      suggestions.push('• 可以考虑适当提高目标难度，挑战自己。');
+      suggestions.push('• The completion rate is good, please continue to maintain this pace!');
+      suggestions.push('• Consider increasing the difficulty of the goal to challenge yourself.');
     }
 
     if (goal.currentSettings?.dailyTask) {
-      suggestions.push(`• 今日任务「${goal.currentSettings.dailyTask}」正在进行中。`);
+      suggestions.push(`• The current task「${goal.currentSettings.dailyTask}」is ongoing.`);
     }
 
     return suggestions.join('\n');
@@ -143,15 +143,15 @@ ${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || 
     const plans = [];
     
     if (goal.currentSettings?.dailyTask) {
-      plans.push(`1. 完成今日任务：${goal.currentSettings.dailyTask}`);
+      plans.push(`1. Complete the today's task: ${goal.currentSettings.dailyTask}`);
     }
 
     if (analysis.completionRate < 50) {
-      plans.push('2. 回顾未完成的任务，找出困难点');
-      plans.push('3. 适当调整任务难度或寻求帮助');
+      plans.push('2. Review the incomplete tasks, find the difficulties');
+      plans.push('3. Adjust the difficulty of the task or seek help');
     } else {
-      plans.push('2. 记录今日经验和心得');
-      plans.push('3. 规划明日任务重点');
+      plans.push('2. Record today\'s experience and心得');
+      plans.push('3. Plan the重点 for tomorrow\'s task');
     }
 
     return plans.join('\n');
@@ -161,8 +161,8 @@ ${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || 
     const insights = [];
     
     if (analysis.totalRecords > 0) {
-      insights.push(`今日任务参与度：${analysis.completionRate.toFixed(1)}%`);
-      insights.push(`完成任务数量：${analysis.completedTasks}/${analysis.totalRecords}`);
+      insights.push(`Today's task participation rate: ${analysis.completionRate.toFixed(1)}%`);
+      insights.push(`Completed tasks: ${analysis.completedTasks}/${analysis.totalRecords}`);
     }
     
     return insights;
@@ -172,11 +172,11 @@ ${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || 
     const recommendations = [];
     
     if (analysis.completionRate < 50) {
-      recommendations.push('建议增加任务执行频率');
-      recommendations.push('考虑调整任务难度');
+      recommendations.push('Suggest increasing the frequency of task execution');
+      recommendations.push('Consider adjusting the difficulty of the task');
     } else if (analysis.completionRate >= 80) {
-      recommendations.push('可以尝试提高任务难度');
-      recommendations.push('分享成功经验给其他用户');
+      recommendations.push('Try to increase the difficulty of the task');
+      recommendations.push('Share successful experiences with other users');
     }
     
     return recommendations;

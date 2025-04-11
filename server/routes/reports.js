@@ -10,16 +10,16 @@ const router = express.Router();
 
 // 测试路由 - 不需要身份验证
 router.get('/test', (req, res) => {
-  console.log('测试路由被调用');
-  res.json({ success: true, message: '报告API测试成功' });
+  console.log('test route called');
+  res.json({ success: true, message: 'report API test success' });
 });
 
 // 鉴权测试路由
 router.get('/auth-test', requireAuth, (req, res) => {
-  console.log('鉴权测试路由被调用，用户ID:', req.user.id);
+  console.log('auth test route called, user ID:', req.user.id);
   res.json({ 
     success: true, 
-    message: '鉴权成功',
+    message: 'auth success',
     user: {
       id: req.user.id,
       userType: req.user.userType
@@ -53,13 +53,13 @@ router.post(
   generateReport
 );
 
-// 获取最新报告
+// get latest report
 router.get('/:goalId/latest', requireAuth, async (req, res) => {
   try {
     const { goalId } = req.params;
     const userId = req.user.id;
 
-    console.log('获取最新报告被调用:', {
+    console.log('get latest report called:', {
       goalId,
       userId
     });
@@ -70,11 +70,11 @@ router.get('/:goalId/latest', requireAuth, async (req, res) => {
       data: {
         goalId,
         userId,
-        message: '这是一个测试响应，没有实际获取报告'
+        message: 'this is a test response, no actual report is retrieved'
       }
     });
   } catch (error) {
-    console.error('错误:', error);
+    console.error('error:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 

@@ -36,7 +36,7 @@ const buildPrompt = (goal, startDate, endDate) => {
   prompt += `Daily Tasks Defined:\n${goal.dailyTasks && goal.dailyTasks.length > 0 ? goal.dailyTasks.map(task => `- ${task}`).join('\n') : '- None'}\n\n`;
   prompt += `Progress Log (${startDateStr} to ${endDateStr}):\n`;
 
-  // 過濾日期範圍內的 dailyCards
+  // Filter dailyCards within the date range
   const filteredCards = goal.dailyCards
     .filter(card => {
       const cardDate = new Date(card.date);
@@ -204,12 +204,12 @@ export const generateReport = async (req, res) => {
   try {
     console.log(`Generating report for goalId: ${goalId} with timeRange:`, timeRange);
     
-    // 設定默認時間範圍（如果沒有提供）
+    // Set default time range (if not provided)
     let startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7); // 默認過去7天
+    startDate.setDate(startDate.getDate() - 7); // Default to past 7 days
     let endDate = new Date();
     
-    // 如果提供了時間範圍，使用提供的值
+    // If time range is provided, use the provided values
     if (timeRange && timeRange.startDate && timeRange.endDate) {
       startDate = new Date(timeRange.startDate);
       endDate = new Date(timeRange.endDate);

@@ -14,7 +14,7 @@ const requireAuth = async (req, res, next) => {
     // Get token from cookies
     const token = req.cookies.token;
     
-    // 记录认证请求信息
+    // record the authentication request information
     console.log(`Auth check for ${req.method} ${req.originalUrl}`, {
       hasCookie: !!token,
       method: req.method,
@@ -38,7 +38,7 @@ const requireAuth = async (req, res, next) => {
       });
     }
     
-    // 输出token解码信息用于调试
+    // output the token decoding information for debugging
     console.log("JWT token decoded:", {
       userType: decoded.userType,
       userId: decoded.id || 'none',
@@ -165,16 +165,16 @@ const requireOwnership = (getResourceUserId) => {
       // Get the resource owner ID using the provided function
       const resourceUserId = await getResourceUserId(req);
       
-      // 添加日志以帮助调试
-      console.log("权限验证:", {
-        操作: req.method + ' ' + req.originalUrl,
-        认证用户类型: req.user.userType,
-        认证用户ID: req.user.userType === 'registered' ? req.user.id : req.user.tempId,
-        资源拥有者ID: resourceUserId,
-        临时用户检测: typeof resourceUserId === 'string' && resourceUserId.startsWith('temp_')
+      // add logs to help debug
+      console.log("auth: permission verification:", {
+        operation: req.method + ' ' + req.originalUrl,
+        authenticatedUserType: req.user.userType,
+        authenticatedUserId: req.user.userType === 'registered' ? req.user.id : req.user.tempId,
+        resourceOwnerId: resourceUserId,
+        tempUserDetection: typeof resourceUserId === 'string' && resourceUserId.startsWith('temp_')
       });
       
-      // 检查是否为临时用户ID
+      // check if the resource owner ID is a temp user ID
       const isTempId = typeof resourceUserId === 'string' && resourceUserId.startsWith('temp_');
       
       // Check if the authenticated user is the owner
@@ -183,15 +183,15 @@ const requireOwnership = (getResourceUserId) => {
       } else if (req.user.userType === 'temp' && req.user.tempId === resourceUserId) {
         next();
       } else if (isTempId && req.user.userType === 'temp' && req.user.tempId === resourceUserId) {
-        // 添加额外检查临时用户ID的条件
+        // add additional check for temp user ID
         next();
       } else {
-        // 日志详细的访问拒绝原因
-        console.log("访问拒绝:", {
-          用户类型: req.user.userType,
-          用户ID: req.user.userType === 'registered' ? req.user.id : req.user.tempId,
-          资源ID: resourceUserId,
-          原因: "用户不是资源拥有者"
+        // log the detailed access denial reason
+        console.log("auth: access denied:", {
+          userType: req.user.userType,
+          userId: req.user.userType === 'registered' ? req.user.id : req.user.tempId,
+          resourceId: resourceUserId,
+          reason: "user is not the resource owner"
         });
         
         res.status(403).json({

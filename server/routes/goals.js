@@ -36,69 +36,69 @@ router.get("/:userId", requireAuth, requireOwnership((req) => req.params.userId)
 // POST /api/goals - Create a new goal
 router.post("/", requireAuth, async (req, res, next) => {
   try {
-    // 检查并记录用户信息和请求体
+    // check and record user information and request body
     const { userId } = req.body;
     const authUser = req.user;
     
-    console.log("创建目标请求:", { 
-      认证用户: {
-        类型: authUser.userType,
+    console.log("create goal request:", { 
+      authenticatedUser: {
+        type: authUser.userType,
         ID: authUser.userType === 'registered' ? authUser.id : authUser.tempId
       },
-      请求体用户ID: userId,
-      是临时ID: userId && userId.toString().startsWith('temp_'),
-      完整请求体: {
+      requestBodyUserId: userId,
+      isTempId: userId && userId.toString().startsWith('temp_'),
+      fullRequestBody: {
         ...req.body,
         description: req.body.description ? `${req.body.description.substring(0, 20)}...` : undefined
       }
     });
     
-    // 临时用户身份验证
+    // temp user authentication
     if (userId && userId.toString().startsWith('temp_')) {
-      // 确保创建目标的用户是自己
+      // ensure the goal is created by the same temp user
       if (authUser.userType !== 'temp' || authUser.tempId !== userId) {
-        console.log("临时用户ID不匹配:", {
+        console.log("temp user ID does not match:", {
           authTempId: authUser.tempId,
           requestUserId: userId
         });
         return res.status(403).json({
           success: false,
-          error: { message: '无权为其他用户创建目标' }
+          error: { message: 'no permission to create goal for other users' }
         });
       }
       
-      console.log("临时用户身份验证通过，继续创建目标");
+      console.log("temp user authentication passed, continue to create goal");
       
-      // 检查临时用户是否存在
+      // check if the temp user exists
       try {
         const TempUser = await import("../models/TempUser.js").then(module => module.default);
         const tempUser = await TempUser.findOne({ tempId: userId });
         
         if (!tempUser) {
-          console.log(`临时用户不存在: ${userId}`);
+          console.log(`temp user does not exist: ${userId}`);
           return res.status(404).json({
             success: false,
             error: {
-              message: "临时用户不存在，请刷新页面重试"
+              message: "temp user does not exist, please refresh the page and try again"
             }
           });
         }
       } catch (err) {
-        console.error("查询临时用户时出错:", err);
+        console.error("error querying temp user:", err);
         return res.status(500).json({
           success: false,
           error: {
-            message: "验证临时用户时出错",
+            message: "error verifying temp user",
             details: err.message
           }
         });
       }
     }
     
-    // 继续执行原始的 createGoal 控制器
+    // continue to execute the original createGoal controller
     next();
   } catch (error) {
-    console.error("路由中间件错误:", error);
+    console.error("route middleware error:", error);
     next(error);
   }
 }, createGoal);

@@ -10,24 +10,24 @@ export const createTempUser = async (req, res) => {
   try {
     // check if there is already a temp user's token
     const existingToken = req.cookies.token;
-    // 检查客户端是否传递了现有的 tempId
+    // Check if client has passed an existing tempId
     const clientTempId = req.body.existingTempId;
     
     console.log(`Request for temp user creation - existingToken: ${existingToken ? 'yes' : 'no'}, clientTempId: ${clientTempId || 'none'}`);
     
-    // 首先检查客户端传递的 tempId
+    // First check if the client provided a tempId
     if (clientTempId) {
-      // 检查这个 tempId 是否存在于数据库中
+      // Check if this tempId exists in the database
       const existingTempUser = await TempUser.findOne({ tempId: clientTempId });
       
       if (existingTempUser) {
-        // 如果存在，生成新的 JWT token 并设置 cookie
+        // If it exists, generate a new JWT token and set cookie
         const token = generateTempToken(clientTempId);
         setTokenCookie(res, token, 14 * 24 * 60 * 60 * 1000); // 14 days
         
         console.log(`Using existing temp user: ${clientTempId}`);
         
-        // 返回现有临时用户数据
+        // Return existing temporary user data
         return res.status(200).json({
           success: true,
           message: "Using existing temp user from client",
@@ -40,7 +40,7 @@ export const createTempUser = async (req, res) => {
       } else {
         console.log(`Client provided tempId ${clientTempId} not found in database, will create new temp user`);
       }
-      // 如果客户端传递的 tempId 不存在，继续检查 token 或创建新用户
+      // If the tempId provided by the client doesn't exist, continue to check token or create new user
     }
     
     if (existingToken) {

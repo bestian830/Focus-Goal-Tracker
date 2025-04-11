@@ -12,28 +12,28 @@ const getAllGoals = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    console.log(`获取目标列表，用户ID: ${userId}`, {
-      是临时ID: typeof userId === 'string' && userId.startsWith('temp_')
+    console.log(`Retrieving goals list, user ID: ${userId}`, {
+      isTempId: typeof userId === 'string' && userId.startsWith('temp_')
     });
     
     let userExists = false;
     let queryConditions = [];
     
-    // 检查用户ID是否为临时用户ID (以temp_开头)
+    // Check if user ID is a temporary user ID (starting with temp_)
     if (userId && typeof userId === 'string' && userId.startsWith('temp_')) {
-      console.log(`检测到临时用户ID: ${userId}，检查临时用户是否存在`);
-      // 对于临时用户，使用TempUser模型查找
+      console.log(`Detected temporary user ID: ${userId}, checking if temporary user exists`);
+      // For temporary users, use TempUser model to find
       const TempUser = await import("../models/TempUser.js").then(module => module.default);
       const tempUser = await TempUser.findOne({ tempId: userId });
       
       if (tempUser) {
-        console.log(`临时用户存在: ${userId}`);
+        console.log(`Temporary user exists: ${userId}`);
         userExists = true;
         
-        // 临时用户情况下，查找是否有已注册用户关联了这个临时ID
+        // For temporary users, check if there is a registered user associated with this temp ID
         const registeredUser = await User.findOne({ tempId: userId });
         if (registeredUser) {
-          console.log(`找到关联的注册用户: ${registeredUser._id}，将同时查询两个用户ID的目标`);
+          console.log(`Found associated registered user: ${registeredUser._id}, will query goals for both user IDs`);
           queryConditions = [
             { userId: userId },
             { userId: registeredUser._id.toString() }
@@ -42,21 +42,21 @@ const getAllGoals = async (req, res) => {
           queryConditions = [{ userId: userId }];
         }
       } else {
-        console.log(`临时用户不存在: ${userId}`);
+        console.log(`Temporary user does not exist: ${userId}`);
       }
     } else {
-      // 注册用户，使用User模型查找
+      // Registered user, use User model to find
       const user = await User.findById(userId);
       
       if (user) {
-        console.log(`注册用户存在: ${userId}`);
+        console.log(`Registered user exists: ${userId}`);
         userExists = true;
         
         queryConditions = [{ userId: userId.toString() }];
         
-        // 如果注册用户关联了临时用户ID，也查询与临时ID相关的目标
+        // If registered user is associated with a temp user ID, also query goals related to the temp ID
         if (user.tempId) {
-          console.log(`注册用户关联了临时ID: ${user.tempId}，将同时查询两个ID的目标`);
+          console.log(`Registered user is associated with temp ID: ${user.tempId}, will query goals for both IDs`);
           queryConditions.push({ userId: user.tempId });
         }
       }
@@ -71,14 +71,14 @@ const getAllGoals = async (req, res) => {
       });
     }
     
-    // 使用$or构建查询条件，同时查询多个可能的userId
+    // Use $or to build query conditions, to query multiple possible userIds simultaneously
     const query = queryConditions.length > 1 ? { $or: queryConditions } : queryConditions[0];
-    console.log("查询条件:", JSON.stringify(query));
+    console.log("Query conditions:", JSON.stringify(query));
     
     // Find all goals for the user (based on current userId or previously linked tempId)
     const goals = await Goal.find(query).sort({ createdAt: -1 });
     
-    console.log(`找到 ${goals.length} 个目标，用户ID: ${userId}`);
+    console.log(`Found ${goals.length} goals, user ID: ${userId}`);
     
     res.status(200).json({
       success: true,
@@ -120,13 +120,13 @@ const createGoal = async (req, res) => {
       checkpoints
     } = req.body;
     
-    console.log(`===== 開始創建目標 =====`);
-    console.log(`用戶ID: ${userId}, 標題: "${title}"`);
-    console.log(`是否為臨時用戶ID: ${userId?.toString().startsWith('temp_') ? 'Yes' : 'No'}`);
+    console.log(`===== Starting Goal Creation =====`);
+    console.log(`User ID: ${userId}, Title: "${title}"`);
+    console.log(`Is Temporary User ID: ${userId?.toString().startsWith('temp_') ? 'Yes' : 'No'}`);
     
     // Validate required fields
     if (!userId || !title || !description) {
-      console.log(`創建目標失敗: 缺少必要字段`);
+      console.log(`Goal creation failed: Missing required fields`);
       return res.status(400).json({
         success: false,
         error: {
@@ -140,7 +140,7 @@ const createGoal = async (req, res) => {
     
     // Check if user ID is a temporary user ID (starting with temp_)
     if (userId && userId.toString().startsWith('temp_')) {
-      console.log(`檢測到臨時用戶ID: ${userId}`);
+      console.log(`Detected temporary user ID: ${userId}`);
       isTemporaryUser = true;
       
       // For temporary users, use TempUser model to find
@@ -148,7 +148,7 @@ const createGoal = async (req, res) => {
         const TempUser = await import("../models/TempUser.js").then(module => module.default);
         user = await TempUser.findOne({ tempId: userId });
       } catch (modelError) {
-        console.error(`加載臨時用戶模型出錯:`, modelError);
+        console.error(`Error loading temporary user model:`, modelError);
         return res.status(500).json({
           success: false,
           error: {
@@ -158,7 +158,7 @@ const createGoal = async (req, res) => {
       }
       
       if (!user) {
-        console.log(`找不到臨時用戶: ${userId}`);
+        console.log(`Temporary user not found: ${userId}`);
         return res.status(404).json({
           success: false,
           error: {
@@ -170,10 +170,10 @@ const createGoal = async (req, res) => {
       // Check if temporary user already has a goal (limit: 1)
       try {
         const existingGoals = await Goal.find({ userId: userId.toString() });
-        console.log(`臨時用戶已有 ${existingGoals.length} 個目標`);
+        console.log(`Temporary user already has ${existingGoals.length} goals`);
         
         if (existingGoals.length >= 1) {
-          console.log(`臨時用戶目標數量已達上限: ${existingGoals.length}`);
+          console.log(`Temporary user has reached goal limit: ${existingGoals.length}`);
           return res.status(400).json({
             success: false,
             error: {
@@ -182,7 +182,7 @@ const createGoal = async (req, res) => {
           });
         }
       } catch (findError) {
-        console.error(`查詢現有目標時出錯:`, findError);
+        console.error(`Error querying existing goals:`, findError);
         return res.status(500).json({
           success: false,
           error: {
@@ -191,13 +191,13 @@ const createGoal = async (req, res) => {
         });
       }
       
-      console.log(`臨時用戶存在，開始創建目標`);
+      console.log(`Temporary user exists, proceeding with goal creation`);
     } else {
       // Registered user, use User model to find
       try {
         user = await User.findById(userId);
       } catch (findError) {
-        console.error(`查詢用戶時出錯:`, findError);
+        console.error(`Error querying user:`, findError);
         return res.status(500).json({
           success: false,
           error: {
@@ -207,7 +207,7 @@ const createGoal = async (req, res) => {
       }
       
       if (!user) {
-        console.log(`找不到註冊用戶: ${userId}`);
+        console.log(`Registered user not found: ${userId}`);
         return res.status(404).json({
           success: false,
           error: {
@@ -216,30 +216,28 @@ const createGoal = async (req, res) => {
         });
       }
       
-      // Check if registered user already has maximum allowed goals (limit: 4 active goals)
+      console.log(`Registered user exists: ${userId}`);
+      
+      // Check if the user has reached the limit of active goals (limit: 20)
       try {
-        const activeGoals = await Goal.find({ 
-          userId: userId.toString(),
-          status: "active"
-        });
+        const activeGoals = await Goal.find({ userId: userId.toString(), status: "active" });
+        console.log(`Registered user already has ${activeGoals.length} active goals`);
         
-        console.log(`註冊用戶已有 ${activeGoals.length} 個活躍目標`);
-        
-        if (activeGoals.length >= 4) {
-          console.log(`註冊用戶活躍目標數量已達上限: ${activeGoals.length}`);
+        if (activeGoals.length >= 20) {
+          console.log(`Registered user has reached active goal limit: ${activeGoals.length}`);
           return res.status(400).json({
             success: false,
             error: {
-              message: "Regular users are limited to four active goals. Please complete or archive existing goals to create new ones."
+              message: "You have reached the maximum number of active goals (20). Please complete or archive some goals before creating new ones."
             }
           });
         }
       } catch (findError) {
-        console.error(`查詢活躍目標時出錯:`, findError);
+        console.error(`Error querying active goals:`, findError);
         return res.status(500).json({
           success: false,
           error: {
-            message: "Server error: Failed to check active goals"
+            message: "Server error: Failed to check existing goals"
           }
         });
       }
@@ -252,7 +250,7 @@ const createGoal = async (req, res) => {
       description,
       priority: priority || "Medium",
       status: "active",
-      // 添加新字段
+      // Add new fields
       motivation: motivation || "",
       targetDate: targetDate || null,
       resources: resources || [],
@@ -261,15 +259,15 @@ const createGoal = async (req, res) => {
       visionImageUrl: visionImageUrl || null
     };
     
-    // 添加可选字段
+    // Add optional fields
     if (declaration) goalData.declaration = declaration;
     if (checkpoints) goalData.checkpoints = checkpoints;
     
-    // 初始化dailyCards数组
+    // Initialize dailyCards array
     goalData.dailyCards = [];
     
-    // 记录创建的目标数据
-    console.log("開始創建目標，數據:", {
+    // Log the goal data being created
+    console.log("Starting to create goal, data:", {
       userId: goalData.userId,
       title: goalData.title,
       hasMotivation: !!goalData.motivation,
@@ -278,31 +276,29 @@ const createGoal = async (req, res) => {
       dailyTasksCount: goalData.dailyTasks.length,
       rewardsCount: goalData.rewards.length,
       hasVisionImage: !!goalData.visionImageUrl,
-      userType: isTemporaryUser ? "臨時用戶" : "註冊用戶"
+      userType: isTemporaryUser ? "Temporary User" : "Registered User"
     });
     
     // Create new goal
     let goal;
     try {
       goal = await Goal.create(goalData);
-      console.log(`目標創建成功，ID: ${goal._id}`);
+      console.log(`Goal created successfully, ID: ${goal._id}`);
     } catch (createError) {
-      console.error(`創建目標時出錯:`, createError);
+      console.error(`Error creating goal:`, createError);
       
-      // 檢查是否是重複鍵錯誤
-      if (createError.name === 'MongoServerError' && createError.code === 11000) {
-        console.log(`發生重複鍵錯誤:`, createError.keyValue);
+      // Check if it's a duplicate key error
+      if (createError.code === 11000) {
+        console.log(`Duplicate key error occurred:`, createError.keyValue);
         return res.status(400).json({
           success: false,
           error: {
-            message: "A goal with this title already exists. Please use a different title.",
-            code: "DUPLICATE_KEY",
-            details: createError.keyValue
+            message: "A goal with these details already exists"
           }
         });
       }
       
-      // 其他錯誤
+      // Other errors
       return res.status(500).json({
         success: false,
         error: {
@@ -317,7 +313,7 @@ const createGoal = async (req, res) => {
       data: goal
     });
     
-    console.log(`===== 目標創建完成 =====`);
+    console.log(`===== Goal Creation Completed =====`);
   } catch (error) {
     console.error("Error creating goal:", error);
     res.status(500).json({
@@ -378,7 +374,7 @@ const getGoalById = async (req, res) => {
 const updateGoal = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`處理目標更新請求, ID: ${id}`, {
+    console.log(`Processing goal update request, ID: ${id}`, {
       requestBody: JSON.stringify(req.body, null, 2)
     });
     
@@ -398,21 +394,21 @@ const updateGoal = async (req, res) => {
       dailyCards
     } = req.body;
     
-    // 記錄日期更新，這對診斷很重要
+    // Log date updates, important for diagnostics
     if (targetDate) {
-      console.log(`目標日期更新請求: ${targetDate}`, {
-        日期類型: typeof targetDate,
-        是否有效: !isNaN(new Date(targetDate).getTime()),
-        解析結果: new Date(targetDate)
+      console.log(`Goal target date update request: ${targetDate}`, {
+        dateType: typeof targetDate,
+        isValid: !isNaN(new Date(targetDate).getTime()),
+        parsedResult: new Date(targetDate)
       });
     }
     
-    // 記錄願景圖片更新，這對診斷也很重要
+    // Log vision image updates, also important for diagnostics
     if (visionImageUrl !== undefined) {
-      console.log(`願景圖片更新請求:`, {
-        有無圖片: !!visionImageUrl,
-        圖片URL類型: typeof visionImageUrl,
-        圖片URL長度: visionImageUrl ? visionImageUrl.length : 0
+      console.log(`Vision image update request:`, {
+        hasImage: !!visionImageUrl,
+        imageUrlType: typeof visionImageUrl,
+        imageUrlLength: visionImageUrl ? visionImageUrl.length : 0
       });
     }
     
@@ -420,7 +416,7 @@ const updateGoal = async (req, res) => {
     const goal = await Goal.findById(id);
     
     if (!goal) {
-      console.log(`目標 ${id} 未找到`);
+      console.log(`Goal ${id} not found`);
       return res.status(404).json({
         success: false,
         error: {
@@ -429,7 +425,7 @@ const updateGoal = async (req, res) => {
       });
     }
     
-    console.log(`找到要更新的目標: ${goal.title}`);
+    console.log(`Found goal to update: ${goal.title}`);
     
     // Update fields
     if (title) goal.title = title;
@@ -440,7 +436,7 @@ const updateGoal = async (req, res) => {
     if (checkpoints) goal.checkpoints = checkpoints;
     if (status) goal.status = status;
     
-    // 更新新字段
+    // Update new fields
     if (motivation !== undefined) goal.motivation = motivation;
     if (resources) goal.resources = resources;
     if (dailyTasks) goal.dailyTasks = dailyTasks;
@@ -450,7 +446,7 @@ const updateGoal = async (req, res) => {
     
     // Save updated goal
     await goal.save();
-    console.log(`目標更新成功, ID: ${id}`);
+    console.log(`Goal updated successfully, ID: ${id}`);
     
     res.status(200).json({
       success: true,
@@ -600,12 +596,12 @@ const addOrUpdateDailyCard = async (req, res) => {
     // Extract YYYY-MM-DD portion only for comparison
     const cardDateStr = `${cardDate.getFullYear()}-${String(cardDate.getMonth() + 1).padStart(2, '0')}-${String(cardDate.getDate()).padStart(2, '0')}`;
     
-    console.log('處理日卡請求:', {
-      目標ID: id,
-      請求日期: date,
-      解析日期: cardDate,
-      標準化日期字符串: cardDateStr,
-      現有卡片數量: goal.dailyCards?.length || 0
+    console.log('Processing daily card request:', {
+      goalID: id,
+      requestDate: date,
+      parsedDate: cardDate,
+      standardizedDateString: cardDateStr,
+      existingCardCount: goal.dailyCards?.length || 0
     });
     
     // Improved date comparison logic using normalized YYYY-MM-DD strings
@@ -617,10 +613,10 @@ const addOrUpdateDailyCard = async (req, res) => {
         const existingDate = new Date(card.date);
         const existingDateStr = `${existingDate.getFullYear()}-${String(existingDate.getMonth() + 1).padStart(2, '0')}-${String(existingDate.getDate()).padStart(2, '0')}`;
         
-        console.log('日期比較:', {
-          卡片日期: existingDateStr,
-          目標日期: cardDateStr,
-          相等: existingDateStr === cardDateStr
+        console.log('Date comparison:', {
+          cardDate: existingDateStr,
+          goalDate: cardDateStr,
+          isEqual: existingDateStr === cardDateStr
         });
         
         return existingDateStr === cardDateStr;
@@ -630,9 +626,9 @@ const addOrUpdateDailyCard = async (req, res) => {
       }
     });
     
-    console.log('日期比較結果:', {
-      找到現有卡片: existingCardIndex !== -1,
-      索引: existingCardIndex
+    console.log('Date comparison result:', {
+      foundExistingCard: existingCardIndex !== -1,
+      index: existingCardIndex
     });
     
     if (existingCardIndex !== -1) {
@@ -652,23 +648,23 @@ const addOrUpdateDailyCard = async (req, res) => {
         }
       }
       
-      // 处理任务完成状态
+      // Process task completion status
       if (taskCompletions) {
-        console.log('更新任务完成状态:', {
-          原状态: goal.dailyCards[existingCardIndex].taskCompletions || {},
-          新状态: taskCompletions
+        console.log('Updating task completion status:', {
+          originalStatus: goal.dailyCards[existingCardIndex].taskCompletions || {},
+          newStatus: taskCompletions
         });
         
-        // 完全替换任务完成状态对象，而不是浅合并
-        // 使用深拷贝避免引用问题
+        // Completely replace task completion status object instead of shallow merge
+        // Use deep copy to avoid reference issues
         goal.dailyCards[existingCardIndex].taskCompletions = JSON.parse(JSON.stringify(taskCompletions));
         
-        console.log('更新后的任务完成状态:', goal.dailyCards[existingCardIndex].taskCompletions);
+        console.log('Updated task completion status:', goal.dailyCards[existingCardIndex].taskCompletions);
       }
       
-      // 處理記錄（records）字段
+      // Process records
       if (records) {
-        console.log('addOrUpdateDailyCard - 收到并更新记录:', records);
+        console.log('Adding or updating records:', records);
         goal.dailyCards[existingCardIndex].records = records;
       }
       
@@ -687,13 +683,13 @@ const addOrUpdateDailyCard = async (req, res) => {
         completed: completed || { dailyTask: false, dailyReward: false },
         records: records || [],
         links: links || [],
-        // 使用深拷贝创建任务完成状态对象，避免引用问题
+        // Use deep copy to create task completion status object to avoid reference issues
         taskCompletions: taskCompletions ? JSON.parse(JSON.stringify(taskCompletions)) : {}
       };
       
-      console.log('创建新卡片:', {
-        日期: cardDate,
-        任务完成状态: newCard.taskCompletions
+      console.log('Creating new card:', {
+        date: cardDate,
+        taskCompletionStatus: newCard.taskCompletions
       });
       
       goal.dailyCards.push(newCard);

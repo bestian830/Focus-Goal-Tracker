@@ -18,52 +18,52 @@ import bcrypt from 'bcryptjs';
  */
 const getProfile = async (req, res) => {
   try {
-    console.log("=== 獲取用戶資料請求 ===");
-    console.log("用戶類型:", req.user?.userType);
-    console.log("用戶ID:", req.user?.id);
+    console.log("=== User Profile Request ===");
+    console.log("User Type:", req.user?.userType);
+    console.log("User ID:", req.user?.id);
     console.log("=====================");
 
-    // 檢查用戶認證狀態
+    // Check user authentication status
     if (!req.user) {
-      console.error("未找到用戶認證信息");
+      console.error("No user authentication information found");
       return res.status(401).json({
         success: false,
         error: {
-          message: "未授權訪問",
+          message: "Unauthorized access",
         },
       });
     }
 
-    // 檢查用戶類型
+    // Check user type
     if (req.user.userType !== 'registered') {
-      console.error("非註冊用戶嘗試訪問個人資料");
+      console.error("Non-registered user attempting to access profile");
       return res.status(403).json({
         success: false,
         error: {
-          message: "只有註冊用戶可以訪問個人資料",
+          message: "Only registered users can access their profile",
         },
       });
     }
 
-    // 獲取當前用戶的ID
+    // Get the current user's ID
     const userId = req.user.id;
 
-    // 根據ID查找用戶
+    // Find user by ID
     const user = await User.findById(userId).select('-password');
 
     if (!user) {
-      console.error(`未找到ID為 ${userId} 的用戶`);
+      console.error(`User with ID ${userId} not found`);
       return res.status(404).json({
         success: false,
         error: {
-          message: "用戶不存在",
+          message: "User does not exist",
         },
       });
     }
 
-    console.log(`成功獲取用戶資料: ${user.username}`);
+    console.log(`Successfully retrieved user profile: ${user.username}`);
     
-    // 返回用戶信息
+    // Return user information
     return res.status(200).json({
       success: true,
       data: {
@@ -75,11 +75,11 @@ const getProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("獲取用戶資料時發生錯誤:", error);
+    console.error("Error retrieving user profile:", error);
     res.status(500).json({
       success: false,
       error: {
-        message: "獲取用戶資料失敗",
+        message: "Failed to retrieve user profile",
         details: error.message,
       },
     });
@@ -96,7 +96,7 @@ const updateProfile = async (req, res) => {
     const userId = req.user.id;
     const { username, email } = req.body;
 
-    // 验证输入
+    // Validate input
     if (!username && !email) {
       return res.status(400).json({
         success: false,
@@ -104,7 +104,7 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    // 查找并更新用户信息
+    // Find and update user information
     const user = await User.findById(userId);
     
     if (!user) {
@@ -114,13 +114,13 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    // 更新信息
+    // Update information
     if (username) user.username = username;
     if (email) user.email = email;
     
     await user.save();
 
-    // 返回更新后的用户信息
+    // Return updated user information
     res.status(200).json({
       success: true,
       data: {
@@ -152,7 +152,7 @@ const changePassword = async (req, res) => {
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
 
-    // 验证输入
+    // Validate input
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
@@ -160,7 +160,7 @@ const changePassword = async (req, res) => {
       });
     }
 
-    // 查找用户
+    // Find user
     const user = await User.findById(userId);
     
     if (!user) {
@@ -170,7 +170,7 @@ const changePassword = async (req, res) => {
       });
     }
 
-    // 验证当前密码
+    // Validate current password
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({
@@ -179,7 +179,7 @@ const changePassword = async (req, res) => {
       });
     }
 
-    // 更新密码
+    // Update password
     user.password = newPassword;
     await user.save();
 
@@ -208,7 +208,7 @@ const deleteAccount = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 查找并删除用户
+    // Find and delete user
     const user = await User.findByIdAndDelete(userId);
     
     if (!user) {
@@ -218,8 +218,8 @@ const deleteAccount = async (req, res) => {
       });
     }
 
-    // 还可以在这里添加删除用户相关数据的逻辑
-    // 例如删除用户的目标、进度记录等
+    // You can add logic here to delete user-related data
+    // For example, deleting the user's goals, progress records, etc.
 
     res.status(200).json({
       success: true,

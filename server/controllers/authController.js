@@ -343,7 +343,7 @@ const loginUser = async (req, res) => {
  */
 const logoutUser = (req, res) => {
   try {
-    console.log(`用戶註銷: ${req.user?.userType === 'registered' ? req.user.id : req.user?.tempId}`);
+    console.log(`User logging out: ${req.user?.userType === 'registered' ? req.user.id : req.user?.tempId}`);
     
     // Clear the JWT token cookie
     clearTokenCookie(res);
