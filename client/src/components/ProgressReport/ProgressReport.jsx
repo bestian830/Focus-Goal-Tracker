@@ -4,11 +4,11 @@ import AIFeedback from './AIFeedback';
 import styles from './ProgressReport.module.css';
 
 export default function ProgressReport({ goalId }) {
-  // 如果没有goalId，显示提示信息
+  // If no goalId, show prompt message
   if (!goalId) {
     return (
       <div className={styles.reportContainer}>
-        <div className={styles.noGoalMessage}>请先选择一个目标</div>
+        <div className={styles.noGoalMessage}>Please select a goal first</div>
       </div>
     );
   }

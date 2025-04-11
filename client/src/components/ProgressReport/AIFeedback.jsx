@@ -27,7 +27,7 @@ export default function AIFeedback({ goalId }) {
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   
-  // 新增時間範圍選擇狀態
+  // Add time range selection state
   const [timeRange, setTimeRange] = useState('last7days');
   const [customDateOpen, setCustomDateOpen] = useState(false);
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
@@ -75,7 +75,7 @@ export default function AIFeedback({ goalId }) {
     }
   }, [goalId, reports]);
 
-  // 處理時間範圍變更
+  // Handle time range change
   const handleTimeRangeChange = (event) => {
     const value = event.target.value;
     setTimeRange(value);
@@ -91,38 +91,38 @@ export default function AIFeedback({ goalId }) {
     }
   };
 
-  // 關閉自定義日期對話框
+  // Close custom date dialog
   const handleCloseCustomDate = () => {
     setCustomDateOpen(false);
   };
 
-  // 確認自定義日期範圍
+  // Confirm custom date range
   const handleConfirmCustomDate = () => {
     setCustomDateOpen(false);
   };
 
   const generateFeedback = async () => {
-    // 如果没有goalId，直接返回
+    // If no goalId, return directly
     if (!goalId) {
-      setError('没有选择目标，无法生成分析');
+      setError('No goal selected, cannot generate analysis');
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      console.log('开始请求生成报告，goalId:', goalId);
-      console.log('时间范围:', timeRange, '开始日期:', startDate, '结束日期:', endDate);
+      console.log('Starting to request report generation, goalId:', goalId);
+      console.log('Time range:', timeRange, 'Start date:', startDate, 'End date:', endDate);
       
-      // 將日期轉換為ISO字符串格式
+      // Convert dates to ISO string format
       const startDateStr = startDate.toISOString();
       const endDateStr = endDate.toISOString();
       
       const response = await apiService.reports.generate(goalId, startDateStr, endDateStr);
-      console.log('收到报告响应:', response);
+      console.log('Received report response:', response);
       
       if (response.data && response.data.success) {
-        console.log('报告数据:', response.data.data);
+        console.log('Report data:', response.data.data);
         const reportData = {
           ...response.data.data,
           startDate: startDateStr,
@@ -135,17 +135,17 @@ export default function AIFeedback({ goalId }) {
         // Save to Zustand store
         setReport(goalId, reportData);
       } else {
-        console.log('生成报告失败，响应:', response);
-        setError('生成分析失败，请稍后重试');
+        console.log('Failed to generate report, response:', response);
+        setError('Failed to generate analysis, please try again later');
       }
     } catch (err) {
-      console.error('生成分析错误:', err);
-      console.error('错误详情:', {
+      console.error('Error generating analysis:', err);
+      console.error('Error details:', {
         message: err.message,
         response: err.response,
         stack: err.stack
       });
-      setError(err.response?.data?.error || '生成分析失败，请稍后重试');
+      setError(err.response?.data?.error || 'Failed to generate analysis, please try again later');
     } finally {
       setLoading(false);
     }
@@ -154,20 +154,20 @@ export default function AIFeedback({ goalId }) {
   return (
     <Paper elevation={3} className="ai-feedback-paper">
       <Box className="ai-feedback-header">
-        <Typography variant="h6" className="ai-feedback-title">AI 进度分析</Typography>
+        <Typography variant="h6" className="ai-feedback-title">AI Progress Analysis</Typography>
         
         <Box className="ai-feedback-controls">
           <FormControl variant="outlined" size="small" className="ai-feedback-date-range">
-            <InputLabel>时间范围</InputLabel>
+            <InputLabel>Time Range</InputLabel>
             <Select
               value={timeRange}
               onChange={handleTimeRangeChange}
-              label="时间范围"
+              label="Time Range"
               disabled={loading}
             >
-              <MenuItem value="last7days">过去7天</MenuItem>
-              <MenuItem value="last30days">过去30天</MenuItem>
-              <MenuItem value="custom">自定义范围</MenuItem>
+              <MenuItem value="last7days">Last 7 Days</MenuItem>
+              <MenuItem value="last30days">Last 30 Days</MenuItem>
+              <MenuItem value="custom">Custom Range</MenuItem>
             </Select>
           </FormControl>
           
@@ -177,19 +177,19 @@ export default function AIFeedback({ goalId }) {
             disabled={loading || !goalId}
             className="ai-feedback-generate-btn"
           >
-            {loading ? '分析中...' : (feedback ? '重新生成' : '生成分析')}
+            {loading ? 'Analyzing...' : (feedback ? 'Regenerate' : 'Generate Analysis')}
           </Button>
         </Box>
       </Box>
 
-      {/* 自定義日期範圍對話框 */}
+      {/* Custom date range dialog */}
       <Dialog open={customDateOpen} onClose={handleCloseCustomDate}>
-        <DialogTitle>选择日期范围</DialogTitle>
+        <DialogTitle>Select Date Range</DialogTitle>
         <DialogContent>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Box className="ai-feedback-date-picker-container">
               <DatePicker
-                label="开始日期"
+                label="Start Date"
                 value={startDate}
                 onChange={(newValue) => setStartDate(newValue)}
                 slotProps={{ 
@@ -201,7 +201,7 @@ export default function AIFeedback({ goalId }) {
                 maxDate={endDate}
               />
               <DatePicker
-                label="结束日期"
+                label="End Date"
                 value={endDate}
                 onChange={(newValue) => setEndDate(newValue)}
                 slotProps={{ 
@@ -217,14 +217,14 @@ export default function AIFeedback({ goalId }) {
           </LocalizationProvider>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCustomDate}>取消</Button>
-          <Button onClick={handleConfirmCustomDate} variant="contained">确认</Button>
+          <Button onClick={handleCloseCustomDate}>Cancel</Button>
+          <Button onClick={handleConfirmCustomDate} variant="contained">Confirm</Button>
         </DialogActions>
       </Dialog>
 
       {error && (
         <Typography color="error" gutterBottom>
-          {typeof error === 'string' ? error : error.message || '发生未知错误'}
+          {typeof error === 'string' ? error : error.message || 'An unknown error occurred'}
         </Typography>
       )}
 
@@ -232,7 +232,7 @@ export default function AIFeedback({ goalId }) {
         <Box className="ai-feedback-loading-container">
           <CircularProgress />
           <Typography variant="body2" className="ai-feedback-loading-text">
-            正在生成分析...
+            Generating analysis...
           </Typography>
         </Box>
       )}
@@ -240,7 +240,7 @@ export default function AIFeedback({ goalId }) {
       {!feedback && !loading && !error && (
         <Box className="ai-feedback-placeholder">
           <Typography variant="body2" color="text.secondary">
-            {goalId ? '点击按钮生成 AI 分析报告' : '请先选择一个目标'}
+            {goalId ? 'Click the button to generate AI analysis report' : 'Please select a goal first'}
           </Typography>
         </Box>
       )}
@@ -248,14 +248,14 @@ export default function AIFeedback({ goalId }) {
       {feedback && (
         <>
           <Box className="ai-feedback-content" data-export-id="ai-analysis-content">
-            {feedback.content || '暂无分析内容'}
+            {feedback.content || 'No analysis content available'}
           </Box>
           <Box className="ai-feedback-timestamp">
             <Typography variant="subtitle2" color="text.secondary">
-              分析时间: {lastUpdate?.toLocaleString()}
+              Analysis time: {lastUpdate?.toLocaleString()}
             </Typography>
             <Typography variant="subtitle2" color="text.secondary" className="ai-feedback-date-range-info">
-              分析范围: {startDate.toLocaleDateString()} 至 {endDate.toLocaleDateString()}
+              Analysis range: {startDate.toLocaleDateString()} to {endDate.toLocaleDateString()}
             </Typography>
           </Box>
         </>
