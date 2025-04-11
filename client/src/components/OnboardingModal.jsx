@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, IconButton, Typography, Box } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import GoalSettingGuide from './GoalSettingGuide/GoalSettingGuide';
-import apiService from '../services/api';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+  Box,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import GoalSettingGuide from "./GoalSettingGuide/GoalSettingGuide";
+import apiService from "../services/api";
 
 /**
  * User onboarding modal
@@ -10,25 +17,28 @@ import apiService from '../services/api';
  */
 const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Handle goal submission completion
   const handleGoalSubmit = async (goalData) => {
     setSubmitting(true);
-    setError('');
-    
+    setError("");
+
     console.log("Starting goal submission with data:", {
       title: goalData.title,
       userId: userId,
-      isGuest: isGuest
+      isGuest: isGuest,
     });
 
     try {
       // Log current user info
-      console.log("OnboardingModal - Processing goal submission", { userId, isGuest });
+      console.log("OnboardingModal - Processing goal submission", {
+        userId,
+        isGuest,
+      });
 
       // Ensure goalData is valid
-      if (!goalData || typeof goalData !== 'object') {
+      if (!goalData || typeof goalData !== "object") {
         console.error("Invalid goal data:", goalData);
         throw new Error("Invalid goal data");
       }
@@ -39,11 +49,16 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         // Get from localStorage to ensure latest
         const tempIdFromStorage = localStorage.getItem("tempId");
         console.log("Temporary user ID from localStorage:", tempIdFromStorage);
-        
+
         // If the passed userId differs from localStorage, use localStorage
-        if (tempIdFromStorage && tempIdFromStorage.startsWith('temp_') && 
-            (!userId || userId !== tempIdFromStorage)) {
-          console.log(`Using tempId from localStorage instead of passed userId: ${tempIdFromStorage} instead of ${userId}`);
+        if (
+          tempIdFromStorage &&
+          tempIdFromStorage.startsWith("temp_") &&
+          (!userId || userId !== tempIdFromStorage)
+        ) {
+          console.log(
+            `Using tempId from localStorage instead of passed userId: ${tempIdFromStorage} instead of ${userId}`
+          );
           finalUserId = tempIdFromStorage;
         }
       }
@@ -51,7 +66,9 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       // Ensure valid userId
       if (!finalUserId) {
         console.error("Unable to determine user ID, cannot create goal");
-        throw new Error("Unable to determine user ID. Please try logging in again.");
+        throw new Error(
+          "Unable to determine user ID. Please try logging in again."
+        );
       }
 
       // Set userId based on user type
@@ -64,15 +81,23 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         userId: finalGoalData.userId,
         title: finalGoalData.title,
         description: finalGoalData.description,
-        descriptionLength: finalGoalData.description ? finalGoalData.description.length : 0,
+        descriptionLength: finalGoalData.description
+          ? finalGoalData.description.length
+          : 0,
         hasDescription: !!finalGoalData.description,
-        motivationInDesc: finalGoalData.description && finalGoalData.description.includes(finalGoalData.motivation),
-        titleInDesc: finalGoalData.description && finalGoalData.description.includes(finalGoalData.title),
+        motivationInDesc:
+          finalGoalData.description &&
+          finalGoalData.description.includes(finalGoalData.motivation),
+        titleInDesc:
+          finalGoalData.description &&
+          finalGoalData.description.includes(finalGoalData.title),
         targetDate: finalGoalData.targetDate,
         hasVisionImage: !!finalGoalData.visionImageUrl,
-        visionImageUrl: finalGoalData.visionImageUrl ? `${finalGoalData.visionImageUrl.substring(0, 50)}...` : null,
+        visionImageUrl: finalGoalData.visionImageUrl
+          ? `${finalGoalData.visionImageUrl.substring(0, 50)}...`
+          : null,
         hasDetails: !!finalGoalData.details,
-        hasSettings: !!finalGoalData.currentSettings
+        hasSettings: !!finalGoalData.currentSettings,
       });
 
       // Create new goal
@@ -80,7 +105,11 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       try {
         console.log("Calling API to create goal...");
         // 确保finalGoalData中的description被传递给API
-        if (!finalGoalData.description && finalGoalData.title && finalGoalData.motivation) {
+        if (
+          !finalGoalData.description &&
+          finalGoalData.title &&
+          finalGoalData.motivation
+        ) {
           console.log("生成默认description，因为它缺失了");
           finalGoalData.description = `我想要${finalGoalData.title}，因为${finalGoalData.motivation}。`;
         }
@@ -88,7 +117,7 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
         console.log("Goal creation API response:", response);
       } catch (apiError) {
         console.error("API Error details:", apiError);
-        
+
         // Enhanced error logging
         console.error("API Error full details:", {
           message: apiError.message,
@@ -98,25 +127,33 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
           url: apiError.config?.url,
           method: apiError.config?.method,
         });
-        
+
         // Check for duplicate title error
-        if (apiError.response && apiError.response.data && 
-            (apiError.response.data.error?.message?.includes("duplicate key") ||
-             apiError.response.data.error?.message?.includes("E11000"))) {
-          throw new Error("You already have a goal with this title. Please use a different title.");
+        if (
+          apiError.response &&
+          apiError.response.data &&
+          (apiError.response.data.error?.message?.includes("duplicate key") ||
+            apiError.response.data.error?.message?.includes("E11000"))
+        ) {
+          throw new Error(
+            "You already have a goal with this title. Please use a different title."
+          );
         }
-        
+
         // Check for goal limits
-        if (apiError.response && apiError.response.data && 
-            apiError.response.data.error?.message?.includes("limited to")) {
+        if (
+          apiError.response &&
+          apiError.response.data &&
+          apiError.response.data.error?.message?.includes("limited to")
+        ) {
           throw new Error(apiError.response.data.error.message);
         }
-        
+
         // If we have a detailed error message from the API, use it
         if (apiError.response?.data?.error?.message) {
           throw new Error(apiError.response.data.error.message);
         }
-        
+
         // Otherwise, throw with a generic message
         throw new Error("Server error. Please try again later.");
       }
@@ -129,13 +166,16 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
 
       if (response.data && response.data.success) {
         console.log("Goal created successfully:", response.data);
-        
+
         // 確保我們有完整的目標數據
         const newGoal = response.data.data;
-        
+
         if (newGoal && (newGoal._id || newGoal.id)) {
-          console.log("Notifying parent component of successful goal creation:", newGoal._id || newGoal.id);
-          
+          console.log(
+            "Notifying parent component of successful goal creation:",
+            newGoal._id || newGoal.id
+          );
+
           // 新增一個延遲，確保後端處理完成
           setTimeout(() => {
             // Notify parent component after successful goal creation
@@ -146,25 +186,29 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
           throw new Error("Server returned invalid goal data");
         }
       } else {
-        console.error("API returned success but response format unexpected:", response);
-        setError('Error creating goal. API response format incorrect.');
+        console.error(
+          "API returned success but response format unexpected:",
+          response
+        );
+        setError("Error creating goal. API response format incorrect.");
       }
     } catch (err) {
-      console.error('Error creating goal:', err);
-      
+      console.error("Error creating goal:", err);
+
       // Provide more detailed error message
-      let errorMessage = err.message || 'Error creating goal. Please try again later.';
-      
+      let errorMessage =
+        err.message || "Error creating goal. Please try again later.";
+
       // Handle specific error cases from server
       if (err.response) {
-        console.error('Error response:', err.response.data);
+        console.error("Error response:", err.response.data);
         errorMessage = err.response.data?.error?.message || errorMessage;
       }
-      
+
       setError(errorMessage);
-      
+
       // Log the complete error for debugging
-      console.error('Complete error object:', err);
+      console.error("Complete error object:", err);
     } finally {
       setSubmitting(false);
     }
@@ -182,7 +226,7 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
       <DialogTitle id="onboarding-dialog-title">
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" component="div">
-            {isGuest ? 'Welcome to Focus' : 'Create Your First Goal'}
+            {isGuest ? "Welcome to Focus" : "Create Your Goal"}
           </Typography>
           <IconButton
             edge="end"
@@ -200,8 +244,8 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
             {error}
           </Typography>
         )}
-        <GoalSettingGuide 
-          onComplete={handleGoalSubmit} 
+        <GoalSettingGuide
+          onComplete={handleGoalSubmit}
           isSubmitting={submitting}
           onCancel={onClose}
         />
@@ -210,4 +254,4 @@ const OnboardingModal = ({ open, onClose, userId, isGuest, onComplete }) => {
   );
 };
 
-export default OnboardingModal; 
+export default OnboardingModal;

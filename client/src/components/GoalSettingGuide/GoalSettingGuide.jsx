@@ -7,84 +7,84 @@ import ResourcesStep from './ResourcesStep';
 import RewardsStep from './RewardsStep';
 import VisionStep from './VisionStep';
 
-// localStorage 键名
+// localStorage key name
 const STORAGE_KEY = 'focus_goal_setting_draft';
 
-// 步骤标题
+// Step titles
 const steps = [
-  '目标设定',
-  '动机探索',
-  '日期设定',
-  '资源与步骤',
-  '奖励机制',
-  '願景圖片'
+  'Goal Setting',
+  'Motivation Exploration',
+  'Date Setting',
+  'Resources & Steps',
+  'Rewards System',
+  'Vision Image'
 ];
 
-// 初始表单数据
+// Initial form data
 const initialGoalData = {
   title: '',
   motivation: '',
   targetDate: null,
-  resources: [], // 改为数组，可添加多个
-  dailyTasks: [], // 改为数组，可添加多个
-  rewards: [], // 改为数组，可添加多个
+  resources: [], // Changed to array, can add multiple
+  dailyTasks: [], // Changed to array, can add multiple
+  rewards: [], // Changed to array, can add multiple
   visionImageUrl: null,
-  status: 'active' // 默认状态
+  status: 'active' // Default status
 };
 
 /**
- * 目标设置引导组件
- * 引导用户通过 5 个步骤完成目标设置
+ * Goal Setting Guide Component
+ * Guides users through 5 steps to complete goal setting
  */
 const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
-  // 当前步骤
+  // Current step
   const [activeStep, setActiveStep] = useState(0);
   
-  // 目标数据
+  // Goal data
   const [goalData, setGoalData] = useState(initialGoalData);
 
-  // 从 localStorage 加载已保存的数据
+  // Load saved data from localStorage
   useEffect(() => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        // 如果有日期字段，需要转换为 Date 对象
+        // If there is a date field, convert it to a Date object
         if (parsedData.targetDate) {
           parsedData.targetDate = new Date(parsedData.targetDate);
         }
         setGoalData(parsedData);
-        console.log('已从 localStorage 恢复表单数据');
+        console.log('Form data restored from localStorage');
       }
     } catch (error) {
-      console.error('从 localStorage 恢复数据失败:', error);
+      console.error('Failed to restore data from localStorage:', error);
     }
   }, []);
 
-  // 验证当前步骤是否可以继续
+  // Validate whether the current step can proceed
   const validateStep = () => {
     switch (activeStep) {
-      case 0: // 标题步骤
+      case 0: // Title step
         return goalData.title.trim() !== '';
-      case 1: // 动机步骤
+      case 1: // Motivation step
         return goalData.motivation.trim() !== '';
-      case 2: // 日期步骤
+      case 2: // Date step
         return goalData.targetDate !== null && goalData.targetDate instanceof Date;
-      case 3: // 资源步骤
-        // resources和dailyTasks是可选的
+      case 3: // Resources step
+        // resources and dailyTasks are optional
         return true;
-      case 4: // 奖励步骤
-        // rewards是可选的
+      case 4: // Rewards step
+        // rewards are optional
         return true;
-      case 5: // 願景圖片步骤
-        // 願景圖片是可選的
+      case 5: // Vision image step
+        // Vision image is optional
         return true;
       default:
         return false;
     }
   };
 
-  // 处理数据更新
+  // Handle data updates
   const handleDataChange = (field, value) => {
     const updatedData = {
       ...goalData,
@@ -93,16 +93,16 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
     
     setGoalData(updatedData);
     
-    // 保存到 localStorage
+    // Save to localStorage
     try {
       const dataToSave = {...updatedData};
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     } catch (error) {
-      console.error('保存数据到 localStorage 失败:', error);
+      console.error('Failed to save data to localStorage:', error);
     }
   };
 
-  // 添加多项元素（资源/任务/奖励）
+  // Add multiple items (resources/tasks/rewards)
   const handleAddItem = (field, item) => {
     if (!item.trim()) return;
     
@@ -110,28 +110,28 @@ const GoalSettingGuide = ({ onComplete, isSubmitting = false, onCancel }) => {
     handleDataChange(field, items);
   };
 
-  // 删除多项元素
+  // Remove multiple items
   const handleRemoveItem = (field, index) => {
     const items = [...goalData[field]];
     items.splice(index, 1);
     handleDataChange(field, items);
   };
 
-  // 下一步
+  // Next step
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
       console.log("GoalSettingGuide: Final step, preparing to submit...");
       
-      // 生成详细描述
-      const generatedDescription = `我想要${goalData.title}，因为${goalData.motivation}。`;
+      // Generate detailed description
+      const generatedDescription = `I want to ${goalData.title}, because ${goalData.motivation}.`;
       
-      // 生成宣言内容
+      // Generate declaration content
       const generateDeclarationText = (data) => {
-        const username = 'User'; // 可以从其他地方获取用户名
+        const username = 'User'; // Can be obtained from elsewhere
         const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : '';
-        const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : '每日坚持';
-        const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : '适当的奖励';
-        const resource = data.resources && data.resources.length > 0 ? data.resources[0] : '必要的准备';
+        const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : 'daily persistence';
+        const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : 'appropriate reward';
+        const resource = data.resources && data.resources.length > 0 ? data.resources[0] : 'necessary preparation';
         
         return `${data.title}
 
@@ -152,18 +152,18 @@ I've set a deadline for myself: ${formattedDate}. I know there might be ups and 
 Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
       };
       
-      // 確保所有必要的字段都有值
+      // Ensure all necessary fields have values
       const finalGoalData = {
         ...goalData,
         description: generatedDescription,
-        // 添加宣言对象
+        // Add declaration object
         declaration: {
           content: generateDeclarationText(goalData),
           updatedAt: new Date()
         }
       };
       
-      console.log("GoalSettingGuide: 目标设置最终数据:", {
+      console.log("GoalSettingGuide: Final goal setting data:", {
         title: finalGoalData.title,
         description: finalGoalData.description,
         hasDescription: !!finalGoalData.description,
@@ -174,44 +174,44 @@ Because the path is already beneath my feet—it's really not that complicated. 
         dailyTasksCount: finalGoalData.dailyTasks.length,
         rewardsCount: finalGoalData.rewards.length,
         hasVisionImage: !!finalGoalData.visionImageUrl,
-        // 添加宣言日志记录
+        // Add declaration log records
         hasDeclaration: !!finalGoalData.declaration,
         declarationLength: finalGoalData.declaration ? finalGoalData.declaration.content.length : 0
       });
       
       try {
-        // 提交表单
-        console.log("GoalSettingGuide: 调用 onComplete 提交表单...");
+        // Submit form
+        console.log("GoalSettingGuide: Calling onComplete to submit form...");
         onComplete(finalGoalData);
         
-        // 清除 localStorage 中的数据
-        console.log("GoalSettingGuide: 清除本地存储的表单数据");
+        // Clear data from localStorage
+        console.log("GoalSettingGuide: Clearing locally stored form data");
         localStorage.removeItem(STORAGE_KEY);
       } catch (error) {
-        console.error("GoalSettingGuide: 提交表单时出错:", error);
+        console.error("GoalSettingGuide: Error submitting form:", error);
       }
     } else {
       setActiveStep(prev => prev + 1);
     }
   };
 
-  // 上一步
+  // Previous step
   const handleBack = () => {
     setActiveStep(prev => prev - 1);
   };
 
-  // 处理取消
+  // Handle cancel
   const handleCancel = () => {
-    // 清除 localStorage 中的数据
+    // Clear data from localStorage
     localStorage.removeItem(STORAGE_KEY);
     
-    // 调用外部取消处理函数（如果有）
+    // Call external cancel handler (if available)
     if (onCancel) {
       onCancel();
     }
   };
 
-  // 渲染当前步骤内容
+  // Render current step content
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
@@ -271,10 +271,10 @@ Because the path is already beneath my feet—it's really not that complicated. 
       <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4" align="center" sx={{ flexGrow: 1 }}>
-            宣言制定指引
+            Goal Setting Guide
           </Typography>
           <Button onClick={handleCancel} color="inherit" size="small">
-            取消
+            Cancel
           </Button>
         </Box>
         
@@ -294,7 +294,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
             disabled={activeStep === 0 || isSubmitting}
             onClick={handleBack}
           >
-            上一步
+            Back
           </Button>
           
           <Button
@@ -303,7 +303,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
             onClick={handleNext}
             startIcon={isSubmitting && activeStep === steps.length - 1 ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {activeStep === steps.length - 1 ? '完成' : '下一步'}
+            {activeStep === steps.length - 1 ? 'Complete' : 'Next'}
           </Button>
         </Box>
       </Paper>

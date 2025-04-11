@@ -3,14 +3,14 @@ import { Box, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { zhCN } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 
 /**
- * 日期设定步骤
- * 用户设置目标完成日期
+ * Date Setting Step
+ * User sets the target completion date for the goal
  */
 const DateStep = ({ value, onChange }) => {
-  // 处理日期变更
+  // Handle date change
   const handleDateChange = (date) => {
     onChange(date);
   };
@@ -18,16 +18,16 @@ const DateStep = ({ value, onChange }) => {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        我计划在这个日期前实现目标 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+        I plan to achieve this goal by <Box component="span" sx={{ color: 'error.main' }}>*</Box>
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
-        为目标设定一个明确的时间期限，这能增加紧迫感并帮助你更好规划。
+        Set a clear deadline for your goal, which creates a sense of urgency and helps you plan better.
       </Typography>
       
-      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={zhCN}>
+      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enUS}>
         <DatePicker
-          label="目标日期"
+          label="Target Date"
           value={value}
           onChange={handleDateChange}
           disablePast
@@ -36,7 +36,7 @@ const DateStep = ({ value, onChange }) => {
               fullWidth: true,
               required: true,
               variant: "outlined",
-              helperText: "选择一个目标完成日期"
+              helperText: "Select a target completion date"
             } 
           }}
         />

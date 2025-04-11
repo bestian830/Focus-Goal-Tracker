@@ -4,8 +4,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 /**
- * 奖励设定步骤
- * 第四步：用户可以设置多个奖励项目（可选）
+ * Rewards Setting Step
+ * Step 4: User can set multiple reward items (optional)
  */
 const RewardsStep = ({ 
   rewards,
@@ -14,7 +14,7 @@ const RewardsStep = ({
 }) => {
   const [newReward, setNewReward] = useState('');
 
-  // 添加奖励
+  // Add reward
   const handleAddReward = () => {
     if (newReward.trim()) {
       onAddReward(newReward);
@@ -27,21 +27,21 @@ const RewardsStep = ({
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
-            我的奖励机制
+            My Reward System
           </Typography>
           
           <Typography variant="body2" color="text.secondary" paragraph>
-            为你的进步和成就设定奖励，这将帮助你保持动力和积极性（可选）。
+            Set rewards for your progress and achievements, which will help you maintain motivation and positivity (optional).
           </Typography>
           
           <Box sx={{ display: 'flex', mb: 2 }}>
             <TextField
               fullWidth
-              label="添加奖励"
+              label="Add Reward"
               variant="outlined"
               value={newReward}
               onChange={(e) => setNewReward(e.target.value)}
-              placeholder="例如：完成一周任务后看一部电影，达成目标后去旅行..."
+              placeholder="For example: Watch a movie after completing a week of tasks, travel after achieving the goal..."
               inputProps={{ maxLength: 200 }}
             />
             <Button 
@@ -51,14 +51,14 @@ const RewardsStep = ({
               sx={{ ml: 1 }}
               startIcon={<AddIcon />}
             >
-              添加
+              Add
             </Button>
           </Box>
           
           {rewards.length > 0 && (
             <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
               <Typography variant="subtitle2" gutterBottom>
-                已添加的奖励 ({rewards.length})
+                Added Rewards ({rewards.length})
               </Typography>
               <List dense>
                 {rewards.map((reward, index) => (
