@@ -244,10 +244,11 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
         return freshUserInfo.username;
       }
       
-      // Check if we have a username in the profile data shown on screen
-      if (apiService.userInfo?.username) {
-        console.log("Using username from apiService.userInfo:", apiService.userInfo.username);
-        return apiService.userInfo.username;
+      // Try to get from the centralized user system
+      const cachedUser = apiService.userEvents.getCurrentUser();
+      if (cachedUser && cachedUser.username) {
+        console.log("Using username from centralized user cache:", cachedUser.username);
+        return cachedUser.username;
       }
       
       // Check if goal has populated user data (most reliable for registered users)
@@ -283,18 +284,30 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   
   // Listen for profile updates so we can refresh username when needed
   useEffect(() => {
-    const handleUsernameUpdate = () => {
-      // Force re-render to get fresh username
-      console.log("Username update event received, refreshing declaration with new username");
-      // We'll force a re-render by updating a timestamp state
-      setLastUpdate(Date.now());
+    // Listener function for user profile updates
+    const handleUserUpdate = (userData) => {
+      console.log("GoalDeclaration received user update:", userData.username);
+      setFreshUserInfo(userData);
     };
     
-    // Listen for custom event that will be triggered by ProfileModal after successful update
-    window.addEventListener('usernameUpdated', handleUsernameUpdate);
+    // Subscribe to centralized user profile updates
+    const unsubscribe = apiService.userEvents.subscribe(
+      'goal-declaration-component',
+      handleUserUpdate
+    );
+    
+    // Also listen for direct DOM events as fallback
+    const handleDomEvent = (event) => {
+      if (event.detail) {
+        handleUserUpdate(event.detail);
+      }
+    };
+    
+    window.addEventListener('userProfileUpdated', handleDomEvent);
     
     return () => {
-      window.removeEventListener('usernameUpdated', handleUsernameUpdate);
+      unsubscribe();
+      window.removeEventListener('userProfileUpdated', handleDomEvent);
     };
   }, []);
   

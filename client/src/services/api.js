@@ -119,8 +119,60 @@ const checkApiHealth = async () => {
   }
 };
 
+// Add event system for user data updates
+// This allows components to subscribe to user profile changes
+const userEvents = {
+  // Event listeners for user profile updates
+  listeners: {},
+  
+  // Current user data cache
+  currentUser: null,
+  
+  // Register a listener for user profile updates
+  subscribe: (id, callback) => {
+    userEvents.listeners[id] = callback;
+    
+    // Return unsubscribe function
+    return () => {
+      delete userEvents.listeners[id];
+    };
+  },
+  
+  // Call when user profile is updated
+  notifyUpdate: (userData) => {
+    // Update cache
+    userEvents.currentUser = userData;
+    
+    // Store in localStorage for simple access by other components
+    if (userData && userData.username) {
+      localStorage.setItem('username', userData.username);
+    }
+    
+    // Notify all listeners
+    Object.values(userEvents.listeners).forEach(callback => {
+      try {
+        callback(userData);
+      } catch (error) {
+        console.error("Error in user update listener:", error);
+      }
+    });
+    
+    // Also dispatch DOM event for components that use direct DOM event listeners
+    const event = new CustomEvent('userProfileUpdated', { detail: userData });
+    window.dispatchEvent(event);
+    
+    console.log("Notified all components about user profile update");
+  },
+  
+  // Get current user data
+  getCurrentUser: () => userEvents.currentUser
+};
+
 // encapsulate API methods
 const apiService = {
+  // userEvents system for sharing user data
+  userEvents,
+
   // diagnostic method
   getDiagnostics: () => {
     return {
@@ -165,9 +217,25 @@ const apiService = {
   users: {
     getProfile: () => {
       console.log("Calling getProfile method, API_URL:", API_URL);
-      return api.get("/api/users/profile");
+      return api.get("/api/users/profile")
+        .then(response => {
+          // Cache user data and notify all components
+          if (response.data && response.data.success && response.data.data) {
+            userEvents.notifyUpdate(response.data.data);
+          }
+          return response;
+        });
     },
-    updateProfile: (data) => api.put("/api/users/profile", data),
+    updateProfile: (data) => {
+      return api.put("/api/users/profile", data)
+        .then(response => {
+          // Update cached user data and notify all components
+          if (response.data && response.data.success && response.data.data) {
+            userEvents.notifyUpdate(response.data.data);
+          }
+          return response;
+        });
+    },
     changePassword: (data) => api.put("/api/users/password", data),
     deleteAccount: () => api.delete("/api/users/account"),
   },

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaUser } from "react-icons/fa";
 import "../../styles/Home.css"; // import styles
+import apiService from "../../services/api";
 
 /**
  * Header Component
@@ -20,6 +21,25 @@ export default function Header({
   toggleProfileModal,
 }) {
   const navigate = useNavigate();
+  const [localUser, setLocalUser] = useState(user);
+  
+  // Listen for user profile updates
+  useEffect(() => {
+    // Subscribe to user profile updates
+    const unsubscribe = apiService.userEvents.subscribe(
+      'header-component',
+      (updatedUser) => {
+        console.log("Header received user update:", updatedUser.username);
+        setLocalUser(updatedUser);
+      }
+    );
+    
+    // Initial update
+    setLocalUser(user);
+    
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [user]);
 
   return (
     <header className="app-header">
@@ -27,13 +47,13 @@ export default function Header({
       <div className="user-info">
         {loading ? (
           <span>Loading...</span>
-        ) : user ? (
+        ) : localUser ? (
           <div className="logged-in-user">
-            <span>Welcome, {user.username}</span>
+            <span>Welcome, {localUser.username}</span>
             <div className="avatar-container" onClick={toggleProfileModal}>
-              {user.avatarUrl ? (
+              {localUser.avatarUrl ? (
                 <img
-                  src={user.avatarUrl}
+                  src={localUser.avatarUrl}
                   alt="User Avatar"
                   className="avatar-image"
                 />
