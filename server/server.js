@@ -5,6 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
+import mongoose from "mongoose";
 
 // import routes
 import authRoutes from "./routes/auth.js";
@@ -159,5 +160,51 @@ app.use((req, res) => {
   });
 });
 
-// Start the server
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Connect to MongoDB & start server
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(async () => {
+    console.log("Connected to MongoDB successfully!");
+    
+    // 手动清理所有可能存在的唯一索引
+    try {
+      const db = mongoose.connection.db;
+      console.log("开始检查并移除所有可能的唯一索引...");
+      
+      // 获取当前集合上的所有索引
+      const indexes = await db.collection('goals').indexes();
+      console.log("现有索引:", JSON.stringify(indexes));
+      
+      // 尝试删除所有可能与userId和title相关的唯一索引
+      const indexesToDrop = [
+        'userId_1_title_1', 
+        'title_1_userId_1',
+        'title_1',
+        'userId_1_title_1_unique'
+      ];
+      
+      for (const indexName of indexesToDrop) {
+        try {
+          await db.collection('goals').dropIndex(indexName);
+          console.log(`成功删除索引: ${indexName}`);
+        } catch (err) {
+          console.log(`尝试删除索引 ${indexName}: ${err.message}`);
+        }
+      }
+      
+      // 重建非唯一索引
+      await db.collection('goals').createIndex({ userId: 1, title: 1 }, { unique: false, background: true });
+      console.log("成功重建非唯一索引");
+      
+    } catch (indexError) {
+      console.log("索引处理过程中出错:", indexError.message);
+      // 继续执行，不要因为索引问题而阻止服务器启动
+    }
+    
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}!`);
+    });
+  })
+  .catch((error) => {
+    console.error("Error connecting to MongoDB:", error);
+  });

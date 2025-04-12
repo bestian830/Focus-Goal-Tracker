@@ -1,139 +1,122 @@
-import { useState, useEffect } from "react";
-import { Tooltip } from "@mui/material";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  Divider,
+  CircularProgress,
+  Alert,
+  Tooltip,
+} from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import GoalCard from "./GoalCard";
-import AddGoalButton from "./AddGoalButton";
 import OnboardingModal from "../OnboardingModal";
-import apiService from "../../services/api";
+import Search from "./Search";
+import PropTypes from 'prop-types';
 
 export default function Sidebar({
   onGoalSelect,
-  goals = [],
+  goals: initialGoals = [],
   onAddGoalClick,
   onPriorityChange,
   onDateChange,
   activeGoalId,
+  onGoalUpdate,
 }) {
-  const [sortedGoals, setSortedGoals] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allGoals, setAllGoals] = useState(initialGoals);
+  
+  const isLoading = false;
+  const error = null;
 
-  // Check if user is a temporary user
+  const checkIsGuest = () => {
+    return !localStorage.getItem("userId") && !!localStorage.getItem("tempId");
+  };
+  
   const isGuest = checkIsGuest();
-  // Count active goals (for registered users)
-  const activeGoalsCount = isGuest
-    ? 0
-    : sortedGoals.filter((g) => g.status === "active").length;
-  // Check limitations based on user type
-  const hasTempUserGoal = isGuest && sortedGoals.length > 0;
-  const hasMaxRegularUserGoals = !isGuest && activeGoalsCount >= 4;
-  const isAddGoalDisabled = hasTempUserGoal || hasMaxRegularUserGoals;
 
   useEffect(() => {
-    // every time goals change, output detailed logs
-    console.log("Goals prop changed in Sidebar:", goals);
-    console.log("Current goals count:", goals?.length || 0);
-    console.log("Active goal ID:", activeGoalId);
-
-    // check if goals really changed by deep comparison
-    const goalsString = JSON.stringify(goals);
-    console.log("Goals data hash:", goalsString.length);
-
-    if (goals && Array.isArray(goals)) {
-      if (goals.length > 0) {
-        console.log(
-          "Goals received in Sidebar:",
-          goals.map((g) => ({
-            id: g._id || g.id,
-            title: g.title,
-            priority: g.priority,
-            userId: g.userId,
-          }))
-        );
-
-        try {
-          // ensure deep copy, prevent accidental modification of original data
-          const goalsCopy = JSON.parse(JSON.stringify(goals));
-          const sorted = sortGoals(goalsCopy);
-          console.log(
-            "Sorted goals:",
-            sorted.map((g) => g.title)
-          );
-          setSortedGoals(sorted);
-
-          // if there are goals and no active goal, automatically select the first one
-          if (sorted.length > 0 && onGoalSelect && !activeGoalId) {
-            const firstGoalId = sorted[0]._id || sorted[0].id;
-            console.log("Auto-selecting first goal:", firstGoalId);
-            onGoalSelect(firstGoalId);
-          }
-        } catch (error) {
-          console.error("Error processing goals:", error);
-          // try to handle simpler
-          setSortedGoals([...goals]);
-          console.log("Falling back to unprocessed goals");
-        }
-      } else {
-        // clear goal list
-        console.log(
-          "No goals available to display, clearing sorted goals list"
-        );
-        setSortedGoals([]);
-      }
-    } else {
-      console.error("Invalid goals data received:", goals);
-      setSortedGoals([]);
-    }
-  }, [goals, onGoalSelect, activeGoalId]);
+    setAllGoals(initialGoals);
+  }, [initialGoals]);
 
   const sortGoals = (goalList) => {
     if (!goalList || goalList.length === 0) {
-      console.log("No goals to sort");
       return [];
     }
 
-    console.log("Sorting goals, count:", goalList.length);
+    const priorityMap = { High: 1, Medium: 2, Low: 3 };
+    
+    return [...goalList].sort((a, b) => {
+      if (!a || !b) {
+        console.error("Invalid goal objects in sort function:", { a, b });
+        return 0;
+      }
 
-    try {
-      const priorityMap = { High: 1, Medium: 2, Low: 3 };
-      return [...goalList].sort((a, b) => {
-        // ensure goal objects are valid
-        if (!a || !b) {
-          console.error("Invalid goal objects in sort function:", { a, b });
-          return 0;
-        }
+      const aPriority = a.priority || "Medium";
+      const bPriority = b.priority || "Medium";
 
-        // sort by priority first
-        const aPriority = a.priority || "Medium";
-        const bPriority = b.priority || "Medium";
+      if (priorityMap[aPriority] !== priorityMap[bPriority]) {
+        return priorityMap[aPriority] - priorityMap[bPriority];
+      }
 
-        // sort by priority
-        if (priorityMap[aPriority] !== priorityMap[bPriority]) {
-          return priorityMap[aPriority] - priorityMap[bPriority];
-        }
+      const aDate = a.targetDate || a.dueDate || new Date();
+      const bDate = b.targetDate || b.dueDate || new Date();
 
-        // sort by target date
-        const aDate = a.targetDate || a.dueDate || new Date();
-        const bDate = b.targetDate || b.dueDate || new Date();
-
-        return new Date(aDate) - new Date(bDate);
-      });
-    } catch (error) {
-      console.error("Error sorting goals:", error);
-      return goalList; // return original list if error
-    }
+      return new Date(aDate) - new Date(bDate);
+    });
   };
 
-  // Open goal setting modal
-  const handleAddGoalClick = () => {
-    // If user has reached goal limit, don't proceed
-    if (isAddGoalDisabled) {
-      console.log(
-        `User has reached goal limit: ${
-          isGuest ? "Temporary user (1 goal)" : "Regular user (4 active goals)"
-        }`
+  const filteredAndSortedGoals = useMemo(() => {
+    let goalsToDisplay = allGoals;
+
+    if (searchQuery) {
+      goalsToDisplay = allGoals.filter(goal =>
+        goal.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      
+      return sortGoals(goalsToDisplay);
+    } else {
+      goalsToDisplay = allGoals.filter(goal => goal.status !== 'archived');
+      
+      return sortGoals(goalsToDisplay);
+    }
+  }, [allGoals, searchQuery]);
+
+  const activeGoalsCount = useMemo(() => {
+    return allGoals.filter(goal => goal.status === "active").length;
+  }, [allGoals]);
+
+  const isAddGoalDisabled = useMemo(() => {
+    const hasTempUserGoal = isGuest && allGoals.length > 0;
+    const hasMaxRegularUserGoals = !isGuest && activeGoalsCount >= 4;
+    return hasTempUserGoal || hasMaxRegularUserGoals;
+  }, [isGuest, allGoals.length, activeGoalsCount]);
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+  };
+
+  const handleGoalArchived = (archivedGoalId) => {
+     console.log(`Sidebar received archive event for goal: ${archivedGoalId}`);
+     setAllGoals(currentGoals =>
+        currentGoals.map(goal =>
+          goal._id === archivedGoalId ? { ...goal, status: 'archived' } : goal
+        )
+     );
+     if (onGoalUpdate) {
+         const updatedGoal = allGoals.find(g => g._id === archivedGoalId);
+         if(updatedGoal) {
+             onGoalUpdate({ ...updatedGoal, status: 'archived' });
+         }
+     }
+  };
+
+  const handleOpenAddGoalModal = () => {
+    if (isAddGoalDisabled) {
       return;
     }
-
+    
     if (onAddGoalClick) {
       onAddGoalClick();
     } else {
@@ -141,199 +124,121 @@ export default function Sidebar({
     }
   };
 
-  // Close goal setting modal
-  const handleCloseGoalModal = () => {
+  const handleCloseGoalModal = (goalAdded) => {
     setShowGoalModal(false);
-  };
-
-  // Handle goal creation completion
-  const handleGoalComplete = (newGoal) => {
-    console.log("New goal created in Sidebar:", newGoal);
-
-    // close modal
-    setShowGoalModal(false);
-
-    // add new goal to local list and re-sort
-    // note: Home component will also refresh goal list, this is a quick update
-    if (newGoal && (newGoal._id || newGoal.id)) {
-      const updatedGoals = [...sortedGoals, newGoal];
-      const newSorted = sortGoals(updatedGoals);
-      console.log("Updated goal list with new goal:", newGoal.title);
-      setSortedGoals(newSorted);
-
-      // select newly created goal
-      if (onGoalSelect) {
-        console.log("Selecting newly created goal:", newGoal._id || newGoal.id);
-        onGoalSelect(newGoal._id || newGoal.id);
-      }
+    if (goalAdded && onGoalUpdate) {
+      onGoalUpdate(goalAdded);
     }
   };
 
-  // Get user ID
   const getUserId = () => {
     const userId = localStorage.getItem("userId");
     const tempId = localStorage.getItem("tempId");
     return userId || tempId;
   };
 
-  // Check if user is a temporary user
-  function checkIsGuest() {
-    return !localStorage.getItem("userId") && !!localStorage.getItem("tempId");
-  }
-
-  // Render add goal button with appropriate tooltip
-  const renderAddGoalButton = () => {
-    // If user has reached goal limit, show appropriate tooltip
-    if (isAddGoalDisabled) {
-      let tooltipMessage = "";
-
-      if (hasTempUserGoal) {
-        tooltipMessage =
-          "Temporary users are limited to one goal. Register for an account to create more!";
-      } else if (hasMaxRegularUserGoals) {
-        tooltipMessage =
-          "You have reached the maximum of 4 active goals. Complete or archive existing goals to create new ones.";
-      }
-
-      return (
-        <Tooltip title={tooltipMessage} arrow>
-          <span>
-            <AddGoalButton
-              onAddGoalClick={handleAddGoalClick}
-              disabled={true}
-            />
-          </span>
-        </Tooltip>
-      );
+  const getAddGoalTooltip = () => {
+    if (isGuest) {
+      return "Guests can only create one goal. Please sign up or log in to add more goals.";
     }
-
-    // Otherwise show normal add button
-    return (
-      <AddGoalButton onAddGoalClick={handleAddGoalClick} disabled={false} />
-    );
-  };
-
-  // Handle priority change
-  const handlePriorityChange = (goalId, newPriority, updatedGoal) => {
-    console.log(
-      `Sidebar handling priority change for goal ${goalId} to ${newPriority}`
-    );
-
-    // use parent component's onPriorityChange function first
-    if (onPriorityChange) {
-      onPriorityChange(goalId, newPriority, updatedGoal);
+    if (activeGoalsCount >= 4) {
+      return "You have reached the maximum of 4 active goals. Complete or archive existing goals to create new ones.";
     }
-
-    // only sort locally if no updated goal data is received
-    if (!updatedGoal) {
-      // local priority update, maintain consistency
-      const updatedGoals = sortedGoals.map((goal) => {
-        if (
-          (goal._id && goal._id === goalId) ||
-          (goal.id && goal.id === goalId)
-        ) {
-          return { ...goal, priority: newPriority };
-        }
-        return goal;
-      });
-
-      // re-sort goals
-      const newSorted = sortGoals(updatedGoals);
-      setSortedGoals(newSorted);
-    }
+    return "";
   };
 
   return (
-    <div className="sidebar">
-      {renderAddGoalButton()}
+    <Box
+      sx={{
+        width: "300px",
+        height: "100vh",
+        bgcolor: "background.paper",
+        borderRight: "1px solid",
+        borderColor: "divider",
+        display: "flex",
+        flexDirection: "column",
+        p: 2,
+      }}
+    >
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Goals
+      </Typography>
 
-      <div className="goal-list">
-        {sortedGoals.length > 0 ? (
-          sortedGoals.map((goal) => {
-            // get goal ID
-            const goalId = goal._id || goal.id;
-            if (!goalId) {
-              console.error("Goal is missing ID:", goal);
-              return null;
-            }
+      <Search onSearchChange={handleSearchChange} />
 
-            return (
-              <div
-                key={goalId}
-                onClick={() => {
-                  console.log("Goal selected:", goal.title);
-                  onGoalSelect && onGoalSelect(goalId);
+      <Tooltip title={getAddGoalTooltip()}>
+        <span>
+           <Button
+             variant="contained"
+             startIcon={<AddCircleOutlineIcon />}
+             onClick={handleOpenAddGoalModal}
+             fullWidth
+             sx={{ mb: 2 }}
+             disabled={isAddGoalDisabled}
+           >
+             Add New Goal
+           </Button>
+        </span>
+      </Tooltip>
+
+      <Divider sx={{ mb: 2 }} />
+
+      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+        {isLoading && <CircularProgress sx={{ display: 'block', margin: 'auto' }} />}
+        {error && <Alert severity="error">{error}</Alert>}
+        {!isLoading && !error && (
+          filteredAndSortedGoals.length === 0 ? (
+            <Typography color="text.secondary" align="center">
+              {searchQuery ? "No goals match your search." : "No active goals yet."}
+            </Typography>
+          ) : (
+            filteredAndSortedGoals.map((goal) => (
+              <Box
+                key={goal._id || goal.id}
+                onClick={() => onGoalSelect(goal)}
+                sx={{
+                  cursor: "pointer",
+                  mb: 1.5,
+                  p: 1,
+                  borderRadius: 1,
+                  border: activeGoalId === (goal._id || goal.id) ? '2px solid' : '1px solid',
+                  borderColor: activeGoalId === (goal._id || goal.id) ? 'primary.main' : 'divider',
+                  backgroundColor: goal.status === 'archived' ? 'rgba(0,0,0,0.05)' : 'inherit',
+                  '&:hover': {
+                    backgroundColor: 'action.hover'
+                  }
                 }}
-                className={`goal-item ${
-                  goalId === activeGoalId ? "active" : ""
-                }`}
               >
                 <GoalCard
                   goal={goal}
-                  onPriorityChange={handlePriorityChange}
-                  onDateChange={(goalId, newDate, updatedGoal) => {
-                    console.log(
-                      `[important] GoalCard date changed: ${goalId} -> ${newDate}`
-                    );
-
-                    // if updated goal object is received, update the whole goal
-                    if (updatedGoal) {
-                      console.log(`using full data to update goal`);
-
-                      // notify parent component
-                      if (onDateChange) {
-                        onDateChange(goalId, newDate, updatedGoal);
-                      }
-
-                      // local update
-                      const updatedGoals = sortedGoals.map((g) => {
-                        if (g._id === goalId || g.id === goalId) {
-                          return { ...g, ...updatedGoal };
-                        }
-                        return g;
-                      });
-                      const newSorted = sortGoals(updatedGoals);
-                      setSortedGoals(newSorted);
-                    } else {
-                      // only update date
-                      console.log(`only update goal date`);
-
-                      // notify parent component
-                      if (onDateChange) {
-                        onDateChange(goalId, newDate);
-                      }
-
-                      // local update
-                      const updatedGoals = sortedGoals.map((g) => {
-                        if (g._id === goalId || g.id === goalId) {
-                          return { ...g, targetDate: newDate };
-                        }
-                        return g;
-                      });
-                      const newSorted = sortGoals(updatedGoals);
-                      setSortedGoals(newSorted);
-                    }
-                  }}
+                  onPriorityChange={onPriorityChange}
+                  onDateChange={onDateChange}
+                  onGoalArchived={handleGoalArchived}
                 />
-              </div>
-            );
-          })
-        ) : (
-          <div className="no-goals">
-            <p>No goals yet</p>
-            <p>Click the "Add Goal" button above to create your goal!</p>
-          </div>
+              </Box>
+            ))
+          )
         )}
-      </div>
+      </Box>
 
-      {/* Goal setting guide modal */}
-      <OnboardingModal
-        open={showGoalModal}
-        onClose={handleCloseGoalModal}
-        userId={getUserId()}
-        isGuest={isGuest}
-        onComplete={handleGoalComplete}
-      />
-    </div>
+      {showGoalModal && (
+        <OnboardingModal
+          open={showGoalModal}
+          onClose={handleCloseGoalModal}
+          userId={getUserId()}
+          isGuest={isGuest}
+          onComplete={handleCloseGoalModal}
+        />
+      )}
+    </Box>
   );
 }
+
+Sidebar.propTypes = {
+  onGoalSelect: PropTypes.func.isRequired,
+  onAddGoalClick: PropTypes.func,
+  onPriorityChange: PropTypes.func.isRequired,
+  onDateChange: PropTypes.func.isRequired,
+  activeGoalId: PropTypes.string,
+  onGoalUpdate: PropTypes.func,
+};
