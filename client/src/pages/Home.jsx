@@ -204,6 +204,9 @@ function Home() {
    */
   const handleLogout = async () => {
     try {
+      // Set a flag indicating the user just logged out
+      localStorage.setItem("justLoggedOut", "true");
+      
       // try to clear session on server
       try {
         if (user && user.isGuest) {

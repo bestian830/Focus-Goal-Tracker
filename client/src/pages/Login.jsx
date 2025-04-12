@@ -36,8 +36,18 @@ function Login() {
     const userId = localStorage.getItem("userId");
     const tempId = localStorage.getItem("tempId");
     
-    // If userId or tempId exists, redirect to home page
-    if (userId || tempId) {
+    // Check if user just logged out
+    const justLoggedOut = localStorage.getItem("justLoggedOut");
+    
+    // If user just logged out, clear the flag and stay on login page
+    if (justLoggedOut) {
+      localStorage.removeItem("justLoggedOut");
+      return;
+    }
+    
+    // Only auto-redirect to home page for users with userId
+    // For tempId users, they need to click login button manually
+    if (userId) {
       console.log("User already logged in, redirecting to home page");
       navigate("/");
     }
