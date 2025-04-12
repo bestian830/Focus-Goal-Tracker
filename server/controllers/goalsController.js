@@ -287,18 +287,6 @@ const createGoal = async (req, res) => {
     } catch (createError) {
       console.error(`Error creating goal:`, createError);
       
-      // Check if it's a duplicate key error
-      if (createError.code === 11000) {
-        console.log(`Duplicate key error occurred:`, createError.keyValue);
-        return res.status(400).json({
-          success: false,
-          error: {
-            message: "A goal with these details already exists"
-          }
-        });
-      }
-      
-      // Other errors
       return res.status(500).json({
         success: false,
         error: {
@@ -516,13 +504,14 @@ const updateGoalStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     
-    // Validate status value
-    const validStatuses = ["active", "completed", "abandoned"];
+    // *** Modification：put "archived" into the valid status list ***
+    const validStatuses = ["active", "completed", "abandoned", "archived"]; // 添加 "archived"
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Invalid status value. Must be one of: active, completed, abandoned"
+          // Update error message
+          message: `Invalid status value. Must be one of: ${validStatuses.join(', ')}`
         }
       });
     }
@@ -538,24 +527,27 @@ const updateGoalStatus = async (req, res) => {
       });
     }
     
-    // Update status
+    // update status
     goal.status = status;
+    console.log(`Updating goal ${id} status to: ${status}`); 
     
     // If completed, set completedAt
     if (status === "completed") {
       goal.completedAt = new Date();
     } else {
-      goal.completedAt = undefined; // Remove completedAt if not completed
+      // For "active", "archived", "abandoned" clear completedAt
+      goal.completedAt = undefined; 
     }
     
     await goal.save();
+    console.log(`Goal ${id} status updated successfully.`); 
     
     res.status(200).json({
       success: true,
       data: goal
     });
   } catch (error) {
-    console.error("Error updating goal status:", error);
+    console.error(`Error updating goal status for ID ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: {

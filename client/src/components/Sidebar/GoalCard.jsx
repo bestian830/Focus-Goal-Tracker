@@ -7,16 +7,28 @@ import {
   Typography,
   Box,
   Chip,
+  CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import ArchiveIcon from '@mui/icons-material/Archive';
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { zhCN } from "date-fns/locale";
 import apiService from "../../services/api";
+import axios from 'axios';
 
-export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
-  // enhanced security check, ensure goal is a valid object
+export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalArchived }) {
+  // Hooks must be called at the top level
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [priority, setPriority] = useState(goal?.priority || "Medium");
+  const [targetDate, setTargetDate] = useState(() => {
+    const initialDate = goal?.targetDate || goal?.dueDate;
+    return initialDate ? new Date(initialDate) : null;
+  });
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState(null);
+
+  // Early return check AFTER hooks
   if (!goal || typeof goal !== "object") {
     console.error("Invalid goal object received by GoalCard:", goal);
     return (
@@ -26,7 +38,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     );
   }
 
-  // detailed logging for debugging
+  // Logging for rendering
   console.log("Rendering GoalCard for:", {
     id: goal._id || goal.id,
     title: goal.title,
@@ -35,34 +47,21 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     targetDate: goal.targetDate || goal.dueDate,
   });
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [priority, setPriority] = useState(goal.priority || "Medium");
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [targetDate, setTargetDate] = useState(
-    goal.targetDate
-      ? new Date(goal.targetDate)
-      : goal.dueDate
-      ? new Date(goal.dueDate)
-      : null
-  );
-
-  // when goal properties change, update local state
+  // Effect to sync state with props
   useEffect(() => {
-    if (goal.priority && goal.priority !== priority && hasLoaded) {
+    // Update priority if prop changes
+    if (goal.priority && goal.priority !== priority) {
       console.log(
         `Updating priority state from ${priority} to ${goal.priority}`
       );
       setPriority(goal.priority);
-    } else {
-      setHasLoaded(true);
     }
 
-    // update target date - enhanced logging for debugging
+    // Update target date if prop changes
     const newDate = goal.targetDate || goal.dueDate;
     if (newDate) {
       const newDateObj = new Date(newDate);
-
-      // check if current date is different from new date
+      // Check if date actually changed to avoid unnecessary state updates
       const needsUpdate =
         !targetDate || targetDate.getTime() !== newDateObj.getTime();
 
@@ -74,17 +73,16 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
         });
         setTargetDate(newDateObj);
       }
+    } else if (targetDate !== null) { // Handle case where date is removed from props
+        console.log(`[date] goal property removed, clearing date state`, {
+          goalID: goal._id || goal.id,
+          oldDate: targetDate ? targetDate.toISOString() : "none",
+        });
+       setTargetDate(null);
     }
-  }, [
-    goal.priority,
-    priority,
-    hasLoaded,
-    goal.targetDate,
-    goal.dueDate,
-    targetDate,
-  ]);
+  }, [goal.priority, goal.targetDate, goal.dueDate, priority, targetDate]); // Add priority and targetDate to dependency array
 
-  // priority mapping - text to display number
+  // Priority mapping
   const priorityMap = {
     High: 1,
     Medium: 2,
@@ -94,72 +92,50 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
   const priorityClass = priority.toLowerCase();
   const priorityNumber = priorityMap[priority] || 2;
 
-  // handle opening priority edit menu
+  // Menu handlers
   const handleOpenMenu = (event) => {
-    event.stopPropagation(); // prevent triggering goal selection
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
-  // handle closing priority edit menu
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
 
-  // handle priority change
+  // Priority change handler
   const handlePriorityChange = async (newPriority) => {
     try {
-      // close menu
       handleCloseMenu();
-
-      // if priority didn't change, do nothing
       if (newPriority === priority) return;
 
       console.log(`Changing priority from ${priority} to ${newPriority}`);
-
-      // ensure goal id exists
       const goalId = goal._id || goal.id;
       if (!goalId) {
         console.error("Cannot update priority: missing goal ID");
         return;
       }
 
-      // update local state for quick feedback
-      setPriority(newPriority);
+      const oldPriority = priority;
+      setPriority(newPriority); // Optimistic UI update
 
-      // notify parent component priority has changed (use old data for initial update)
       if (onPriorityChange) {
-        onPriorityChange(goalId, newPriority);
+        onPriorityChange(goalId, newPriority); // Notify parent immediately
       }
 
-      // update goal priority via API
       try {
         const response = await apiService.goals.update(goalId, {
           priority: newPriority,
         });
-        console.log(
-          `Priority updated successfully to ${newPriority}`,
-          response
-        );
-
-        // if API returns updated data, notify parent component again
-        if (
-          response &&
-          response.data &&
-          response.data.success &&
-          response.data.data
-        ) {
-          // notify parent component updated goal data, trigger re-render
-          if (onPriorityChange) {
-            onPriorityChange(goalId, newPriority, response.data.data);
-          }
+        console.log(`Priority updated successfully to ${newPriority}`, response);
+        // Optionally notify parent again with confirmed data
+        if (response?.data?.success && response.data.data && onPriorityChange) {
+           onPriorityChange(goalId, newPriority, response.data.data);
         }
       } catch (apiError) {
         console.error("API failed to update goal priority:", apiError);
-        // rollback local state
-        setPriority(priority);
-        // notify parent component priority update failed
+        setPriority(oldPriority); // Rollback UI
         if (onPriorityChange) {
-          onPriorityChange(goalId, priority);
+          onPriorityChange(goalId, oldPriority); // Notify parent of rollback
         }
       }
     } catch (error) {
@@ -167,9 +143,11 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
     }
   };
 
-  // handle date change - fully implemented like RewardsStep
+  // Date change handler
   const handleDateChange = async (newDate) => {
-    if (!newDate) return;
+    // Allow clearing the date
+    const dateChanged = (!newDate && targetDate) || (newDate && !targetDate) || (newDate && targetDate && newDate.getTime() !== targetDate.getTime());
+    if (!dateChanged) return; 
 
     const goalId = goal._id || goal.id;
     if (!goalId) {
@@ -177,110 +155,154 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange }) {
       return;
     }
 
-    console.log(`date changed: ${goalId}, from ${targetDate} to ${newDate}`);
+    console.log(`date changed: ${goalId}, from ${targetDate?.toISOString()} to ${newDate?.toISOString()}`);
 
-    // update local state
-    setTargetDate(newDate);
+    const oldDate = targetDate;
+    setTargetDate(newDate); // Optimistic UI update
 
-    // notify parent component (optional)
     if (onDateChange) {
-      onDateChange(goalId, newDate);
+      onDateChange(goalId, newDate); // Notify parent immediately
     }
 
-    // update directly via API
     try {
       const response = await apiService.goals.update(goalId, {
-        targetDate: newDate, // pass Date object directly
+        targetDate: newDate, // Pass Date object or null
       });
-
       console.log("date updated successfully:", response.data);
-
-      // optional: if API returns updated data, notify parent component
-      if (
-        response.data &&
-        response.data.success &&
-        response.data.data &&
-        onDateChange
-      ) {
+      // Optionally notify parent again with confirmed data
+      if (response?.data?.success && response.data.data && onDateChange) {
         onDateChange(goalId, newDate, response.data.data);
       }
     } catch (error) {
       console.error("date update failed:", error);
-      // rollback local state (optional)
-      const originalDate = goal.targetDate
-        ? new Date(goal.targetDate)
-        : goal.dueDate
-        ? new Date(goal.dueDate)
-        : null;
-      setTargetDate(originalDate);
+      setTargetDate(oldDate); // Rollback UI
+      if (onDateChange) {
+        onDateChange(goalId, oldDate); // Notify parent of rollback
+      }
     }
   };
 
-  // safe get goal title and status
+  // Archive handler
+  const handleArchive = async () => {
+    if (isArchiving) return;
+    setIsArchiving(true);
+    setArchiveError(null);
+    const goalId = goal._id || goal.id; // Get goalId here
+    if (!goalId) {
+       console.error("Cannot archive goal: missing goal ID");
+       setIsArchiving(false);
+       return;
+    }
+
+    try {
+      const response = await axios.put(
+        `/api/goals/${goalId}/status`, // Use goalId variable
+        { status: 'archived' },
+        { withCredentials: true }
+      );
+      if (response.data && response.data.success) {
+        console.log(`Goal ${goalId} archived successfully.`);
+        if (onGoalArchived) {
+          onGoalArchived(goalId); // Pass goalId to the callback
+        }
+      } else {
+         throw new Error(response.data?.error?.message || 'Failed to archive goal');
+      }
+    } catch (err) {
+      console.error(`Error archiving goal ${goalId}:`, err);
+      setArchiveError(err.message || 'Could not archive goal.');
+      setIsArchiving(false); // Allow retry on failure
+    }
+    // Don't set isArchiving to false on success, as the card will be removed
+  };
+
+  // Safe access to goal properties
   const goalTitle = goal.title || "Unnamed Goal";
   const goalStatus = goal.status || "active";
 
   return (
-    <div className={`goal-card ${goalStatus === "active" ? "active" : ""}`}>
-      <div className="goal-card-header">
-        <h5>{goalTitle}</h5>
-      </div>
+      <div className={`goal-card ${goalStatus === "active" ? "active" : ""}`}>
+        {/* Header with Title and Archive Button */}
+        <div className="goal-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          {/* Goal Title */}
+          <h5 style={{ margin: 0, flexGrow: 1, marginRight: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+             {goalTitle}
+          </h5>
 
-      <div className="goal-card-content">
-        <div className="priority-container">
-          <Chip
-            size="small"
-            label={`Priority: ${priorityNumber} (${priority})`}
-            className={`priority-chip priority-${priorityClass}`}
-          />
-
-          <Tooltip title="Edit Priority" arrow>
-            <IconButton
-              size="small"
-              className="edit-priority-btn"
-              onClick={handleOpenMenu}
-              aria-label="Edit Priority"
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
+          {/* Archive Button */}
+          <Tooltip title="Archive Goal">
+            <div> {/* Wrapper div might help with layout consistency */}
+              <IconButton
+                aria-label="archive goal"
+                onClick={(e) => { e.stopPropagation(); handleArchive(); }} // Prevent card click while archiving
+                disabled={isArchiving || goalStatus === 'archived'}
+                size="small"
+                sx={{ color: 'action.active' }} // Use theme color for consistency
+              >
+                {isArchiving ? <CircularProgress size={20} color="inherit"/> : <ArchiveIcon fontSize="inherit" />}
+              </IconButton>
+            </div>
           </Tooltip>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleCloseMenu}
-          >
-            <MenuItem onClick={() => handlePriorityChange("High")}>
-              Priority: 1 (High)
-            </MenuItem>
-            <MenuItem onClick={() => handlePriorityChange("Medium")}>
-              Priority: 2 (Medium)
-            </MenuItem>
-            <MenuItem onClick={() => handlePriorityChange("Low")}>
-              Priority: 3 (Low)
-            </MenuItem>
-          </Menu>
         </div>
 
-        <div className="due-date-container">
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="Target Date"
-              value={targetDate}
-              onChange={handleDateChange}
-              disablePast
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  variant: "outlined",
-                  size: "small",
-                  helperText: "Select target completion date",
-                },
-              }}
+        {/* Content Area */}
+        <div className="goal-card-content">
+          {/* Priority Section */}
+          <div className="priority-container">
+            <Chip
+              size="small"
+              label={`Prio: ${priorityNumber}`}
+              className={`priority-chip priority-${priorityClass}`}
+              sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
             />
-          </LocalizationProvider>
+            <Tooltip title="Edit Priority" arrow>
+              <IconButton
+                size="small"
+                className="edit-priority-btn"
+                onClick={handleOpenMenu}
+                aria-label="Edit Priority"
+                sx={{ padding: '4px' }}
+              >
+                <EditIcon sx={{ fontSize: '1rem' }} />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleCloseMenu}
+            >
+              <MenuItem onClick={() => handlePriorityChange("High")}>Priority: 1 (High)</MenuItem>
+              <MenuItem onClick={() => handlePriorityChange("Medium")}>Priority: 2 (Medium)</MenuItem>
+              <MenuItem onClick={() => handlePriorityChange("Low")}>Priority: 3 (Low)</MenuItem>
+            </Menu>
+          </div>
+
+          {/* Date Picker Section */}
+          <div className="due-date-container">
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Target Date"
+                value={targetDate}
+                onChange={handleDateChange}
+                disablePast
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined",
+                    size: "small",
+                    InputLabelProps: { shrink: true },
+                    sx: { marginTop: 1 }
+                  },
+                  actionBar: { actions: ['clear', 'today', 'accept'] }
+                }}
+                 sx={{ width: '100%' }}
+              />
+            </LocalizationProvider>
+          </div>
+
+          {/* Display archive error subtly */}
+          {archiveError && <Typography variant="caption" color="error" sx={{ display: 'block', textAlign: 'right', marginTop: 0.5 }}>Archive failed</Typography>}
         </div>
       </div>
-    </div>
   );
 }

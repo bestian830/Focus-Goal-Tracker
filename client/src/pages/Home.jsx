@@ -118,8 +118,10 @@ function Home() {
         console.log("User information in localStorage:", { userId, tempId });
 
         if (!userId && !tempId) {
-          console.log("No user information found, displaying welcome page");
+          console.log("No user information found, redirecting to login page");
           setLoading(false);
+          // Redirect to login page instead of showing welcome message
+          navigate("/login");
           return;
         }
 
@@ -180,7 +182,7 @@ function Home() {
 
     fetchUserData();
 
-    // set up a scheduled refresh mechanism, refresh every 30 seconds
+    // set up a scheduled refresh mechanism, refresh every 5 minutes instead of 30 seconds
     const refreshInterval = setInterval(() => {
       if (user) {
         console.log("Running scheduled refresh of goals data");
@@ -189,7 +191,7 @@ function Home() {
           console.error("Scheduled refresh failed:", err);
         });
       }
-    }, 30000); // refresh every 30 seconds
+    }, 300000); // refresh every 5 minutes (300000ms)
 
     return () => {
       // clear timer when component unmounts
@@ -288,8 +290,9 @@ function Home() {
   };
 
   // handle goal selection from sidebar
-  const handleGoalSelect = (goalId) => {
-    console.log("Goal selected:", goalId);
+  const handleGoalSelect = (goal) => {
+    console.log("Goal selected:", goal);
+    const goalId = goal._id || goal.id;
     setSelectedGoalId(goalId);
   };
 
@@ -515,11 +518,9 @@ function Home() {
             <ProgressReport goalId={selectedGoalId} />
           </>
         ) : (
-          <div className="welcome-message">
-            <h2>Welcome to Focus</h2>
-            <p>
-              Please log in or continue as a guest to start tracking your goals.
-            </p>
+          // Show loading indicator instead of welcome message when not authenticated
+          <div className="loading-container">
+            <p>Loading user data...</p>
           </div>
         )}
       </div>
