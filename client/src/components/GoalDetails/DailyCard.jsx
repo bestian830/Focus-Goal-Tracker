@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Badge } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import styles from './DailyCard.module.css';
 import DailyCardRecord from './DailyCardRecord';
 import apiService from '../../services/api';
+import useRewardsStore from '../../store/rewardsStore';
 
 /**
  * DailyCard - Displays a single date's card showing task completion status
@@ -18,6 +19,21 @@ import apiService from '../../services/api';
 export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Get reward data from Zustand store
+  const getGoalReward = useRewardsStore(state => state.getGoalReward);
+  const currentReward = goal?._id ? getGoalReward(goal._id) : null;
+  
+  // Effect to log when reward changes from declaration
+  useEffect(() => {
+    if (goal?._id) {
+      const reward = getGoalReward(goal._id);
+      console.log('DailyCard detected reward change:', {
+        goalId: goal._id,
+        reward
+      });
+    }
+  }, [goal?._id, getGoalReward]);
 
   // Format the date for display
   const formatDate = (dateString) => {
@@ -65,8 +81,15 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
     setLoading(true);
     
     try {
-      // If we have an onUpdate callback (which should come from WeeklyDailyCards),
-      // we can use it to refresh the goal data before opening the dialog
+      // Get the latest reward from Zustand store
+      let latestReward = goal?._id ? getGoalReward(goal._id) : null;
+      console.log('DailyCard opening with reward:', {
+        goalId: goal?._id,
+        reward: latestReward,
+        originalReward: goal?.currentSettings?.dailyReward
+      });
+      
+      // If we have an onUpdate callback, use it to refresh the goal data
       if (onUpdate && goal && goal._id) {
         console.log('DailyCard - Refreshing goal data before opening record dialog');
         
@@ -94,6 +117,26 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
             });
             
             console.log('DailyCard - Data refresh completed, found card:', foundCard);
+            
+            // Store the current reward in Zustand if available
+            if (refreshedGoal && refreshedGoal._id) {
+              // First, check dailyReward in the currentSettings
+              const dailyReward = refreshedGoal.currentSettings?.dailyReward || '';
+              
+              // Also check rewards array
+              const rewards = refreshedGoal.rewards || [];
+              
+              // Store reward data in Zustand
+              console.log('Storing reward data in Zustand:', { 
+                goalId: refreshedGoal._id,
+                dailyReward,
+                rewards 
+              });
+              
+              // We don't need to update the Zustand store here as we're
+              // just opening the dialog with the current state
+              // The declaration rewards should have priority anyway
+            }
           }
         } catch (error) {
           console.error('DailyCard - Error refreshing data before opening dialog:', error);

@@ -593,7 +593,8 @@ const addOrUpdateDailyCard = async (req, res) => {
       requestDate: date,
       parsedDate: cardDate,
       standardizedDateString: cardDateStr,
-      existingCardCount: goal.dailyCards?.length || 0
+      existingCardCount: goal.dailyCards?.length || 0,
+      dailyReward: dailyReward || goal.currentSettings?.dailyReward || ''
     });
     
     // Improved date comparison logic using normalized YYYY-MM-DD strings
@@ -623,10 +624,14 @@ const addOrUpdateDailyCard = async (req, res) => {
       index: existingCardIndex
     });
     
+    // Get current dailyReward from goal settings if not provided in request
+    const effectiveDailyReward = dailyReward || goal.currentSettings?.dailyReward || '';
+    
     if (existingCardIndex !== -1) {
       // Update existing card
       if (dailyTask) goal.dailyCards[existingCardIndex].dailyTask = dailyTask;
-      if (dailyReward) goal.dailyCards[existingCardIndex].dailyReward = dailyReward;
+      // Always update dailyReward with the effective value
+      goal.dailyCards[existingCardIndex].dailyReward = effectiveDailyReward;
       
       if (completed) {
         if (!goal.dailyCards[existingCardIndex].completed) {
@@ -671,7 +676,7 @@ const addOrUpdateDailyCard = async (req, res) => {
       const newCard = {
         date: cardDate,
         dailyTask: dailyTask || goal.currentSettings?.dailyTask || '',
-        dailyReward: dailyReward || goal.currentSettings?.dailyReward || '',
+        dailyReward: effectiveDailyReward,
         completed: completed || { dailyTask: false, dailyReward: false },
         records: records || [],
         links: links || [],
@@ -681,10 +686,22 @@ const addOrUpdateDailyCard = async (req, res) => {
       
       console.log('Creating new card:', {
         date: cardDate,
+        dailyReward: newCard.dailyReward,
         taskCompletionStatus: newCard.taskCompletions
       });
       
       goal.dailyCards.push(newCard);
+    }
+
+    // Check if goal.rewards is an array and ensure it includes the dailyReward
+    if (!goal.rewards) {
+      goal.rewards = [];
+    }
+    
+    // Ensure goal.rewards includes the current dailyReward if it's valid
+    if (effectiveDailyReward && !goal.rewards.includes(effectiveDailyReward)) {
+      console.log('Adding dailyReward to goal.rewards:', effectiveDailyReward);
+      goal.rewards.push(effectiveDailyReward);
     }
     
     // Save updated goal

@@ -21,6 +21,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 import { useUserStore } from '../../store/userStore';
+import useRewardsStore from '../../store/rewardsStore';
 
 /**
  * Editable field component - allows direct text editing
@@ -99,6 +100,9 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   
   // State to store updated username info
   const [freshUserInfo, setFreshUserInfo] = useState(null);
+  
+  // Get the setDeclarationReward function from the Zustand store
+  const setDeclarationReward = useRewardsStore(state => state.setDeclarationReward);
   
   // When dialog opens, fetch fresh user data
   useEffect(() => {
@@ -746,6 +750,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
         
         console.log("Declaration saved successfully, API result:", result);
         
+        // Update the declaration reward in the Zustand store
+        if (goalId && editedData.dailyReward) {
+          console.log("Updating declaration reward in Zustand store:", {
+            goalId,
+            reward: editedData.dailyReward
+          });
+          setDeclarationReward(goalId, editedData.dailyReward);
+        }
+        
         // Create a more complete localUpdatedGoal with consistent motivation across all fields
         const localUpdatedGoal = {
           ...goal,
@@ -772,13 +785,23 @@ Because the path is already beneath my feet—it's really not that complicated. 
             ...(goal.currentSettings || {}),
             dailyTask: editedData.dailyTask,
             dailyReward: editedData.dailyReward
-          }
+          },
+          // Add rewards array with dailyReward to ensure it gets passed properly
+          rewards: Array.isArray(goal.rewards) 
+            ? [...goal.rewards.filter(r => r !== editedData.dailyReward), editedData.dailyReward]
+            : [editedData.dailyReward]
         };
         
         console.log("Local updated goal with motivation:", {
           motivation: localUpdatedGoal.motivation,
           detailsMotivation: localUpdatedGoal.details?.motivation,
           description: localUpdatedGoal.description
+        });
+        
+        // Make sure rewards include the dailyReward value for DailyCardRecord
+        console.log("Updated rewards array:", {
+          dailyReward: editedData.dailyReward,
+          rewards: localUpdatedGoal.rewards
         });
         
         // Ensure the goal object is completely updated (more thoroughly)
@@ -806,6 +829,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
           // Pass a clean copy of the local goal to prevent reference issues
           const cleanCopy = JSON.parse(JSON.stringify(localUpdatedGoal));
           console.log("Sending updated goal to parent with motivation:", cleanCopy.motivation);
+          console.log("Sending updated goal with dailyReward:", cleanCopy.currentSettings?.dailyReward);
+          console.log("Sending updated rewards array:", cleanCopy.rewards);
           onClose(cleanCopy, false); // Pass updated goal and false for "don't close dialog"
         }
         

@@ -36,6 +36,7 @@ import DailyTasks from './DailyTasks';
 import DailyReward from './DailyReward';
 import apiService from '../../services/api';
 import { toast } from 'react-hot-toast';
+import useRewardsStore from '../../store/rewardsStore';
 
 /**
  * DailyCardRecord component displays and manages a daily card with tasks, rewards, and progress records
@@ -55,6 +56,10 @@ export default function DailyCardRecord({
   onSave,
   onViewDeclaration 
 }) {
+  // Get reward from Zustand store
+  const getGoalReward = useRewardsStore(state => state.getGoalReward);
+  const setGoalReward = useRewardsStore(state => state.setGoalReward);
+  
   // Format the date for display (e.g., "4/9 Wednesday")
   const formatDisplayDate = (dateString) => {
     if (!dateString) return '';
@@ -151,6 +156,13 @@ export default function DailyCardRecord({
       );
     });
 
+    // Try to get reward from Zustand store
+    const zustandReward = goal._id ? getGoalReward(goal._id) : null;
+    console.log('Checking for reward in Zustand store:', {
+      goalId: goal._id,
+      zustandReward
+    });
+
     if (existingCard) {
       // 使用本地日期格式處理，而不是 UTC
       const today = new Date();
@@ -180,7 +192,8 @@ export default function DailyCardRecord({
         setCardData({
           ...existingCard,
           dailyTask: goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
-          dailyReward: goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
+          // Try to use reward from Zustand first, then fallback to other sources
+          dailyReward: zustandReward || goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
           // Ensure records is an array
           records: Array.isArray(existingCard.records) ? existingCard.records : [],
           taskCompletions // 保留任务完成状态
@@ -189,6 +202,8 @@ export default function DailyCardRecord({
         // For past dates, use existing card data unchanged, but ensure records is an array
         setCardData({
           ...existingCard,
+          // Still prefer Zustand reward if available
+          dailyReward: zustandReward || existingCard.dailyReward || '',
           records: Array.isArray(existingCard.records) ? existingCard.records : [],
           taskCompletions // 保留任务完成状态
         });
@@ -213,7 +228,8 @@ export default function DailyCardRecord({
       setCardData({
         date: date,
         dailyTask: goal.currentSettings?.dailyTask || '',
-        dailyReward: goal.currentSettings?.dailyReward || '',
+        // Use Zustand reward for new cards too
+        dailyReward: zustandReward || goal.currentSettings?.dailyReward || '',
         completed: {
           dailyTask: false,
           dailyReward: false
@@ -227,10 +243,53 @@ export default function DailyCardRecord({
     console.log('Daily card data initialized:', {
       date,
       existingCard: existingCard ? 'found' : 'not found',
+      zustandReward,
+      finalReward: zustandReward || goal.currentSettings?.dailyReward || (existingCard?.dailyReward || ''),
       recordsType: existingCard ? (Array.isArray(existingCard.records) ? 'array' : typeof existingCard.records) : 'N/A',
       taskCompletionsLoaded: existingCard ? (existingCard.taskCompletions ? 'yes' : 'no') : 'N/A'
     });
-  }, [goal, date, open]);
+  }, [goal, date, open, getGoalReward]);
+
+  // Effect to update reward when goal settings change
+  useEffect(() => {
+    if (goal?.currentSettings?.dailyReward) {
+      console.log('Detected dailyReward change in goal settings:', goal.currentSettings.dailyReward);
+      
+      setCardData(prevData => {
+        // Only update if different from current value
+        if (prevData.dailyReward !== goal.currentSettings.dailyReward) {
+          console.log('Updating dailyReward in cardData:', goal.currentSettings.dailyReward);
+          return {
+            ...prevData,
+            dailyReward: goal.currentSettings.dailyReward
+          };
+        }
+        return prevData;
+      });
+    }
+  }, [goal?.currentSettings?.dailyReward]);
+
+  // Add an effect to update rewards when the goal object changes
+  // This will ensure that changes made in the GoalDeclaration component are reflected
+
+  useEffect(() => {
+    if (goal?._id) {
+      // Check if the goal has rewards data
+      if (goal.rewards?.length > 0 || goal.currentSettings?.dailyReward) {
+        const rewardToUse = goal.currentSettings?.dailyReward || (goal.rewards?.length > 0 ? goal.rewards[0] : null);
+        
+        if (rewardToUse) {
+          console.log('Goal updated with new reward data:', {
+            goalId: goal._id,
+            reward: rewardToUse
+          });
+          
+          // Update Zustand store
+          setGoalReward(goal._id, rewardToUse);
+        }
+      }
+    }
+  }, [goal?.rewards, goal?.currentSettings?.dailyReward, goal?._id, setGoalReward]);
 
   // Handle task status change
   const handleTaskStatusChange = async (taskId, completed) => {
@@ -706,6 +765,12 @@ export default function DailyCardRecord({
         updatedCard.completed = { dailyTask: false, dailyReward: false };
       }
       
+      // Inside handleSave function, after creating updatedCard object
+      // Ensure effective dailyReward is used
+      updatedCard.dailyReward = goal?.currentSettings?.dailyReward || updatedCard.dailyReward;
+
+      console.log('About to save card with dailyReward:', updatedCard.dailyReward);
+      
       console.log('Sending updated card to API:', {
         goalId: goal._id,
         date: updatedCard.date,
@@ -719,6 +784,15 @@ export default function DailyCardRecord({
         const response = await apiService.goals.addOrUpdateDailyCard(goalId, updatedCard);
         console.log('API response:', response);
         
+        // Update reward in Zustand store
+        if (goal._id && updatedCard.dailyReward) {
+          console.log('Updating reward in Zustand after save:', {
+            goalId: goal._id,
+            reward: updatedCard.dailyReward
+          });
+          setGoalReward(goal._id, updatedCard.dailyReward);
+        }
+        
         // Show success message with completed tasks info
         const completedTasksCount = Object.values(safeTaskCompletions).filter(Boolean).length;
         const totalTasksCount = Object.keys(safeTaskCompletions).length;
@@ -730,7 +804,7 @@ export default function DailyCardRecord({
         setTimeout(() => setSuccess(''), 5000);
         
         // Call onSave callback if provided
-      if (onSave) {
+        if (onSave) {
           console.log('Calling onSave callback with updatedCard data');
           // Pass the locally constructed updatedCard, consistent with handleTaskStatusChange
           onSave(updatedCard); 
@@ -749,6 +823,32 @@ export default function DailyCardRecord({
       setIsSaving(false);
     }
   };
+
+  // Effect to check for Zustand rewards when component opens
+  useEffect(() => {
+    if (open && goal?._id) {
+      const zustandReward = getGoalReward(goal._id);
+      console.log('DailyCardRecord opened, checking Zustand reward:', {
+        goalId: goal._id,
+        reward: zustandReward,
+        currentSettingsReward: goal?.currentSettings?.dailyReward
+      });
+      
+      if (zustandReward) {
+        // Update cardData with the Zustand reward
+        setCardData(prev => {
+          if (prev.dailyReward !== zustandReward) {
+            console.log('Updating cardData with Zustand reward:', zustandReward);
+            return {
+              ...prev,
+              dailyReward: zustandReward
+            };
+          }
+          return prev;
+        });
+      }
+    }
+  }, [open, goal?._id, getGoalReward]);
 
   return (
     <Dialog 
@@ -940,27 +1040,13 @@ export default function DailyCardRecord({
             <span>Rewards</span>
           </Typography>
           
-          {goal && goal.rewards && goal.rewards.length > 0 ? (
-            <List>
-              {goal.rewards.map((reward, index) => (
-                <ListItem key={`reward-${index}`} sx={{ p: 0, my: 1 }}>
-                  <DailyReward 
-                    reward={reward}
-                    claimed={cardData.completed?.dailyReward || false}
-                    onClaimedChange={handleRewardStatusChange}
-                    disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean))}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          ) : (
-            <DailyReward 
-              reward={cardData.dailyReward}
-              claimed={cardData.completed?.dailyReward || false}
-              onClaimedChange={handleRewardStatusChange}
-              disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean))}
-            />
-          )}
+          {/* Always prioritize reward from Zustand store */}
+          <DailyReward 
+            reward={goal?._id ? (getGoalReward(goal._id) || cardData.dailyReward || 'No reward set') : (cardData.dailyReward || 'No reward set')}
+            claimed={cardData.completed?.dailyReward || false}
+            onClaimedChange={handleRewardStatusChange}
+            disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean))}
+          />
         </Box>
         
         <Divider sx={{ my: 2 }} />
