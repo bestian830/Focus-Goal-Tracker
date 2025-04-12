@@ -230,16 +230,35 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
           </h5>
 
           {/* Archive Button */}
-          <Tooltip title="Archive Goal">
-            <div> {/* Wrapper div might help with layout consistency */}
+          <Tooltip 
+            title="Complete and Archive" 
+            placement="top-end"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  padding: '8px 12px'
+                }
+              }
+            }}
+          >
+            <div style={{ marginLeft: '4px' }}> {/* Add some margin for spacing */}
               <IconButton
-                aria-label="archive goal"
+                aria-label="complete and archive goal"
                 onClick={(e) => { e.stopPropagation(); handleArchive(); }} // Prevent card click while archiving
                 disabled={isArchiving || goalStatus === 'archived'}
-                size="small"
-                sx={{ color: 'action.active' }} // Use theme color for consistency
+                size="medium"
+                sx={{ 
+                  color: 'action.active',
+                  padding: '6px',
+                  '&:hover': {
+                    color: 'primary.main',
+                    backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
               >
-                {isArchiving ? <CircularProgress size={20} color="inherit"/> : <ArchiveIcon fontSize="inherit" />}
+                {isArchiving ? <CircularProgress size={24} color="inherit"/> : <ArchiveIcon sx={{ fontSize: '1.5rem' }} />}
               </IconButton>
             </div>
           </Tooltip>
@@ -255,7 +274,19 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
               className={`priority-chip priority-${priorityClass}`}
               sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
             />
-            <Tooltip title="Edit Priority" arrow>
+            <Tooltip 
+              title="Edit Priority" 
+              arrow
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    padding: '8px 12px'
+                  }
+                }
+              }}
+            >
               <IconButton
                 size="small"
                 className="edit-priority-btn"
