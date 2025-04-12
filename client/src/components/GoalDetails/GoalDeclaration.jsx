@@ -219,6 +219,8 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
       targetDate,
     } = data;
     
+    console.log("Generating declaration with motivation:", motivation);
+    
     const username = 'User'; // Can be obtained as needed
     const formattedDate = targetDate ? new Date(targetDate).toLocaleDateString() : '';
     
@@ -518,6 +520,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       setError('');
       
       console.log("Starting preparation of declaration data...");
+      console.log("Using motivation value:", editedData.motivation);
       console.log("Current goal object:", {
         id: goal._id || goal.id,
         hasId: !!(goal._id || goal.id),
@@ -528,6 +531,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
       // Prepare update data
       const updatedGoal = {
         title: editedData.title,
+        // Set motivation as a top-level property for immediate access
+        motivation: editedData.motivation,
         details: {
           ...(goal.details || {}),
           motivation: editedData.motivation,
@@ -583,19 +588,22 @@ Because the path is already beneath my feet—it's really not that complicated. 
         
         console.log("Declaration saved successfully, API result:", result);
         
-        // Key improvement: Immediately update declaration content display locally, without waiting for reload
-        // Create a local object with new declaration content
+        // Create a more complete localUpdatedGoal with consistent motivation across all fields
         const localUpdatedGoal = {
           ...goal,
           _id: goalId, // Ensure ID remains consistent
           id: goalId,  // Update both possible ID formats
+          title: editedData.title,
           declaration: {
             content: updatedGoal.declaration.content,
             updatedAt: new Date()
           },
+          // Ensure motivation is available in ALL places it might be accessed from
+          motivation: editedData.motivation,
+          description: editedData.motivation, // Add to description as fallback
           details: {
             ...(goal.details || {}),
-            motivation: editedData.motivation,
+            motivation: editedData.motivation, // Ensure details.motivation is set
             resources: editedData.resources,
             nextStep: editedData.nextStep,
             ultimateReward: editedData.ultimateReward,
@@ -609,14 +617,39 @@ Because the path is already beneath my feet—it's really not that complicated. 
           }
         };
         
-        // Force update local goal object, this is a hack but effective
-        Object.assign(goal, localUpdatedGoal);
+        console.log("Local updated goal with motivation:", {
+          motivation: localUpdatedGoal.motivation,
+          detailsMotivation: localUpdatedGoal.details?.motivation,
+          description: localUpdatedGoal.description
+        });
+        
+        // Ensure the goal object is completely updated (more thoroughly)
+        for (const key in localUpdatedGoal) {
+          if (localUpdatedGoal.hasOwnProperty(key)) {
+            goal[key] = localUpdatedGoal[key];
+          }
+        }
         
         // Exit edit mode
         setIsEditing(false);
         
         // Show success message
         setSuccess('Goal declaration successfully updated');
+        
+        // First make sure motivation is directly accessible on the goal
+        if (goal && typeof goal === 'object') {
+          // Double-check that motivation is set on the goal object
+          goal.motivation = editedData.motivation;
+          if (goal.details) goal.details.motivation = editedData.motivation;
+        }
+        
+        // Signal parent component to update immediately without closing the dialog
+        if (onClose) {
+          // Pass a clean copy of the local goal to prevent reference issues
+          const cleanCopy = JSON.parse(JSON.stringify(localUpdatedGoal));
+          console.log("Sending updated goal to parent with motivation:", cleanCopy.motivation);
+          onClose(cleanCopy, false); // Pass updated goal and false for "don't close dialog"
+        }
         
         // Clear success message after 3 seconds
         setTimeout(() => {
@@ -637,7 +670,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
   return (
     <Dialog
       open={isOpen}
-      onClose={() => !isSaving && onClose()}
+      onClose={() => !isSaving && onClose(null, true)}
       maxWidth="md"
       fullWidth
       className={styles.declarationDialog}
@@ -656,7 +689,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       <DialogContent className={styles.dialogContent}>
         {/* Header buttons */}
         <div className={styles.header}>
-          <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose()} disabled={isSaving}>
+          <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose(null, true)} disabled={isSaving}>
             <CloseIcon />
           </IconButton>
           

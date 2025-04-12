@@ -330,11 +330,61 @@ Because the path is already beneath my feet—it's really not that complicated. 
   };
   
   // handle closing goal declaration dialog
-  const handleCloseDeclaration = async () => {
+  const handleCloseDeclaration = async (updatedGoalData = null, shouldClose = true) => {
+    // If we received updated goal data directly from the declaration component
+    if (updatedGoalData) {
+      console.log("Received direct goal update from declaration component:", {
+        title: updatedGoalData.title,
+        motivation: updatedGoalData.motivation,
+        detailsMotivation: updatedGoalData.details?.motivation,
+        description: updatedGoalData.description
+      });
+      
+      // Extract motivation from all possible sources
+      const newMotivation = updatedGoalData.details?.motivation || 
+                            updatedGoalData.motivation || 
+                            updatedGoalData.description;
+      
+      // Make a complete copy of the goal with updated fields
+      const completeUpdatedGoal = {
+        ...selectedGoal,
+        ...updatedGoalData,
+        // Ensure motivation is accessible in all possible ways
+        motivation: newMotivation,
+        description: updatedGoalData.description || newMotivation,
+        details: {
+          ...(selectedGoal?.details || {}),
+          ...(updatedGoalData.details || {}),
+          motivation: newMotivation
+        }
+      };
+      
+      console.log("Updated goal with motivation to display:", {
+        finalMotivation: completeUpdatedGoal.motivation,
+        finalDetailsMotivation: completeUpdatedGoal.details?.motivation,
+        finalDescription: completeUpdatedGoal.description
+      });
+      
+      // Update selectedGoal with the complete data
+      setSelectedGoal(completeUpdatedGoal);
+      
+      // Force a re-render by setting a state that will cause a UI update
+      setDeclarationOpen(prevState => {
+        if (!shouldClose) return prevState;
+        return false;
+      });
+      
+      // If we shouldn't close the dialog, return early
+      if (!shouldClose) {
+        return;
+      }
+    }
+    
+    // Close the dialog if needed
     setDeclarationOpen(false);
     
-    // refresh goal data immediately after closing, ensuring latest data is displayed
-    if (selectedGoal) {
+    // If no direct update was provided, refresh from API
+    if (!updatedGoalData && selectedGoal) {
       try {
         const goalId = selectedGoal._id || selectedGoal.id;
         console.log("close declaration dialog and refresh goal data:", goalId);
@@ -543,7 +593,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
         }}
       >
         <div>
-
           <h3>{selectedGoal.title}</h3>
         </div>
 
@@ -579,7 +628,34 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </Box>
       </Box>
 
-      <p>{selectedGoal.description}</p>
+      <Typography 
+        variant="body1" 
+        key={`goal-motivation-${selectedGoal._id}-${Date.now()}`}
+        sx={{ 
+          fontSize: '1.1rem',
+          fontStyle: 'italic',
+          color: 'text.primary',
+          my: 2,
+          px: 1,
+          py: 1.5,
+          borderLeft: '4px solid',
+          borderColor: 'primary.main',
+          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+          borderRadius: '0 4px 4px 0'
+        }}
+      >
+        I want to <strong>{selectedGoal.title}</strong>, because{' '}
+        <span style={{ color: 'rgba(0, 0, 0, 0.7)' }}>
+          {(() => {
+            const motivationValue = (selectedGoal.details && selectedGoal.details.motivation) || 
+                                   selectedGoal.motivation || 
+                                   selectedGoal.description || 
+                                   "this goal is meaningful to my personal growth";
+            console.log("Displaying motivation:", motivationValue);
+            return motivationValue;
+          })()}
+        </span>
+      </Typography>
 
       {/* Vision Image and inspirational quote */}
       <Box className="vision-section" sx={{ my: 3, textAlign: 'center' }}>
