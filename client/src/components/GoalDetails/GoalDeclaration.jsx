@@ -20,6 +20,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
+import { useUserStore } from '../../store/userStore';
 
 /**
  * Editable field component - allows direct text editing
@@ -238,7 +239,16 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   // Get username from the most reliable source available
   const getUsernameFromTempOrUser = () => {
     try {
-      // First check if we have fresh user data from our direct API call
+      // First try to get from Zustand store (if imported)
+      if (useUserStore) {
+        const storeUser = useUserStore.getState().user;
+        if (storeUser && storeUser.username) {
+          console.log("Using username from Zustand store:", storeUser.username);
+          return storeUser.username;
+        }
+      }
+      
+      // Then check if we have fresh user data from direct API call
       if (freshUserInfo && freshUserInfo.username) {
         console.log("Using freshly fetched username:", freshUserInfo.username);
         return freshUserInfo.username;

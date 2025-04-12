@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { FaUser } from "react-icons/fa";
 import "../../styles/Home.css"; // import styles
 import apiService from "../../services/api";
+import { useUserStore } from "../../store/userStore";
 
 /**
  * Header Component
@@ -21,39 +21,28 @@ export default function Header({
   toggleProfileModal,
 }) {
   const navigate = useNavigate();
-  const [localUser, setLocalUser] = useState(user);
   
-  // Listen for user profile updates
-  useEffect(() => {
-    // Subscribe to user profile updates
-    const unsubscribe = apiService.userEvents.subscribe(
-      'header-component',
-      (updatedUser) => {
-        console.log("Header received user update:", updatedUser.username);
-        setLocalUser(updatedUser);
-      }
-    );
-    
-    // Initial update
-    setLocalUser(user);
-    
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, [user]);
+  // Use Zustand store for user data - with fallback to props
+  const storeUser = useUserStore(state => state.user);
+  const isStoreLoading = useUserStore(state => state.isLoading);
+  
+  // Determine which user data to display (prefer Zustand store if available)
+  const displayUser = storeUser || user;
+  const isLoading = isStoreLoading || loading;
 
   return (
     <header className="app-header">
       <h1>Focus Goal Tracker</h1>
       <div className="user-info">
-        {loading ? (
+        {isLoading ? (
           <span>Loading...</span>
-        ) : localUser ? (
+        ) : displayUser ? (
           <div className="logged-in-user">
-            <span>Welcome, {localUser.username}</span>
+            <span>Welcome, {displayUser.username}</span>
             <div className="avatar-container" onClick={toggleProfileModal}>
-              {localUser.avatarUrl ? (
+              {displayUser.avatarUrl ? (
                 <img
-                  src={localUser.avatarUrl}
+                  src={displayUser.avatarUrl}
                   alt="User Avatar"
                   className="avatar-image"
                 />
