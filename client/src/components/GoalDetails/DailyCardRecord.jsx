@@ -33,6 +33,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import DailyTasks from './DailyTasks';
+import DailyReward from './DailyReward';
 import apiService from '../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -72,8 +73,10 @@ export default function DailyCardRecord({
   const [cardData, setCardData] = useState({
     date: date,
     dailyTask: '',
+    dailyReward: '',
     completed: {
-      dailyTask: false
+      dailyTask: false,
+      dailyReward: false
     },
     taskCompletions: {}, // 用于存储每个任务的独立完成状态
     records: []
@@ -177,6 +180,7 @@ export default function DailyCardRecord({
         setCardData({
           ...existingCard,
           dailyTask: goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
+          dailyReward: goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
           // Ensure records is an array
           records: Array.isArray(existingCard.records) ? existingCard.records : [],
           taskCompletions // 保留任务完成状态
@@ -209,8 +213,10 @@ export default function DailyCardRecord({
       setCardData({
         date: date,
         dailyTask: goal.currentSettings?.dailyTask || '',
+        dailyReward: goal.currentSettings?.dailyReward || '',
         completed: {
-          dailyTask: false
+          dailyTask: false,
+          dailyReward: false
         },
         taskCompletions, // 添加初始任务完成状态
         records: []  // Empty array for new cards
@@ -280,7 +286,8 @@ export default function DailyCardRecord({
       const payload = {
         date: formattedDate,
         dailyTask: updatedCard.dailyTask,
-        completed: updatedCard.completed || { dailyTask: false },
+        dailyReward: updatedCard.dailyReward,
+        completed: updatedCard.completed || { dailyTask: false, dailyReward: false },
         records: updatedCard.records || [],
         taskCompletions: newTaskCompletions  // 使用新创建的状态对象
       };
@@ -312,6 +319,77 @@ export default function DailyCardRecord({
     } catch (error) {
       console.error('保存任务状态失败:', error);
       toast.error('保存任务状态失败，请重试');
+    }
+  };
+
+  // Handle reward status change
+  const handleRewardStatusChange = async (claimed) => {
+    console.log(`奖励状态变更开始: => ${claimed}`);
+    
+    try {
+      if (!goal || !goal._id) {
+        console.error('无效的目标数据:', goal);
+        toast.error('无法保存，目标数据无效');
+        return;
+      }
+
+      // 确保日期格式正确
+      if (!date) {
+        console.error('无效的日期:', date);
+        toast.error('无法保存，日期数据无效');
+        return;
+      }
+
+      // Mark that user has made changes
+      markAsChanged();
+      
+      // 创建新的cardData对象，避免直接修改原对象
+      const updatedCard = {
+        ...cardData,
+        completed: {
+          ...cardData.completed,
+          dailyReward: claimed
+        }
+      };
+      
+      // 先更新UI状态
+      setCardData(updatedCard);
+      
+      // 准备日期格式
+      const formattedDate = new Date(date).toISOString();
+      
+      // 准备发送到服务器的数据
+      const payload = {
+        date: formattedDate,
+        dailyTask: updatedCard.dailyTask,
+        dailyReward: updatedCard.dailyReward,
+        completed: updatedCard.completed,
+        records: updatedCard.records || [],
+        taskCompletions: updatedCard.taskCompletions
+      };
+      
+      console.log('正在保存奖励状态到数据库:', {
+        目标ID: goal._id,
+        日期: payload.date,
+        奖励状态: claimed,
+        完整载荷: payload
+      });
+      
+      // 使用apiService发送请求
+      const response = await apiService.goals.addOrUpdateDailyCard(goal._id, payload);
+      
+      console.log('奖励状态已保存, 响应:', response);
+      
+      // 显示成功消息
+      toast.success('奖励状态已保存');
+      
+      // 通知父组件更新
+      if (onSave) {
+        onSave(updatedCard); 
+      }
+    } catch (error) {
+      console.error('保存奖励状态失败:', error);
+      toast.error('保存奖励状态失败，请重试');
     }
   };
 
@@ -625,7 +703,7 @@ export default function DailyCardRecord({
       
       // 确保completed字段存在且包含正确的值
       if (!updatedCard.completed) {
-        updatedCard.completed = { dailyTask: false };
+        updatedCard.completed = { dailyTask: false, dailyReward: false };
       }
       
       console.log('Sending updated card to API:', {
@@ -852,6 +930,37 @@ export default function DailyCardRecord({
               }}
             />
           </Box>
+        </Box>
+        
+        <Divider sx={{ my: 2 }} />
+        
+        {/* Rewards Section */}
+        <Box sx={{ my: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Rewards</span>
+          </Typography>
+          
+          {goal && goal.rewards && goal.rewards.length > 0 ? (
+            <List>
+              {goal.rewards.map((reward, index) => (
+                <ListItem key={`reward-${index}`} sx={{ p: 0, my: 1 }}>
+                  <DailyReward 
+                    reward={reward}
+                    claimed={cardData.completed?.dailyReward || false}
+                    onClaimedChange={handleRewardStatusChange}
+                    disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean))}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <DailyReward 
+              reward={cardData.dailyReward}
+              claimed={cardData.completed?.dailyReward || false}
+              onClaimedChange={handleRewardStatusChange}
+              disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean))}
+            />
+          )}
         </Box>
         
         <Divider sx={{ my: 2 }} />
