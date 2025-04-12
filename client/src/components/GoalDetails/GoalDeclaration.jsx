@@ -19,6 +19,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import styles from './GoalDeclaration.module.css';
+import apiService from '../../services/api';
 
 /**
  * Editable field component - allows direct text editing
@@ -94,6 +95,34 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     targetDate: null,
     visionImage: null
   });
+  
+  // State to store updated username info
+  const [freshUserInfo, setFreshUserInfo] = useState(null);
+  
+  // When dialog opens, fetch fresh user data
+  useEffect(() => {
+    if (isOpen && goal) {
+      // Try to fetch updated user data directly from backend if possible
+      const fetchUserInfo = async () => {
+        try {
+          // If we have apiService available
+          if (apiService?.users?.getProfile) {
+            console.log("Fetching updated user profile for declaration");
+            const response = await apiService.users.getProfile();
+            if (response.data && response.data.success) {
+              console.log("Got fresh user data:", response.data.data.username);
+              setFreshUserInfo(response.data.data);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user profile for declaration:", error);
+          // Silently fail - we'll use other methods to get username
+        }
+      };
+      
+      fetchUserInfo();
+    }
+  }, [isOpen, goal]);
   
   // When goal data changes, update the editing data
   useEffect(() => {
@@ -206,6 +235,72 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     }));
   };
   
+  // Get username from the most reliable source available
+  const getUsernameFromTempOrUser = () => {
+    try {
+      // First check if we have fresh user data from our direct API call
+      if (freshUserInfo && freshUserInfo.username) {
+        console.log("Using freshly fetched username:", freshUserInfo.username);
+        return freshUserInfo.username;
+      }
+      
+      // Check if we have a username in the profile data shown on screen
+      if (apiService.userInfo?.username) {
+        console.log("Using username from apiService.userInfo:", apiService.userInfo.username);
+        return apiService.userInfo.username;
+      }
+      
+      // Check if goal has populated user data (most reliable for registered users)
+      if (goal?.user?.username) {
+        console.log("Using username from goal.user:", goal.user.username);
+        return goal.user.username;
+      }
+      
+      // Check localStorage for authenticated user data
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername && storedUsername !== 'User') {
+        console.log("Using username from localStorage:", storedUsername);
+        return storedUsername;
+      }
+      
+      // Check if this is a temporary user
+      const tempId = localStorage.getItem('tempId');
+      const isTempUser = tempId || (goal?.userId && typeof goal.userId === 'string' && goal.userId.startsWith('temp_'));
+      
+      if (isTempUser) {
+        console.log("User is a Guest");
+        return 'Guest';
+      }
+      
+      // Default fallback
+      console.log("No reliable username found, using default");
+      return 'User';
+    } catch (e) {
+      console.error("Error in getUsernameFromTempOrUser:", e);
+      return 'User';
+    }
+  };
+  
+  // Listen for profile updates so we can refresh username when needed
+  useEffect(() => {
+    const handleUsernameUpdate = () => {
+      // Force re-render to get fresh username
+      console.log("Username update event received, refreshing declaration with new username");
+      // We'll force a re-render by updating a timestamp state
+      setLastUpdate(Date.now());
+    };
+    
+    // Listen for custom event that will be triggered by ProfileModal after successful update
+    window.addEventListener('usernameUpdated', handleUsernameUpdate);
+    
+    return () => {
+      window.removeEventListener('usernameUpdated', handleUsernameUpdate);
+    };
+  }, []);
+  
+  // State to force re-render when username changes
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
+  
   // Generate declaration text
   const generateDeclarationText = (data) => {
     const {
@@ -221,7 +316,10 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     
     console.log("Generating declaration with motivation:", motivation);
     
-    const username = 'User'; // Can be obtained as needed
+    // Get fresh username when generating declaration
+    const username = getUsernameFromTempOrUser();
+    console.log("Using username for declaration:", username);
+    
     const formattedDate = targetDate ? new Date(targetDate).toLocaleDateString() : '';
     
     return `${title}
@@ -295,6 +393,39 @@ Because the path is already beneath my feet—it's really not that complicated. 
       contentLength: content.length,
       contentFirstChars: content.substring(0, 30) + '...'
     });
+    
+    // Get fresh username when formatting declaration
+    const username = getUsernameFromTempOrUser();
+    console.log("Using username for content display:", username);
+    
+    // Enhanced user name replacement - handle all possible variations
+    // Replace all possible variations of "I'm X" with the correct username
+    const userPattern = /I'm\s+(.*?),\s+and\s+I'm\s+stepping/g;
+    if (userPattern.test(content)) {
+      content = content.replace(userPattern, `I'm ${username}, and I'm stepping`);
+      console.log("Replaced any existing username pattern with:", username);
+    } else if (content.includes("I'm") && content.includes("stepping onto this path")) {
+      // If pattern isn't exact but contains relevant parts, try more general replacement
+      content = content.replace(/I'm\s+[^,\n]+/, `I'm ${username}`);
+      console.log("Replaced partial username match with:", username);
+    }
+    
+    // Also handle specific cases that might have been set before
+    if (content.includes("I'm User")) {
+      content = content.replace(/I'm User/g, `I'm ${username}`);
+      console.log("Replaced 'I'm User' with:", username);
+    }
+    
+    if (content.includes("I'm Guest") && username !== 'Guest') {
+      content = content.replace(/I'm Guest/g, `I'm ${username}`);
+      console.log("Replaced 'I'm Guest' with actual username:", username);
+    }
+    
+    if (username === 'Guest' && !content.includes("I'm Guest")) {
+      // For Guest users, ensure username shows as Guest
+      content = content.replace(/I'm\s+[^,\n]+/, `I'm Guest`);
+      console.log("Forced 'I'm Guest' for Guest user");
+    }
     
     try {
       // Process declaration content in paragraphs (only if content is long enough)
@@ -444,6 +575,10 @@ Because the path is already beneath my feet—it's really not that complicated. 
       );
     }
     
+    // Get fresh username when rendering editable declaration
+    const username = getUsernameFromTempOrUser();
+    console.log("Using username for editable declaration:", username);
+    
     return (
       <div className={styles.declaration}>
         <Typography variant="h4" className={styles.title}>
@@ -458,7 +593,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          I'm stepping onto this path because <EditableField 
+          I'm {username}, and I'm stepping onto this path because <EditableField 
             value={editedData.motivation} 
             onChange={(value) => handleFieldChange('motivation', value)}
             multiline 
@@ -768,17 +903,23 @@ Because the path is already beneath my feet—it's really not that complicated. 
             renderEditableDeclaration()
           ) : (
             // Modified rendering logic to ensure content is always displayed, even if empty
-            formatDeclarationContent(goal.declaration?.content || `# ${goal.title || 'My Goal'}
+            formatDeclarationContent(goal.declaration?.content || (() => {
+              // 使用优化后的函数获取用户名
+              const username = getUsernameFromTempOrUser();
+              console.log("Using username for default content:", username);
+              
+              return `# ${goal.title || 'My Goal'}
 
 This goal isn't just another item on my list—it's something I genuinely want to achieve.
 
-I'm stepping onto this path because this is a deeply meaningful pursuit to me, a desire that comes straight from my heart.
+I'm ${username}, and I'm stepping onto this path because this is a deeply meaningful pursuit to me, a desire that comes straight from my heart.
 
 I trust that I have what it takes, because I already have the preparation I need. These are my sources of confidence and strength.
 
 I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me forward.
 
-I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.`)
+I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.`;
+            })())
           )}
         </div>
         

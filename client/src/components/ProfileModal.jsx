@@ -144,6 +144,25 @@ function ProfileModal({ isOpen, onClose, user }) {
         setProfile(response.data.data);
         setSuccessMessage("資料已成功更新！");
         setIsEditing(false);
+        
+        // If username was changed, dispatch a custom event to notify components that need to update
+        if (response.data.data.username !== profile.username) {
+          console.log("Username changed from", profile.username, "to", response.data.data.username);
+          
+          // Store updated username in localStorage for easier access by other components
+          localStorage.setItem('username', response.data.data.username);
+          
+          // Dispatch custom event to notify components that username has changed
+          const usernameUpdateEvent = new CustomEvent('usernameUpdated', {
+            detail: {
+              oldUsername: profile.username,
+              newUsername: response.data.data.username
+            }
+          });
+          window.dispatchEvent(usernameUpdateEvent);
+          
+          console.log("Dispatched usernameUpdated event");
+        }
       }
     } catch (error) {
       console.error("Failed to update profile:", error);
