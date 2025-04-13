@@ -424,14 +424,18 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       </Box>
       
       <Fade in={!isLoading} timeout={500}>
-        <Box sx={{ overflowX: {xs: 'auto', md: 'visible'}, width: '100%', pb: 1 }}>
+        <Box sx={{ 
+          width: '100%', 
+          pb: 1,
+          overflowX: {xs: 'auto', md: 'visible'}
+        }}>
           <Box 
             sx={{ 
               display: 'grid',
-              gridTemplateColumns: 'repeat(7, minmax(80px, 1fr))',
-              gap: {xs: 0.5, sm: 1, md: 1},
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: {xs: 1, sm: 1.5},
               width: {xs: 'max-content', md: '100%'},
-              minWidth: '100%'
+              minWidth: {xs: '700px', md: '100%'}
             }}
           >
             {currentWeekCards.map((card, index) => {
@@ -459,7 +463,13 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
               const validatedCard = validateCardData(card);
               
               return (
-                <Box key={`${validatedCard.date}-${index}`} sx={{ width: '100%' }}>
+                <Box 
+                  key={`${validatedCard.date}-${index}`} 
+                  sx={{ 
+                    width: '100%',
+                    px: 0.5
+                  }}
+                >
                   <DailyCard 
                     card={validatedCard}
                     goal={goal}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from 'prop-types';
 import {
   Dialog,
   DialogActions,
@@ -46,7 +47,13 @@ const inspirationalQuotes = [
   }
 ];
 
-export default function GoalDetails({ goals = [], goalId, onGoalDeleted, refreshGoalData: parentRefreshGoalData }) {
+export default function GoalDetails({ 
+  goals = [], 
+  goalId, 
+  onGoalDeleted, 
+  refreshGoalData: parentRefreshGoalData,
+  sx = {}
+}) {
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -585,7 +592,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
   };
 
   return (
-    <div className="goal-details">
+    <Box className="goal-details" sx={{ ...sx }}>
       <Box
         className="goal-header"
         sx={{
@@ -785,6 +792,14 @@ Because the path is already beneath my feet—it's really not that complicated. 
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 }
+
+GoalDetails.propTypes = {
+  goals: PropTypes.array.isRequired,
+  goalId: PropTypes.string,
+  onGoalDeleted: PropTypes.func.isRequired,
+  refreshGoalData: PropTypes.func.isRequired,
+  sx: PropTypes.object,
+};

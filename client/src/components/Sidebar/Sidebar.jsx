@@ -27,6 +27,7 @@ export default function Sidebar({
   onDateChange,
   activeGoalId,
   onGoalUpdate,
+  sx = {}
 }) {
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -176,6 +177,7 @@ export default function Sidebar({
         display: "flex",
         flexDirection: "column",
         p: 2,
+        ...sx
       }}
     >
       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -324,4 +326,5 @@ Sidebar.propTypes = {
   onDateChange: PropTypes.func.isRequired,
   activeGoalId: PropTypes.string,
   onGoalUpdate: PropTypes.func,
+  sx: PropTypes.object,
 };

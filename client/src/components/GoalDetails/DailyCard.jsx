@@ -187,27 +187,34 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
         onClick={handleCardClick}
         elevation={1}
         sx={{ 
-          height: {xs: '130px', sm: '160px'},
+          height: {xs: '120px', sm: '140px', md: '150px'},
           width: '100%',
           padding: {xs: '4px', sm: '6px'},
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minWidth: '80px'
+          boxSizing: 'border-box',
+          mx: 'auto',
+          minWidth: {xs: '90px', sm: 'auto'},
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          '&:hover': {
+            transform: 'translateY(-3px)',
+            boxShadow: 2
+          }
         }}
       >
         <Box className={styles.dateInfo}>
-          <Typography variant="caption" className={styles.day}>
+          <Typography variant="caption" className={styles.day} sx={{ fontSize: {xs: '0.7rem', sm: '0.8rem'} }}>
             {formattedDay}
           </Typography>
-          <Typography variant="h6" className={styles.date}>
+          <Typography variant="h6" className={styles.date} sx={{ fontSize: {xs: '1.2rem', sm: '1.5rem'}, my: 0.5 }}>
             {formattedDate}
           </Typography>
         </Box>
         
         <Box className={styles.todayLabelContainer}>
           {today && (
-            <Typography variant="caption" className={styles.todayLabel}>
+            <Typography variant="caption" className={styles.todayLabel} sx={{ fontSize: '0.65rem', py: 0.5, px: 1 }}>
               Today
             </Typography>
           )}
@@ -223,6 +230,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
               <AssignmentIcon 
                 color={hasCompletedTasks ? "primary" : "action"} 
                 fontSize="small" 
+                sx={{ fontSize: {xs: '1rem', sm: '1.2rem'} }}
               />
             </Badge>
           </Box>
@@ -236,7 +244,8 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
                   visibility: 'visible',
                   display: 'block',
                   textAlign: 'center',
-                  width: '100%'
+                  width: '100%',
+                  fontSize: {xs: '0.65rem', sm: '0.75rem'}
                 }}
               >
                 {card.records.length} {card.records.length === 1 ? 'note' : 'notes'}
