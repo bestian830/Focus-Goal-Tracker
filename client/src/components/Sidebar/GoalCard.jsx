@@ -229,6 +229,18 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
         {/* Header Area */}
         <div className={styles.goalCardHeader}>
           <h5 className={styles.goalTitle}>
+            <Tooltip title={isArchived ? "Goal Archived" : "Complete and archive"}>
+              <div className={styles.titleActions}>
+                <IconButton
+                  className={styles.iconButton}
+                  onClick={(e) => { e.stopPropagation(); handleArchive(); }}
+                  disabled={isArchiving || isArchived}
+                  size="small"
+                >
+                  {isArchiving ? <CircularProgress size={20} /> : <ArchiveIcon fontSize="small" />}
+                </IconButton>
+              </div>
+            </Tooltip>
             <span className={styles.goalTitleText}>
               {goalTitle}
             </span>
@@ -283,19 +295,6 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
               </Menu>
             </Box>
           </h5>
-
-          <Tooltip title={isArchived ? "Goal Archived" : "Archive Goal"}>
-            <div className={styles.actions}>
-              <IconButton
-                className={styles.iconButton}
-                onClick={(e) => { e.stopPropagation(); handleArchive(); }}
-                disabled={isArchiving || isArchived}
-                size="small"
-              >
-                {isArchiving ? <CircularProgress size={20} /> : <ArchiveIcon fontSize="small" />}
-              </IconButton>
-            </div>
-          </Tooltip>
         </div>
 
         {/* Date Section */}
