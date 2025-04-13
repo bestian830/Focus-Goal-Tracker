@@ -1,0 +1,272 @@
+.goalCard {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.goalCard:hover {
+  background-color: #fff9e1;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.goalCard.active {
+  background-color: rgba(13, 94, 109, 0.05);
+}
+
+.goalCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.goalTitle {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0D5E6D;
+}
+
+.titleActions {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.goalTitleText {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.priorityContainer {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.priorityChip {
+  height: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 2px 8px;
+}
+
+.priorityChip.priorityHigh {
+  background-color: rgba(255, 127, 102, 0.2);
+  color: #FF7F66;
+  border: 1px solid rgba(255, 127, 102, 0.5);
+}
+
+.priorityChip.priorityMedium {
+  background-color: rgba(76, 215, 208, 0.2);
+  color: #0D5E6D;
+  border: 1px solid rgba(76, 215, 208, 0.5);
+}
+
+.priorityChip.priorityLow {
+  background-color: rgba(13, 94, 109, 0.1);
+  color: #0D5E6D;
+  border: 1px solid rgba(13, 94, 109, 0.3);
+}
+
+.cardContent {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dueDate {
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+}
+
+.dateIcon {
+  font-size: 0.875rem;
+  margin-right: 4px;
+  color: #0D5E6D;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+
+.iconButton {
+  padding: 4px;
+  color: #0D5E6D;
+  transition: all 0.2s ease;
+}
+
+.iconButton:hover {
+  background-color: rgba(13, 94, 109, 0.1);
+  transform: scale(1.1);
+  color: #0a4a56;
+}
+
+.progressContainer {
+  margin-top: 8px;
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: #4CD7D0;
+  transition: width 0.3s ease;
+}
+
+/* 重新添加这些类，确保它们不会被覆盖 */
+.priorityHigh {
+  background-color: rgba(255, 127, 102, 0.2);
+  color: #FF7F66;
+  border: 1px solid rgba(255, 127, 102, 0.5);
+}
+
+.priorityMedium {
+  background-color: rgba(76, 215, 208, 0.2);
+  color: #0D5E6D;
+  border: 1px solid rgba(76, 215, 208, 0.5);
+}
+
+.priorityLow {
+  background-color: rgba(13, 94, 109, 0.1);
+  color: #0D5E6D;
+  border: 1px solid rgba(13, 94, 109, 0.3);
+}
+
+.archivedSection {
+  margin-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 16px;
+}
+
+.archivedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.archivedTitle {
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.archivedCount {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+}
+
+.archivedIcon {
+  transition: transform 0.3s ease;
+}
+
+.archivedIcon.expanded {
+  transform: rotate(180deg);
+}
+
+.goalCardSelected {
+  border: 2px solid #fbc02d;
+  background-color: #fffde7;
+}
+
+/* Add Goal Button Styles */
+.addGoalButton {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #0D5E6D;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.addGoalButton:hover {
+  background-color: #0a4a56;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.addGoalButton.disabled {
+  background-color: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.26);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.addGoalButton.disabled:hover {
+  background-color: rgba(0, 0, 0, 0.12);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animation for new cards */
+.goalCard {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quoteText {
+  font-size: 1.5rem;
+  color: #000000;
+}
+
+.tooltipText {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.7);
+} 
