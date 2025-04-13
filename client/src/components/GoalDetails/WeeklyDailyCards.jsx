@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button, IconButton, Fade } from '@mui/material';
+import { Box, Typography, Button, IconButton, Fade, CircularProgress, Tooltip } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
 import DailyCard from './DailyCard';
+import DailyTasks from './DailyTasks';
 import styles from './WeeklyDailyCards.module.css';
 import apiService from '../../services/api';
+import { getWeek, getStartOfWeek } from '../../utils/dateUtils';
 
 /**
  * WeeklyDailyCards - Displays a week of daily cards for a goal
@@ -15,11 +18,13 @@ import apiService from '../../services/api';
  * @param {Array} props.dailyCards - Array of daily card data
  * @param {Function} props.onCardsUpdate - Callback for when cards are updated
  * @param {Function} props.onViewDeclaration - Callback for viewing goal declaration
+ * @param {boolean} props.isArchived - Indicates if the goal is archived
  */
-export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate, onViewDeclaration }) {
+export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate, onViewDeclaration, isArchived }) {
   const [currentWeekCards, setCurrentWeekCards] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeCard, setActiveCard] = useState(null);
   
   // Generate a week of dates based on goal creation date or current date
   const generateWeekDates = (goalDate, offset = 0) => {
@@ -342,6 +347,40 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
     }
   };
 
+  // Return loading UI if data is not yet loaded
+  if (isLoading) {
+    return (
+      <Box className={styles.loadingContainer} sx={{ textAlign: 'center', py: 4 }}>
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2, color: 'text.secondary' }}>
+          Loading your progress data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Return empty state if no cards yet
+  if (currentWeekCards.length === 0) {
+    return (
+      <Box className={styles.emptyContainer} sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="h6" sx={{ color: 'text.secondary', mb: 2 }}>
+          No progress data yet
+        </Typography>
+        <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, maxWidth: '80%', mx: 'auto' }}>
+          Start tracking your daily progress by adding notes and tasks for each day.
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={handleViewDeclaration}
+          startIcon={<BookmarkIcon />}
+          sx={{ borderRadius: '20px' }}
+        >
+          View Goal Declaration
+        </Button>
+      </Box>
+    );
+  }
+
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
@@ -350,9 +389,16 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
         </Typography>
         
         <Box className={styles.weekControls}>
-          <IconButton onClick={handlePreviousWeek} size="small">
-            <ChevronLeftIcon />
-          </IconButton>
+          <Tooltip title="Previous week">
+            <IconButton
+              onClick={handlePreviousWeek}
+              disabled={isLoading || isArchived}
+              size="small"
+              sx={{ borderRadius: '4px' }}
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+          </Tooltip>
           
           <Button 
             variant="text" 
@@ -364,13 +410,16 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
             {getWeekTitle()}
           </Button>
           
-          <IconButton 
-            onClick={handleNextWeek} 
-            size="small"
-            disabled={weekOffset >= 0} // Don't allow viewing future weeks
-          >
-            <ChevronRightIcon />
-          </IconButton>
+          <Tooltip title="Next week">
+            <IconButton
+              onClick={handleNextWeek}
+              disabled={isLoading || isArchived}
+              size="small"
+              sx={{ borderRadius: '4px' }}
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
       
@@ -401,18 +450,32 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
             const validatedCard = validateCardData(card);
             
             return (
-              <DailyCard 
-                key={`${validatedCard.date}-${index}`}
-                card={validatedCard}
-                goal={goal}
-                isToday={isToday(validatedCard.date)}
-                onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
-                onViewDeclaration={onViewDeclaration}
-              />
+              <Box key={`${validatedCard.date}-${index}`} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 10px)' } }}>
+                <DailyCard 
+                  card={validatedCard}
+                  goal={goal}
+                  isToday={isToday(validatedCard.date)}
+                  onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
+                  onViewDeclaration={handleViewDeclaration}
+                  isArchived={isArchived}
+                />
+              </Box>
             );
           }).filter(Boolean)} {/* 过滤掉null值 */}
         </Box>
       </Fade>
+
+      {/* Task detail dialog */}
+      {activeCard && (
+        <DailyTasks
+          open={!!activeCard}
+          onClose={() => setActiveCard(null)}
+          card={activeCard}
+          goal={goal}
+          onCardUpdate={handleCardUpdate}
+          isArchived={isArchived}
+        />
+      )}
     </Box>
   );
 } 

@@ -15,8 +15,9 @@ import useRewardsStore from '../../store/rewardsStore';
  * @param {Boolean} props.isToday - Whether this card represents today
  * @param {Function} props.onUpdate - Callback for when card data is updated
  * @param {Function} props.onViewDeclaration - Optional callback for viewing declaration
+ * @param {Boolean} props.isArchived - Whether the goal is archived
  */
-export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration }) {
+export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration, isArchived }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -236,6 +237,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
         onClose={handleCloseDetails}
         onSave={handleSaveCard}
         onViewDeclaration={handleViewDeclaration}
+        isArchived={isArchived}
       />
     </>
   );

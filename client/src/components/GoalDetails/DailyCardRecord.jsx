@@ -21,7 +21,8 @@ import {
   ListItemSecondaryAction,
   Snackbar,
   InputAdornment,
-  Checkbox
+  Checkbox,
+  Chip
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,6 +33,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import ArchiveIcon from '@mui/icons-material/Archive';
 import DailyTasks from './DailyTasks';
 import DailyReward from './DailyReward';
 import apiService from '../../services/api';
@@ -47,6 +49,7 @@ import useRewardsStore from '../../store/rewardsStore';
  * @param {Function} props.onClose - Callback for when dialog is closed
  * @param {Function} props.onSave - Callback for when changes are saved
  * @param {Function} props.onViewDeclaration - Callback to view declaration
+ * @param {boolean} props.isArchived - Whether the goal is archived
  */
 export default function DailyCardRecord({
   goal,
@@ -54,7 +57,8 @@ export default function DailyCardRecord({
   open,
   onClose,
   onSave,
-  onViewDeclaration 
+  onViewDeclaration,
+  isArchived = false
 }) {
   // Get reward from Zustand store
   const getGoalReward = useRewardsStore(state => state.getGoalReward);
@@ -882,8 +886,17 @@ export default function DailyCardRecord({
           <CloseIcon />
         </IconButton>
         
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 2 }}>
-          {displayDate}
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1, ml: 2, display: 'flex', alignItems: 'center' }}>
+          {isArchived ? `Completed on: ${displayDate}` : displayDate}
+          {isArchived && (
+            <Chip 
+              icon={<ArchiveIcon />} 
+              label="Archived" 
+              color="secondary" 
+              size="small" 
+              sx={{ ml: 2 }}
+            />
+          )}
         </Typography>
         
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -909,13 +922,19 @@ export default function DailyCardRecord({
       <Divider />
       
       <DialogContent sx={{ pb: 1 }}>
-              {error && (
+        {isArchived && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            This goal has been archived. Progress records are read-only.
+          </Alert>
+        )}
+        
+        {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-              )}
+        )}
 
-              {success && (
+        {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
@@ -963,6 +982,7 @@ export default function DailyCardRecord({
                           checked={task.completed}
                           onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
                           color="primary"
+                          disabled={isSaving || isArchived}
                         />
                         <Typography 
                           sx={{ 
@@ -978,7 +998,7 @@ export default function DailyCardRecord({
                             <IconButton 
                               size="small" 
                               onClick={() => handleInitiateTaskEdit(task.id, task.text)}
-                              disabled={isSaving}
+                              disabled={isSaving || isArchived}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
@@ -986,7 +1006,7 @@ export default function DailyCardRecord({
                               size="small" 
                               color="error" 
                               onClick={() => handleInitiateTaskDelete(task.id, task.index)}
-                              disabled={isSaving}
+                              disabled={isSaving || isArchived}
                             >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -1013,7 +1033,7 @@ export default function DailyCardRecord({
               value={newTaskText}
               onChange={(e) => setNewTaskText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-              disabled={isSaving}
+              disabled={isSaving || isArchived}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -1021,7 +1041,7 @@ export default function DailyCardRecord({
                       edge="end" 
                       color="primary"
                       onClick={handleAddTask}
-                      disabled={!newTaskText.trim() || isSaving}
+                      disabled={!newTaskText.trim() || isSaving || isArchived}
                     >
                       <AddIcon />
                     </IconButton>
@@ -1045,7 +1065,7 @@ export default function DailyCardRecord({
             reward={goal?._id ? (getGoalReward(goal._id) || cardData.dailyReward || 'No reward set') : (cardData.dailyReward || 'No reward set')}
             claimed={cardData.completed?.dailyReward || false}
             onClaimedChange={handleRewardStatusChange}
-            disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean))}
+            disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean)) || isArchived}
           />
         </Box>
         
@@ -1071,7 +1091,7 @@ export default function DailyCardRecord({
                       })}
                     />
                     <ListItemSecondaryAction>
-                      <IconButton edge="end" onClick={() => handleInitiateDelete(index)}>
+                      <IconButton edge="end" onClick={() => handleInitiateDelete(index)} disabled={isArchived}>
                         <DeleteIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -1094,7 +1114,7 @@ export default function DailyCardRecord({
                     value={newRecord}
                     onChange={(e) => setNewRecord(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddRecord(e)}
-                    disabled={isSaving}
+                    disabled={isSaving || isArchived}
               helperText="Suggested format: Spent [time] [activity] — [insight/result]"
               sx={{ mb: 2 }}
                   />
@@ -1102,7 +1122,7 @@ export default function DailyCardRecord({
               variant="contained" 
               onClick={handleAddRecord}
               sx={{ ml: 1 }}
-                    disabled={!newRecord.trim() || isSaving}
+                    disabled={!newRecord.trim() || isSaving || isArchived}
                   >
               {isSaving ? <CircularProgress size={20} /> : 'Add'}
                   </Button>
@@ -1115,7 +1135,7 @@ export default function DailyCardRecord({
           variant="contained"
           color="primary"
                 onClick={handleSave} 
-                disabled={isSaving}
+                disabled={isSaving || isArchived}
           startIcon={isSaving ? <CircularProgress size={20} /> : <CheckCircleIcon />}
               >
           {isSaving ? 'Saving...' : 'Save Changes'}

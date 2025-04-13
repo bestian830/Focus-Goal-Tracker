@@ -7,8 +7,13 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
+  Collapse,
+  IconButton,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import FolderIcon from "@mui/icons-material/Folder";
 import GoalCard from "./GoalCard";
 import OnboardingModal from "../OnboardingModal";
 import Search from "./Search";
@@ -26,6 +31,7 @@ export default function Sidebar({
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [allGoals, setAllGoals] = useState(initialGoals);
+  const [showArchived, setShowArchived] = useState(false);
   
   const isLoading = false;
   const error = null;
@@ -83,9 +89,17 @@ export default function Sidebar({
     }
   }, [allGoals, searchQuery]);
 
+  const archivedGoals = useMemo(() => {
+    return sortGoals(allGoals.filter(goal => goal.status === 'archived'));
+  }, [allGoals]);
+
   const activeGoalsCount = useMemo(() => {
     return allGoals.filter(goal => goal.status === "active").length;
   }, [allGoals]);
+
+  const archivedGoalsCount = useMemo(() => {
+    return archivedGoals.length;
+  }, [archivedGoals]);
 
   const isAddGoalDisabled = useMemo(() => {
     const hasTempUserGoal = isGuest && allGoals.length > 0;
@@ -110,6 +124,10 @@ export default function Sidebar({
              onGoalUpdate({ ...updatedGoal, status: 'archived' });
          }
      }
+  };
+
+  const toggleShowArchived = () => {
+    setShowArchived(prev => !prev);
   };
 
   const handleOpenAddGoalModal = () => {
@@ -187,37 +205,102 @@ export default function Sidebar({
         {isLoading && <CircularProgress sx={{ display: 'block', margin: 'auto' }} />}
         {error && <Alert severity="error">{error}</Alert>}
         {!isLoading && !error && (
-          filteredAndSortedGoals.length === 0 ? (
-            <Typography color="text.secondary" align="center">
-              {searchQuery ? "No goals match your search." : "No active goals yet."}
-            </Typography>
-          ) : (
-            filteredAndSortedGoals.map((goal) => (
-              <Box
-                key={goal._id || goal.id}
-                onClick={() => onGoalSelect(goal)}
-                sx={{
-                  cursor: "pointer",
-                  mb: 1.5,
-                  p: 1,
-                  borderRadius: 1,
-                  border: activeGoalId === (goal._id || goal.id) ? '2px solid' : '1px solid',
-                  borderColor: activeGoalId === (goal._id || goal.id) ? 'primary.main' : 'divider',
-                  backgroundColor: goal.status === 'archived' ? 'rgba(0,0,0,0.05)' : 'inherit',
-                  '&:hover': {
-                    backgroundColor: 'action.hover'
-                  }
-                }}
-              >
-                <GoalCard
-                  goal={goal}
-                  onPriorityChange={onPriorityChange}
-                  onDateChange={onDateChange}
-                  onGoalArchived={handleGoalArchived}
-                />
-              </Box>
-            ))
-          )
+          <>
+            {/* Active Goals */}
+            {filteredAndSortedGoals.length === 0 ? (
+              <Typography color="text.secondary" align="center">
+                {searchQuery ? "No goals match your search." : "No active goals yet."}
+              </Typography>
+            ) : (
+              filteredAndSortedGoals.map((goal) => (
+                <Box
+                  key={goal._id || goal.id}
+                  onClick={() => onGoalSelect(goal)}
+                  sx={{
+                    cursor: "pointer",
+                    mb: 1.5,
+                    p: 1,
+                    borderRadius: 1,
+                    border: activeGoalId === (goal._id || goal.id) ? '2px solid' : '1px solid',
+                    borderColor: activeGoalId === (goal._id || goal.id) ? 'primary.main' : 'divider',
+                    backgroundColor: 'inherit',
+                    '&:hover': {
+                      backgroundColor: 'action.hover'
+                    }
+                  }}
+                >
+                  <GoalCard
+                    goal={goal}
+                    onPriorityChange={onPriorityChange}
+                    onDateChange={onDateChange}
+                    onGoalArchived={handleGoalArchived}
+                  />
+                </Box>
+              ))
+            )}
+            
+            {/* Archived Goals Section */}
+            {archivedGoalsCount > 0 && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    mb: 1,
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' },
+                    borderRadius: 1,
+                    p: 1.5,
+                    backgroundColor: 'rgba(0,0,0,0.02)'
+                  }}
+                  onClick={toggleShowArchived}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FolderIcon sx={{ mr: 1, color: 'text.secondary', fontSize: '1.2rem' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      Archived Goals ({archivedGoalsCount})
+                    </Typography>
+                  </Box>
+                  <IconButton size="small" sx={{ color: 'text.secondary', p: 0.5 }}>
+                    {showArchived ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </IconButton>
+                </Box>
+                
+                <Collapse in={showArchived}>
+                  <Box sx={{ pl: 0.5, pr: 0.5, mt: 1 }}>
+                    {archivedGoals.map((goal) => (
+                      <Box
+                        key={goal._id || goal.id}
+                        onClick={() => onGoalSelect(goal)}
+                        sx={{
+                          cursor: "pointer",
+                          mb: 1.5,
+                          p: 1,
+                          borderRadius: 1,
+                          border: activeGoalId === (goal._id || goal.id) ? '2px solid' : '1px solid',
+                          borderColor: activeGoalId === (goal._id || goal.id) ? 'primary.main' : 'divider',
+                          backgroundColor: 'rgba(0,0,0,0.03)',
+                          '&:hover': {
+                            backgroundColor: 'action.hover'
+                          }
+                        }}
+                      >
+                        <GoalCard
+                          goal={goal}
+                          onPriorityChange={onPriorityChange}
+                          onDateChange={onDateChange}
+                          onGoalArchived={handleGoalArchived}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                </Collapse>
+              </>
+            )}
+          </>
         )}
       </Box>
 

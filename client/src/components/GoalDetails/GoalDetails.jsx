@@ -12,9 +12,11 @@ import {
   Fade,
   Tooltip,
   CircularProgress,
+  Chip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import ArchiveIcon from "@mui/icons-material/Archive";
 import DailyTasks from "./DailyTasks";
 import WeeklyDailyCards from "./WeeklyDailyCards";
 import GoalDeclaration from "./GoalDeclaration";
@@ -594,6 +596,27 @@ Because the path is already beneath my feet—it's really not that complicated. 
       >
         <div>
           <h3>{selectedGoal.title}</h3>
+          {selectedGoal.status === 'archived' && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+              <Chip 
+                label="Archived" 
+                color="default" 
+                size="small"
+                icon={<ArchiveIcon fontSize="small" />}
+                sx={{ 
+                  mr: 1, 
+                  backgroundColor: 'rgba(0,0,0,0.08)', 
+                  '& .MuiChip-icon': { 
+                    color: 'text.secondary',
+                    ml: 0.5 
+                  }
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                Completed on: {new Date(selectedGoal.targetDate || selectedGoal.completedAt || new Date()).toLocaleDateString()}
+              </Typography>
+            </Box>
+          )}
         </div>
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -639,13 +662,14 @@ Because the path is already beneath my feet—it's really not that complicated. 
           px: 1,
           py: 1.5,
           borderLeft: '4px solid',
-          borderColor: 'primary.main',
-          backgroundColor: 'rgba(0, 0, 0, 0.02)',
-          borderRadius: '0 4px 4px 0'
+          borderColor: selectedGoal.status === 'archived' ? 'grey.400' : 'primary.main',
+          backgroundColor: selectedGoal.status === 'archived' ? 'rgba(0, 0, 0, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+          borderRadius: '0 4px 4px 0',
+          ...(selectedGoal.status === 'archived' && { color: 'text.secondary' })
         }}
       >
         I want to <strong>{selectedGoal.title}</strong>, because{' '}
-        <span style={{ color: 'rgba(0, 0, 0, 0.7)' }}>
+        <span style={{ color: selectedGoal.status === 'archived' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.7)' }}>
           {(() => {
             const motivationValue = (selectedGoal.details && selectedGoal.details.motivation) || 
                                    selectedGoal.motivation || 
@@ -725,6 +749,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
         dailyCards={dailyCards}
         onCardsUpdate={handleDailyCardsUpdate}
         onViewDeclaration={handleOpenDeclaration}
+        isArchived={selectedGoal.status === 'archived'}
       />
 
       {/* <DailyTasks tasks={dailyTasks} /> */}

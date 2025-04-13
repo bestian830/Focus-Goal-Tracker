@@ -219,6 +219,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
   // Safe access to goal properties
   const goalTitle = goal.title || "Unnamed Goal";
   const goalStatus = goal.status || "active";
+  const isArchived = goalStatus === 'archived';
 
   return (
       <div className={`goal-card ${goalStatus === "active" ? "active" : ""}`}>
@@ -231,7 +232,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
 
           {/* Archive Button */}
           <Tooltip 
-            title="Complete and Archive" 
+            title={isArchived ? "Already Archived" : "Complete and Archive"} 
             placement="top-end"
             componentsProps={{
               tooltip: {
@@ -247,14 +248,14 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
               <IconButton
                 aria-label="complete and archive goal"
                 onClick={(e) => { e.stopPropagation(); handleArchive(); }} // Prevent card click while archiving
-                disabled={isArchiving || goalStatus === 'archived'}
+                disabled={isArchiving || isArchived}
                 size="medium"
                 sx={{ 
-                  color: 'action.active',
+                  color: isArchived ? 'text.disabled' : 'action.active',
                   padding: '6px',
                   '&:hover': {
-                    color: 'primary.main',
-                    backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                    color: isArchived ? 'text.disabled' : 'primary.main',
+                    backgroundColor: isArchived ? 'transparent' : 'rgba(25, 118, 210, 0.04)'
                   }
                 }}
               >
@@ -293,6 +294,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
                 onClick={handleOpenMenu}
                 aria-label="Edit Priority"
                 sx={{ padding: '4px' }}
+                disabled={isArchived}
               >
                 <EditIcon sx={{ fontSize: '1rem' }} />
               </IconButton>
@@ -308,27 +310,38 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
             </Menu>
           </div>
 
-          {/* Date Picker Section */}
+          {/* Due Date */}
           <div className="due-date-container">
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Target Date"
-                value={targetDate}
-                onChange={handleDateChange}
-                disablePast
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined",
-                    size: "small",
-                    InputLabelProps: { shrink: true },
-                    sx: { marginTop: 1 }
-                  },
-                  actionBar: { actions: ['clear', 'today', 'accept'] }
-                }}
-                 sx={{ width: '100%' }}
-              />
-            </LocalizationProvider>
+            {isArchived ? (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Completed on
+                </Typography>
+                <Typography variant="body2">
+                  {targetDate ? new Date(targetDate).toLocaleDateString() : 'Unknown date'}
+                </Typography>
+              </Box>
+            ) : (
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Target Date"
+                  value={targetDate}
+                  onChange={handleDateChange}
+                  disablePast
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined",
+                      size: "small",
+                      InputLabelProps: { shrink: true },
+                      sx: { marginTop: 1 }
+                    },
+                    actionBar: { actions: ['clear', 'today', 'accept'] }
+                  }}
+                   sx={{ width: '100%' }}
+                />
+              </LocalizationProvider>
+            )}
           </div>
 
           {/* Display archive error subtly */}
