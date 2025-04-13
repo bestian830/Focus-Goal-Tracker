@@ -186,6 +186,15 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
         className={`${styles.card} ${today ? styles.today : ''}`}
         onClick={handleCardClick}
         elevation={1}
+        sx={{ 
+          height: {xs: '130px', sm: '160px'},
+          width: '100%',
+          padding: {xs: '4px', sm: '6px'},
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          minWidth: '80px'
+        }}
       >
         <Box className={styles.dateInfo}>
           <Typography variant="caption" className={styles.day}>
@@ -220,7 +229,16 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
           
           <Box className={styles.recordsInfo}>
             {hasRecords ? (
-              <Typography variant="caption" className={styles.recordsCount}>
+              <Typography 
+                variant="caption" 
+                className={styles.recordsCount}
+                sx={{ 
+                  visibility: 'visible',
+                  display: 'block',
+                  textAlign: 'center',
+                  width: '100%'
+                }}
+              >
                 {card.records.length} {card.records.length === 1 ? 'note' : 'notes'}
               </Typography>
             ) : (

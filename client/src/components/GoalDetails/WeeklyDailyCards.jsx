@@ -382,7 +382,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   }
 
   return (
-    <Box className={styles.container}>
+    <Box className={styles.container} sx={{ maxWidth: '100%' }}>
       <Box className={styles.header}>
         <Typography variant="h6" className={styles.title}>
           Weekly Progress Cards
@@ -424,44 +424,54 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       </Box>
       
       <Fade in={!isLoading} timeout={500}>
-        <Box className={styles.cardsContainer}>
-          {currentWeekCards.map((card, index) => {
-            // 检查是否重复的周六日期（解决日期重复问题）
-            if (index > 0 && index < currentWeekCards.length) {
-              const prevCardDate = new Date(currentWeekCards[index-1].date);
-              const thisCardDate = new Date(card.date);
-              
-              // 如果前后两个日期相同，跳过渲染
-              if (
-                prevCardDate.getFullYear() === thisCardDate.getFullYear() &&
-                prevCardDate.getMonth() === thisCardDate.getMonth() &&
-                prevCardDate.getDate() === thisCardDate.getDate()
-              ) {
-                console.log('跳过重复的日期卡片:', {
-                  前一个卡片: prevCardDate.toLocaleDateString(),
-                  当前卡片: thisCardDate.toLocaleDateString(),
-                  索引: index
-                });
-                return null;
+        <Box sx={{ overflowX: {xs: 'auto', md: 'visible'}, width: '100%', pb: 1 }}>
+          <Box 
+            sx={{ 
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, minmax(80px, 1fr))',
+              gap: {xs: 0.5, sm: 1, md: 1},
+              width: {xs: 'max-content', md: '100%'},
+              minWidth: '100%'
+            }}
+          >
+            {currentWeekCards.map((card, index) => {
+              // 检查是否重复的周六日期（解决日期重复问题）
+              if (index > 0 && index < currentWeekCards.length) {
+                const prevCardDate = new Date(currentWeekCards[index-1].date);
+                const thisCardDate = new Date(card.date);
+                
+                // 如果前后两个日期相同，跳过渲染
+                if (
+                  prevCardDate.getFullYear() === thisCardDate.getFullYear() &&
+                  prevCardDate.getMonth() === thisCardDate.getMonth() &&
+                  prevCardDate.getDate() === thisCardDate.getDate()
+                ) {
+                  console.log('跳过重复的日期卡片:', {
+                    前一个卡片: prevCardDate.toLocaleDateString(),
+                    当前卡片: thisCardDate.toLocaleDateString(),
+                    索引: index
+                  });
+                  return null;
+                }
               }
-            }
 
-            // 验证卡片数据，确保日期有效
-            const validatedCard = validateCardData(card);
-            
-            return (
-              <Box key={`${validatedCard.date}-${index}`} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 10px)' } }}>
-                <DailyCard 
-                  card={validatedCard}
-                  goal={goal}
-                  isToday={isToday(validatedCard.date)}
-                  onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
-                  onViewDeclaration={handleViewDeclaration}
-                  isArchived={isArchived}
-                />
-              </Box>
-            );
-          }).filter(Boolean)} {/* 过滤掉null值 */}
+              // 验证卡片数据，确保日期有效
+              const validatedCard = validateCardData(card);
+              
+              return (
+                <Box key={`${validatedCard.date}-${index}`} sx={{ width: '100%' }}>
+                  <DailyCard 
+                    card={validatedCard}
+                    goal={goal}
+                    isToday={isToday(validatedCard.date)}
+                    onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
+                    onViewDeclaration={handleViewDeclaration}
+                    isArchived={isArchived}
+                  />
+                </Box>
+              );
+            }).filter(Boolean)} {/* 过滤掉null值 */}
+          </Box>
         </Box>
       </Fade>
 
