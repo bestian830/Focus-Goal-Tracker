@@ -122,6 +122,55 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
     return formatDateToYMD(new Date(dateStr)) === formatDateToYMD(new Date());
   };
   
+  // Add function to check if a date is in current week
+  const isDateInCurrentWeek = (dateStr) => {
+    if (!currentWeekCards.length) return false;
+    
+    try {
+      const targetDate = formatDateToYMD(dateStr);
+      const firstWeekDate = formatDateToYMD(currentWeekCards[0].date);
+      const lastWeekDate = formatDateToYMD(currentWeekCards[6].date);
+      
+      console.log('Checking date in week:', {
+        targetDate,
+        firstWeekDate,
+        lastWeekDate,
+        isInRange: targetDate >= firstWeekDate && targetDate <= lastWeekDate
+      });
+      
+      return targetDate >= firstWeekDate && targetDate <= lastWeekDate;
+    } catch (error) {
+      console.error('Error checking if date is in current week:', error);
+      return false;
+    }
+  };
+  
+  // Add function to calculate week offset for a date
+  const calculateWeekOffset = (targetDate, baseDate) => {
+    const target = new Date(targetDate);
+    const base = new Date(baseDate);
+    
+    // Reset time parts to ensure accurate day calculation
+    target.setHours(0, 0, 0, 0);
+    base.setHours(0, 0, 0, 0);
+    
+    // Get the start of week for both dates
+    const targetDay = target.getDay();
+    const baseDay = base.getDay();
+    
+    const targetWeekStart = new Date(target);
+    targetWeekStart.setDate(target.getDate() - targetDay);
+    
+    const baseWeekStart = new Date(base);
+    baseWeekStart.setDate(base.getDate() - baseDay);
+    
+    // Calculate the difference in weeks
+    const diffTime = targetWeekStart.getTime() - baseWeekStart.getTime();
+    const diffWeeks = Math.round(diffTime / (7 * 24 * 60 * 60 * 1000));
+    
+    return diffWeeks;
+  };
+  
   // Navigate to previous week
   const handlePreviousWeek = () => {
     setWeekOffset(prev => prev - 1);

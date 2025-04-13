@@ -1,65 +1,43 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import apiService from '../services/api';
-import '../styles/GuestLogin.css'; // We'll create this file later
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import apiService from "../services/api";
+import styles from "./GuestLogin.module.css";
 
 /**
  * GuestLogin Component
  * 
  * This component:
- * 1. Displays a welcome page with a "Enter as Guest" button
- * 2. When the button is clicked, it calls the backend API to create a temporary user
- * 3. Stores the returned tempId in localStorage
- * 4. Navigates to the home page
+ * 1. Provides a streamlined entry point for users who don't want to create an account
+ * 2. Creates a temporary account with localStorage storage only
+ * 3. Stores a temporary ID in localStorage
  * 
  * Route: /guest-login
- * Next route: / (after successful login)
  */
 function GuestLogin() {
-  // State to track if login request is in progress
+  // Loading and error states
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [apiResponse, setApiResponse] = useState(null);
+  const [error, setError] = useState("");
   
-  // Navigation hook to redirect after login
+  // Navigation hook
   const navigate = useNavigate();
-
-  // Check if user is already logged in
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    // Only check for userId here, not tempId, since this is the guest login page
-    // and we want to allow users to get a new tempId if they want
-    
-    // If userId exists, redirect to home page
-    if (userId) {
-      console.log("User already logged in as registered user, redirecting to home page");
-      navigate("/");
-    }
-  }, [navigate]);
-
+  
   /**
-   * Handle guest login button click
-   * Calls the backend API to create a temporary user
+   * Handle guest login process
    */
   const handleGuestLogin = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     
     try {
       // check if tempId exists in localStorage
       const existingTempId = localStorage.getItem('tempId');
       console.log('检查localStorage中的tempId:', existingTempId);
       
-      // whether there is an existing tempId, send a request to the backend to decide whether to return the existing user or create a new user
+      // whether there is an existing tempId, send a request to the backend
       // if there is an existing tempId, pass it to the backend for verification
       const requestData = existingTempId ? { existingTempId } : {};
       
       const response = await apiService.auth.createTempUser(requestData);
-      
-      // For debugging purposes
-      setApiResponse(response.data);
-      console.log('API Response:', response.data);
       
       if (response.data && response.data.success) {
         // Store the tempId in localStorage
@@ -67,44 +45,45 @@ function GuestLogin() {
         
         console.log('Using temporary user with ID:', response.data.data.tempId);
         
-        // Redirect to the home page after a short delay to ensure localStorage is updated
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 100);
+        // Redirect to the home page
+        navigate('/');
       } else {
-        throw new Error(response.data?.error?.message || 'Failed to create temporary user');
+        setError(response.data?.error?.message || "Guest login failed. Please try again.");
       }
-    } catch (error) {
-      console.error('Failed to create temporary session:', error);
-      setError('Login failed. Please try again later.');
+    } catch (err) {
+      console.error("Guest login error:", err);
+      setError(
+        err.response?.data?.error?.message || 
+        "Could not create guest account. Please try again or register."
+      );
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
-    <div className="guest-login-container">
-      <h1>Welcome to Focus</h1>
-      <p className="subtitle">Track your goals, boost productivity</p>
+    <div className={styles.guestLoginContainer}>
+      <h1 className={styles.appTitle}>Welcome to Focus</h1>
+      <p className={styles.subtitle}>Track your goals, boost productivity, and achieve more every day</p>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className={styles.errorMessage}>{error}</div>}
       
       <button 
-        className="guest-login-button"
+        className={styles.guestLoginButton}
         onClick={handleGuestLogin}
         disabled={loading}
       >
-        {loading ? 'Logging in...' : 'Enter as Guest'}
+        {loading ? 'Setting up guest access...' : 'Enter as Guest'}
       </button>
       
-      <div className="login-options">
-        <p className="or-divider">Or</p>
-        <div className="auth-links">
-          <Link to="/login" className="auth-link">
+      <div className={styles.loginOptions}>
+        <p className={styles.orDivider}>Or</p>
+        <div className={styles.authLinks}>
+          <Link to="/login" className={styles.authLink}>
             Login
           </Link>
-          <span className="separator">|</span>
-          <Link to="/register" className="auth-link">
+          <span className={styles.separator}>|</span>
+          <Link to="/register" className={styles.authLink}>
             Register
           </Link>
         </div>
