@@ -223,30 +223,70 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
 
   return (
       <div className={`goal-card ${goalStatus === "active" ? "active" : ""}`}>
-        {/* Header with Title and Archive Button */}
-        <div className="goal-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          {/* Goal Title */}
-          <h5 style={{ margin: 0, flexGrow: 1, marginRight: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-             {goalTitle}
+        {/* Header Area */}
+        <div className="goal-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h5 style={{ display: 'flex', alignItems: 'center', margin: 0, overflow: 'hidden' }}>
+            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {goalTitle}
+            </span>
+            
+            {/* Priority Section - Moved here */}
+            <Box 
+              component="span" 
+              className="priority-container"
+              sx={{ 
+                display: 'inline-flex', 
+                alignItems: 'center',
+                ml: 1,
+                flexShrink: 0
+              }}
+            >
+              <Chip
+                size="small"
+                label={`Prio: ${priorityNumber}`}
+                className={`priority-chip priority-${priorityClass}`}
+                sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
+              />
+              <Tooltip 
+                title="Edit Priority" 
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '1rem',
+                      fontWeight: 500,
+                      padding: '8px 12px'
+                    }
+                  }
+                }}
+              >
+                <IconButton
+                  size="small"
+                  className="edit-priority-btn"
+                  onClick={handleOpenMenu}
+                  aria-label="Edit Priority"
+                  sx={{ padding: '4px' }}
+                  disabled={isArchived}
+                >
+                  <EditIcon sx={{ fontSize: '1rem' }} />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleCloseMenu}
+              >
+                <MenuItem onClick={() => handlePriorityChange("High")}>Priority: 1 (High)</MenuItem>
+                <MenuItem onClick={() => handlePriorityChange("Medium")}>Priority: 2 (Medium)</MenuItem>
+                <MenuItem onClick={() => handlePriorityChange("Low")}>Priority: 3 (Low)</MenuItem>
+              </Menu>
+            </Box>
           </h5>
 
-          {/* Archive Button */}
-          <Tooltip 
-            title={isArchived ? "Already Archived" : "Complete and Archive"} 
-            placement="top-end"
-            componentsProps={{
-              tooltip: {
-                sx: {
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  padding: '8px 12px'
-                }
-              }
-            }}
-          >
-            <div style={{ marginLeft: '4px' }}> {/* Add some margin for spacing */}
+          <Tooltip title={isArchived ? "Goal Archived" : "Archive Goal"}>
+            <div className="card-icon-container">
               <IconButton
-                aria-label="complete and archive goal"
+                className="archive-btn"
                 onClick={(e) => { e.stopPropagation(); handleArchive(); }} // Prevent card click while archiving
                 disabled={isArchiving || isArchived}
                 size="medium"
@@ -267,49 +307,6 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
 
         {/* Content Area */}
         <div className="goal-card-content">
-          {/* Priority Section */}
-          <div className="priority-container">
-            <Chip
-              size="small"
-              label={`Prio: ${priorityNumber}`}
-              className={`priority-chip priority-${priorityClass}`}
-              sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
-            />
-            <Tooltip 
-              title="Edit Priority" 
-              arrow
-              componentsProps={{
-                tooltip: {
-                  sx: {
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    padding: '8px 12px'
-                  }
-                }
-              }}
-            >
-              <IconButton
-                size="small"
-                className="edit-priority-btn"
-                onClick={handleOpenMenu}
-                aria-label="Edit Priority"
-                sx={{ padding: '4px' }}
-                disabled={isArchived}
-              >
-                <EditIcon sx={{ fontSize: '1rem' }} />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleCloseMenu}
-            >
-              <MenuItem onClick={() => handlePriorityChange("High")}>Priority: 1 (High)</MenuItem>
-              <MenuItem onClick={() => handlePriorityChange("Medium")}>Priority: 2 (Medium)</MenuItem>
-              <MenuItem onClick={() => handlePriorityChange("Low")}>Priority: 3 (Low)</MenuItem>
-            </Menu>
-          </div>
-
           {/* Due Date */}
           <div className="due-date-container">
             {isArchived ? (

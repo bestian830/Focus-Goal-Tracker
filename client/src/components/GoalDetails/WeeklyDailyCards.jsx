@@ -382,7 +382,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   }
 
   return (
-    <Box className={styles.container} sx={{ maxWidth: '100%' }}>
+    <Box className={styles.container} sx={{ maxWidth: '100%', width: '100%', overflow: 'hidden' }}>
       <Box className={styles.header}>
         <Typography variant="h6" className={styles.title}>
           Weekly Progress Cards
@@ -427,15 +427,14 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
         <Box sx={{ 
           width: '100%', 
           pb: 1,
-          overflowX: {xs: 'auto', md: 'visible'}
+          overflow: 'hidden'
         }}>
           <Box 
             sx={{ 
               display: 'grid',
               gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: {xs: 1, sm: 1.5},
-              width: {xs: 'max-content', md: '100%'},
-              minWidth: {xs: '700px', md: '100%'}
+              gap: 1,
+              width: '100%'
             }}
           >
             {currentWeekCards.map((card, index) => {
@@ -467,7 +466,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
                   key={`${validatedCard.date}-${index}`} 
                   sx={{ 
                     width: '100%',
-                    px: 0.5
+                    boxSizing: 'border-box'
                   }}
                 >
                   <DailyCard 

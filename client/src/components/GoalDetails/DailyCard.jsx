@@ -187,23 +187,17 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
         onClick={handleCardClick}
         elevation={1}
         sx={{ 
-          height: {xs: '120px', sm: '140px', md: '150px'},
           width: '100%',
+          maxWidth: '100%',
           padding: {xs: '4px', sm: '6px'},
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           boxSizing: 'border-box',
-          mx: 'auto',
-          minWidth: {xs: '90px', sm: 'auto'},
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: 2
-          }
+          mx: 'auto'
         }}
       >
-        <Box className={styles.dateInfo}>
+        <Box className={styles.dateInfo} sx={{ width: '100%', textAlign: 'center' }}>
           <Typography variant="caption" className={styles.day} sx={{ fontSize: {xs: '0.7rem', sm: '0.8rem'} }}>
             {formattedDay}
           </Typography>
@@ -212,7 +206,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
           </Typography>
         </Box>
         
-        <Box className={styles.todayLabelContainer}>
+        <Box className={styles.todayLabelContainer} sx={{ width: '100%', textAlign: 'center' }}>
           {today && (
             <Typography variant="caption" className={styles.todayLabel} sx={{ fontSize: '0.65rem', py: 0.5, px: 1 }}>
               Today
@@ -220,7 +214,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
           )}
         </Box>
         
-        <Box className={styles.bottomSection}>
+        <Box className={styles.bottomSection} sx={{ width: '100%' }}>
           <Box className={styles.statusInfo}>
             <Badge 
               color="success" 
