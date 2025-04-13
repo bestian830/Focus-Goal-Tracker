@@ -11,11 +11,13 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import ArchiveIcon from '@mui/icons-material/Archive';
+import EventIcon from '@mui/icons-material/Event';
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import apiService from "../../services/api";
 import axios from 'axios';
+import styles from './GoalCard.module.css';
 
 export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalArchived }) {
   // Hooks must be called at the top level
@@ -223,30 +225,29 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
   const isArchived = goalStatus === 'archived';
 
   return (
-      <div className={`goal-card ${goalStatus === "active" ? "active" : ""}`}>
+      <div className={`${styles.goalCard} ${goalStatus === "active" ? styles.active : ""}`}>
         {/* Header Area */}
-        <div className="goal-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h5 style={{ display: 'flex', alignItems: 'center', margin: 0, overflow: 'hidden' }}>
-            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        <div className={styles.goalCardHeader}>
+          <h5 className={styles.goalTitle}>
+            <span className={styles.goalTitleText}>
               {goalTitle}
             </span>
             
-            {/* Priority Section - Moved here */}
+            {/* Priority Section */}
             <Box 
               component="span" 
-              className="priority-container"
-              sx={{ 
-                display: 'inline-flex', 
-                alignItems: 'center',
-                ml: 1,
-                flexShrink: 0
-              }}
+              className={styles.priorityContainer}
             >
               <Chip
                 size="small"
                 label={`Prio: ${priorityNumber}`}
-                className={`priority-chip priority-${priorityClass}`}
-                sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
+                className={`${styles.priorityChip} ${
+                  priority === "High" 
+                    ? styles.priorityHigh 
+                    : priority === "Medium" 
+                      ? styles.priorityMedium 
+                      : styles.priorityLow
+                }`}
               />
               <Tooltip 
                 title="Edit Priority" 
@@ -263,10 +264,9 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
               >
                 <IconButton
                   size="small"
-                  className="edit-priority-btn"
+                  className={styles.iconButton}
                   onClick={handleOpenMenu}
                   aria-label="Edit Priority"
-                  sx={{ padding: '4px' }}
                   disabled={isArchived}
                 >
                   <EditIcon sx={{ fontSize: '1rem' }} />
@@ -285,69 +285,53 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
           </h5>
 
           <Tooltip title={isArchived ? "Goal Archived" : "Archive Goal"}>
-            <div className="card-icon-container">
+            <div className={styles.actions}>
               <IconButton
-                className="archive-btn"
-                onClick={(e) => { e.stopPropagation(); handleArchive(); }} // Prevent card click while archiving
+                className={styles.iconButton}
+                onClick={(e) => { e.stopPropagation(); handleArchive(); }}
                 disabled={isArchiving || isArchived}
-                size="medium"
-                sx={{ 
-                  color: isArchived ? 'text.disabled' : 'action.active',
-                  padding: '6px',
-                  '&:hover': {
-                    color: isArchived ? 'text.disabled' : 'primary.main',
-                    backgroundColor: isArchived ? 'transparent' : 'rgba(25, 118, 210, 0.04)'
-                  }
-                }}
+                size="small"
               >
-                {isArchiving ? <CircularProgress size={24} color="inherit"/> : <ArchiveIcon sx={{ fontSize: '1.5rem' }} />}
+                {isArchiving ? <CircularProgress size={20} /> : <ArchiveIcon fontSize="small" />}
               </IconButton>
             </div>
           </Tooltip>
         </div>
 
-        {/* Content Area */}
-        <div className="goal-card-content">
-          {/* Due Date */}
-          <div className="due-date-container">
-            {isArchived ? (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Completed on
-                </Typography>
-                <Typography variant="body2">
-                  {targetDate ? new Date(targetDate).toLocaleDateString() : 'Unknown date'}
-                </Typography>
-              </Box>
-            ) : (
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Target Date"
-                  value={targetDate}
-                  onChange={handleDateChange}
-                  disablePast
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: "outlined",
-                      size: "small",
-                      InputLabelProps: { shrink: true },
-                      sx: { marginTop: 1 }
-                    },
-                    actionBar: { actions: ['clear', 'today', 'accept'] },
-                    // Force day selection mode to close only on accept
-                    day: { 
-                      disableAutoFocus: true,
-                      autoFocus: false
-                    }
-                  }}
-                  closeOnSelect={false} // Prevent auto-close on day selection
-                  sx={{ width: '100%' }}
-                />
-              </LocalizationProvider>
-            )}
-          </div>
-
+        {/* Date Section */}
+        <div className={styles.cardFooter}>
+          {isArchived ? (
+            <div className={styles.dueDate}>
+              <EventIcon className={styles.dateIcon} />
+              <span>Completed on {targetDate ? new Date(targetDate).toLocaleDateString() : 'Unknown date'}</span>
+            </div>
+          ) : (
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Target Date"
+                value={targetDate}
+                onChange={handleDateChange}
+                disablePast
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined",
+                    size: "small",
+                    InputLabelProps: { shrink: true },
+                  },
+                  actionBar: { actions: ['clear', 'today', 'accept'] },
+                  // Force day selection mode to close only on accept
+                  day: { 
+                    disableAutoFocus: true,
+                    autoFocus: false
+                  }
+                }}
+                closeOnSelect={false} // Prevent auto-close on day selection
+                sx={{ width: '100%' }}
+              />
+            </LocalizationProvider>
+          )}
+          
           {/* Display archive error subtly */}
           {archiveError && <Typography variant="caption" color="error" sx={{ display: 'block', textAlign: 'right', marginTop: 0.5 }}>Archive failed</Typography>}
         </div>
