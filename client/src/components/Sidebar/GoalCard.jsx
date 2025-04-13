@@ -288,10 +288,41 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleCloseMenu}
+                onClick={(e) => e.stopPropagation()}
               >
-                <MenuItem onClick={() => handlePriorityChange("High")}>Priority: 1 (High)</MenuItem>
-                <MenuItem onClick={() => handlePriorityChange("Medium")}>Priority: 2 (Medium)</MenuItem>
-                <MenuItem onClick={() => handlePriorityChange("Low")}>Priority: 3 (Low)</MenuItem>
+                <MenuItem 
+                  onClick={() => handlePriorityChange("High")}
+                  sx={{
+                    backgroundColor: 'rgba(255, 127, 102, 0.1)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 127, 102, 0.2)'
+                    }
+                  }}
+                >
+                  Priority: 1 (High)
+                </MenuItem>
+                <MenuItem 
+                  onClick={() => handlePriorityChange("Medium")}
+                  sx={{
+                    backgroundColor: 'rgba(76, 215, 208, 0.1)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(76, 215, 208, 0.2)'
+                    }
+                  }}
+                >
+                  Priority: 2 (Medium)
+                </MenuItem>
+                <MenuItem 
+                  onClick={() => handlePriorityChange("Low")}
+                  sx={{
+                    backgroundColor: 'rgba(13, 94, 109, 0.05)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(13, 94, 109, 0.1)'
+                    }
+                  }}
+                >
+                  Priority: 3 (Low)
+                </MenuItem>
               </Menu>
             </Box>
           </h5>

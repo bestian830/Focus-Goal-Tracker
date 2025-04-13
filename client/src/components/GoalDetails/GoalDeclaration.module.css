@@ -2,12 +2,16 @@
   overflow-y: visible;
   border-radius: 16px;
   max-height: 90vh;
+  width: 90%;
+  max-width: 800px;
 }
 
 .dialogContent {
   padding: 24px;
   position: relative;
   overflow-x: hidden;
+  height: auto;
+  max-height: 95vh;
 }
 
 .header {
@@ -37,20 +41,30 @@
 
 .bookIcon {
   font-size: 48px;
-  color: #4CAF50;
-  background-color: rgba(76, 175, 80, 0.1);
-  padding: 12px;
+  color: #0D5E6D;
+  background-color: rgba(13, 94, 109, 0.1);
+  padding: 16px;
   border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.bookIcon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background-color: rgba(13, 94, 109, 0.15);
 }
 
 .contentContainer {
-  padding: 16px;
+  padding: 24px;
   background-color: #fcfcfc;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   margin-bottom: 24px;
-  max-height: 60vh;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
+  line-height: 1.8;
+  font-size: 1.05rem;
 }
 
 .contentContainer > .paragraph:first-child {
@@ -69,6 +83,10 @@
 
 .paragraph {
   margin-bottom: 16px;
+  line-height: 1.8;
+  display: block;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .title {
@@ -82,17 +100,21 @@
 .editableField {
   position: relative;
   display: inline-block;
-  background-color: rgba(233, 233, 233, 0.3);
+  background-color: rgba(233, 233, 233, 0.4);
   border-radius: 4px;
-  padding: 2px 4px;
+  padding: 3px 8px;
+  margin: 0 4px;
   transition: all 0.2s ease;
-  min-width: 60px;
+  min-width: 80px;
   font-weight: bold;
+  border-bottom: 2px solid rgba(13, 94, 109, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .editing {
-  background-color: rgba(66, 165, 245, 0.1);
-  box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.5);
+  background-color: rgba(13, 94, 109, 0.15);
+  box-shadow: 0 0 0 2px rgba(13, 94, 109, 0.4);
+  border-bottom: 2px solid rgba(13, 94, 109, 0.8);
 }
 
 .editInput {
@@ -144,16 +166,19 @@ textarea.editInput {
 
 .variableValue {
   font-weight: 700;
-  color: #2962ff;
-  background-color: rgba(41, 98, 255, 0.08);
-  padding: 0 4px;
-  border-radius: 3px;
+  color: #0D5E6D;
+  background-color: rgba(13, 94, 109, 0.08);
+  padding: 2px 6px;
+  margin: 0 1px;
+  border-radius: 4px;
   display: inline-block;
   transition: background-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .variableValue:hover {
-  background-color: rgba(41, 98, 255, 0.15);
+  background-color: rgba(13, 94, 109, 0.15);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 /* 愿景图像相关样式 */
@@ -219,13 +244,13 @@ textarea.editInput {
   background-color: #f5f5f5 !important;
 }
 
-/* 宣言中显示Vision Image的样式 */
+/* declaration reveal Vision Image */
 .visionParagraph {
   margin-bottom: 24px;
-  background-color: rgba(33, 150, 243, 0.05);
+  background-color: rgba(13, 94, 109, 0.05);
   padding: 16px;
   border-radius: 8px;
-  border-left: 4px solid #2196f3;
+  border-left: 4px solid #0D5E6D;
 }
 
 .declarationImageContainer {
@@ -261,4 +286,11 @@ textarea.editInput {
   .bookIcon {
     font-size: 36px;
   }
+}
+
+/* adjust the size of the whole dialog */
+.declarationDialog {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
 } 

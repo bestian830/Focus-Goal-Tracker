@@ -22,6 +22,7 @@ import DailyTasks from "./DailyTasks";
 import WeeklyDailyCards from "./WeeklyDailyCards";
 import GoalDeclaration from "./GoalDeclaration";
 import apiService from "../../services/api";
+import styles from "./GoalDetails.module.css";
 
 // add inspirational quotes
 const inspirationalQuotes = [
@@ -628,22 +629,10 @@ Because the path is already beneath my feet—it's really not that complicated. 
       <Typography 
         variant="body1" 
         key={`goal-motivation-${selectedGoal._id}-${Date.now()}`}
-        sx={{ 
-          fontSize: '1.1rem',
-          fontStyle: 'italic',
-          color: 'text.primary',
-          my: 2,
-          px: 1,
-          py: 1.5,
-          borderLeft: '4px solid',
-          borderColor: selectedGoal.status === 'archived' ? 'grey.400' : 'primary.main',
-          backgroundColor: selectedGoal.status === 'archived' ? 'rgba(0, 0, 0, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-          borderRadius: '0 4px 4px 0',
-          ...(selectedGoal.status === 'archived' && { color: 'text.secondary' })
-        }}
+        className={selectedGoal.status === 'archived' ? styles.archivedGoalMotivation : styles.goalMotivation}
       >
         I want to <strong>{selectedGoal.title}</strong>, because{' '}
-        <span style={{ color: selectedGoal.status === 'archived' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.7)' }}>
+        <span>
           {(() => {
             const motivationValue = (selectedGoal.details && selectedGoal.details.motivation) || 
                                    selectedGoal.motivation || 
@@ -664,54 +653,41 @@ Because the path is already beneath my feet—it's really not that complicated. 
               <img
                 src={selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)}
                 alt="goal vision"
-                style={{ 
-                  maxWidth: "100%", 
-                  maxHeight: "250px", 
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)" 
-                }}
+                className={styles.visionImage}
               />
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  mt: 2, 
-                  fontStyle: 'italic', 
-                  color: 'text.secondary',
-                  maxWidth: "80%",
-                  mx: 'auto'
-                }}
-              >
-                "{getRandomQuote().text}"
-                <Typography component="span" variant="body2" sx={{ display: 'block', mt: 0.5 }}>
-                  — {getRandomQuote().author}
-                </Typography>
-              </Typography>
+              <Box className={styles.quoteContainer}>
+                {(() => {
+                  const quote = getRandomQuote();
+                  return (
+                    <>
+                      <Typography className={styles.quoteText}>
+                        "{quote.text}"
+                      </Typography>
+                      <Typography className={styles.quoteAuthor}>
+                        — {quote.author}
+                      </Typography>
+                    </>
+                  );
+                })()}
+              </Box>
             </Box>
           </Fade>
         ) : (
           <Fade in={true} timeout={800}>
-            <Box sx={{ 
-              py: 4, 
-              px: 3, 
-              bgcolor: 'background.paper', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              maxWidth: "90%",
-              mx: 'auto'
-            }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontStyle: 'italic', 
-                  color: 'text.primary',
-                  mb: 1
-                }}
-              >
-                "{getRandomQuote().text}"
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                — {getRandomQuote().author}
-              </Typography>
+            <Box className={styles.quoteContainer}>
+              {(() => {
+                const quote = getRandomQuote();
+                return (
+                  <>
+                    <Typography className={styles.quoteText}>
+                      "{quote.text}"
+                    </Typography>
+                    <Typography className={styles.quoteAuthor}>
+                      — {quote.author}
+                    </Typography>
+                  </>
+                );
+              })()}
             </Box>
           </Fade>
         )}
