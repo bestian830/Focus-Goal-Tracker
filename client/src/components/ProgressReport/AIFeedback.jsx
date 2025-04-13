@@ -13,10 +13,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  TextField,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Divider
 } from '@mui/material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import apiService from '../../services/api';
 import { useReportStore } from '../../store/reportStore';
 import '../../styles/AIFeedback.css';
@@ -38,38 +43,15 @@ export default function AIFeedback({ goalId }) {
 
   // Effect to load report from store when goalId changes
   useEffect(() => {
-    if (!goalId) {
-      // Reset states if no goalId
-      setFeedback(null);
-      setLastUpdate(null);
-      return;
-    }
-
-    // Check if we have a cached report for this goal
-    const cachedReport = reports[goalId];
-    if (cachedReport) {
-      console.log('Using cached report for goal:', goalId);
-      setFeedback(cachedReport);
-      // Parse the ISO string dates
-      setLastUpdate(new Date(cachedReport.generatedAt));
-      
-      // Set date range from cached data if available
-      if (cachedReport.dateRange) {
-        setStartDate(new Date(cachedReport.dateRange.startDate));
-        setEndDate(new Date(cachedReport.dateRange.endDate));
-        
-        // Determine time range based on dates
-        const daysDiff = Math.round((new Date(cachedReport.dateRange.endDate) - new Date(cachedReport.dateRange.startDate)) / (24 * 60 * 60 * 1000));
-        if (daysDiff === 7) {
-          setTimeRange('last7days');
-        } else if (daysDiff === 30) {
-          setTimeRange('last30days');
-        } else {
-          setTimeRange('custom');
-        }
+    if (goalId && reports[goalId]) {
+      setFeedback(reports[goalId]);
+      setLastUpdate(new Date(reports[goalId].generatedAt));
+      if (reports[goalId].dateRange) {
+        setStartDate(new Date(reports[goalId].dateRange.startDate));
+        setEndDate(new Date(reports[goalId].dateRange.endDate));
       }
     } else {
-      // No cached report, reset states
+      // Reset when no report exists for this goal
       setFeedback(null);
       setLastUpdate(null);
     }
@@ -80,25 +62,34 @@ export default function AIFeedback({ goalId }) {
     const value = event.target.value;
     setTimeRange(value);
     
-    if (value === 'custom') {
-      setCustomDateOpen(true);
-    } else if (value === 'last7days') {
-      setStartDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
-      setEndDate(new Date());
+    if (value === 'last7days') {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 7);
+      setStartDate(start);
+      setEndDate(end);
     } else if (value === 'last30days') {
-      setStartDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-      setEndDate(new Date());
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 30);
+      setStartDate(start);
+      setEndDate(end);
+    } else if (value === 'custom') {
+      setCustomDateOpen(true);
     }
   };
 
   // Close custom date dialog
   const handleCloseCustomDate = () => {
     setCustomDateOpen(false);
+    // If the user cancels without selecting dates, revert to last selection
+    setTimeRange(timeRange === 'custom' ? 'last7days' : timeRange);
   };
 
   // Confirm custom date range
   const handleConfirmCustomDate = () => {
     setCustomDateOpen(false);
+    setTimeRange('custom');
   };
 
   const generateFeedback = async () => {
@@ -223,7 +214,7 @@ export default function AIFeedback({ goalId }) {
       </Dialog>
 
       {error && (
-        <Typography color="error" gutterBottom>
+        <Typography color="error" gutterBottom className="ai-feedback-error">
           {typeof error === 'string' ? error : error.message || 'An unknown error occurred'}
         </Typography>
       )}
@@ -246,19 +237,62 @@ export default function AIFeedback({ goalId }) {
       )}
 
       {feedback && (
-        <>
-          <Box className="ai-feedback-content" data-export-id="ai-analysis-content">
-            {feedback.content || 'No analysis content available'}
-          </Box>
+        <Box className="ai-feedback-result">
+          {/* If we have formatted content with sections */}
+          {feedback.content && feedback.content.sections && feedback.content.sections.length > 0 ? (
+            <Box className="ai-feedback-structured-content">
+              {/* Sections as accordions without the header info */}
+              {feedback.content.sections
+                // 过滤掉标题为 "---" 的部分
+                .filter(section => section.title !== "---" && section.title.trim() !== "")
+                .map((section, index) => {
+                // Transform section title to use bullet points instead of ** **
+                const title = section.title
+                  .replace(/^\*\*|\*\*$/g, '') // Remove ** if present
+                  .trim();
+                
+                // Transform section content
+                let content = section.content;
+                
+                // If this is the Actionable Suggestions section, add numbers to bullet points
+                if (title.toLowerCase().includes('actionable')) {
+                  content = content.replace(/- /g, (match, offset, string) => {
+                    // Count how many - have appeared before this one
+                    const prevCount = (string.substring(0, offset).match(/- /g) || []).length + 1;
+                    return `${prevCount}: `;
+                  });
+                }
+                
+                return (
+                  <Accordion key={index} defaultExpanded={index === 0}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="subtitle1">• {title}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography variant="body2" className="ai-feedback-section-content" 
+                        style={{ whiteSpace: 'pre-line' }}>
+                        {content}
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              })}
+            </Box>
+          ) : (
+            /* Fallback for legacy or unstructured content */
+            <Box className="ai-feedback-content" data-export-id="ai-analysis-content">
+              {feedback.content && typeof feedback.content === 'object' 
+                ? feedback.content.details || 'No analysis content available'
+                : feedback.content || 'No analysis content available'}
+            </Box>
+          )}
+          
           <Box className="ai-feedback-timestamp">
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Analysis time: {lastUpdate?.toLocaleString()}
             </Typography>
-            <Typography variant="subtitle2" color="text.secondary" className="ai-feedback-date-range-info">
-              Analysis range: {startDate.toLocaleDateString()} to {endDate.toLocaleDateString()}
-            </Typography>
           </Box>
-        </>
+        </Box>
       )}
     </Paper>
   );
