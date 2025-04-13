@@ -511,14 +511,37 @@ function Home() {
               onPriorityChange={handlePriorityChange}
               onDateChange={handleDateChange}
               activeGoalId={selectedGoalId}
+              sx={{ 
+                width: '10%', 
+                flexBasis: '10%', 
+                flexGrow: 0, 
+                flexShrink: 0,
+                minWidth: '200px', // Ensure sidebar has minimum width for usability
+                display: { xs: 'none', md: 'flex' } // Hide on mobile, show on desktop
+              }}
             />
             <GoalDetails
               goals={userGoals}
               goalId={selectedGoalId}
               onGoalDeleted={handleGoalDeleted}
               refreshGoalData={refreshSingleGoal}
+              sx={{ 
+                width: { xs: '100%', md: '70%' },  
+                flexBasis: { xs: '100%', md: '70%' }, 
+                flexGrow: 0, 
+                flexShrink: 0 
+              }}
             />
-            <ProgressReport goalId={selectedGoalId} />
+            <ProgressReport 
+              goalId={selectedGoalId} 
+              sx={{ 
+                width: { xs: '100%', md: '20%' }, 
+                flexBasis: { xs: '100%', md: '20%' }, 
+                flexGrow: 0, 
+                flexShrink: 0,
+                display: { xs: 'none', md: 'block' } // Hide on mobile, show on desktop
+              }}
+            />
           </>
         ) : (
           // Show loading indicator instead of welcome message when not authenticated

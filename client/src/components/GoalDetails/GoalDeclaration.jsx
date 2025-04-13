@@ -19,6 +19,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import styles from './GoalDeclaration.module.css';
+import apiService from '../../services/api';
+import { useUserStore } from '../../store/userStore';
+import useRewardsStore from '../../store/rewardsStore';
 
 /**
  * Editable field component - allows direct text editing
@@ -94,6 +97,37 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     targetDate: null,
     visionImage: null
   });
+  
+  // State to store updated username info
+  const [freshUserInfo, setFreshUserInfo] = useState(null);
+  
+  // Get the setDeclarationReward function from the Zustand store
+  const setDeclarationReward = useRewardsStore(state => state.setDeclarationReward);
+  
+  // When dialog opens, fetch fresh user data
+  useEffect(() => {
+    if (isOpen && goal) {
+      // Try to fetch updated user data directly from backend if possible
+      const fetchUserInfo = async () => {
+        try {
+          // If we have apiService available
+          if (apiService?.users?.getProfile) {
+            console.log("Fetching updated user profile for declaration");
+            const response = await apiService.users.getProfile();
+            if (response.data && response.data.success) {
+              console.log("Got fresh user data:", response.data.data.username);
+              setFreshUserInfo(response.data.data);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user profile for declaration:", error);
+          // Silently fail - we'll use other methods to get username
+        }
+      };
+      
+      fetchUserInfo();
+    }
+  }, [isOpen, goal]);
   
   // When goal data changes, update the editing data
   useEffect(() => {
@@ -206,6 +240,94 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
     }));
   };
   
+  // Get username from the most reliable source available
+  const getUsernameFromTempOrUser = () => {
+    try {
+      // First try to get from Zustand store (if imported)
+      if (useUserStore) {
+        const storeUser = useUserStore.getState().user;
+        if (storeUser && storeUser.username) {
+          console.log("Using username from Zustand store:", storeUser.username);
+          return storeUser.username;
+        }
+      }
+      
+      // Then check if we have fresh user data from direct API call
+      if (freshUserInfo && freshUserInfo.username) {
+        console.log("Using freshly fetched username:", freshUserInfo.username);
+        return freshUserInfo.username;
+      }
+      
+      // Try to get from the centralized user system
+      const cachedUser = apiService.userEvents.getCurrentUser();
+      if (cachedUser && cachedUser.username) {
+        console.log("Using username from centralized user cache:", cachedUser.username);
+        return cachedUser.username;
+      }
+      
+      // Check if goal has populated user data (most reliable for registered users)
+      if (goal?.user?.username) {
+        console.log("Using username from goal.user:", goal.user.username);
+        return goal.user.username;
+      }
+      
+      // Check localStorage for authenticated user data
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername && storedUsername !== 'User') {
+        console.log("Using username from localStorage:", storedUsername);
+        return storedUsername;
+      }
+      
+      // Check if this is a temporary user
+      const tempId = localStorage.getItem('tempId');
+      const isTempUser = tempId || (goal?.userId && typeof goal.userId === 'string' && goal.userId.startsWith('temp_'));
+      
+      if (isTempUser) {
+        console.log("User is a Guest");
+        return 'Guest';
+      }
+      
+      // Default fallback
+      console.log("No reliable username found, using default");
+      return 'User';
+    } catch (e) {
+      console.error("Error in getUsernameFromTempOrUser:", e);
+      return 'User';
+    }
+  };
+  
+  // Listen for profile updates so we can refresh username when needed
+  useEffect(() => {
+    // Listener function for user profile updates
+    const handleUserUpdate = (userData) => {
+      console.log("GoalDeclaration received user update:", userData.username);
+      setFreshUserInfo(userData);
+    };
+    
+    // Subscribe to centralized user profile updates
+    const unsubscribe = apiService.userEvents.subscribe(
+      'goal-declaration-component',
+      handleUserUpdate
+    );
+    
+    // Also listen for direct DOM events as fallback
+    const handleDomEvent = (event) => {
+      if (event.detail) {
+        handleUserUpdate(event.detail);
+      }
+    };
+    
+    window.addEventListener('userProfileUpdated', handleDomEvent);
+    
+    return () => {
+      unsubscribe();
+      window.removeEventListener('userProfileUpdated', handleDomEvent);
+    };
+  }, []);
+  
+  // State to force re-render when username changes
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
+  
   // Generate declaration text
   const generateDeclarationText = (data) => {
     const {
@@ -219,7 +341,12 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
       targetDate,
     } = data;
     
-    const username = 'User'; // Can be obtained as needed
+    console.log("Generating declaration with motivation:", motivation);
+    
+    // Get fresh username when generating declaration
+    const username = getUsernameFromTempOrUser();
+    console.log("Using username for declaration:", username);
+    
     const formattedDate = targetDate ? new Date(targetDate).toLocaleDateString() : '';
     
     return `${title}
@@ -293,6 +420,39 @@ Because the path is already beneath my feet—it's really not that complicated. 
       contentLength: content.length,
       contentFirstChars: content.substring(0, 30) + '...'
     });
+    
+    // Get fresh username when formatting declaration
+    const username = getUsernameFromTempOrUser();
+    console.log("Using username for content display:", username);
+    
+    // Enhanced user name replacement - handle all possible variations
+    // Replace all possible variations of "I'm X" with the correct username
+    const userPattern = /I'm\s+(.*?),\s+and\s+I'm\s+stepping/g;
+    if (userPattern.test(content)) {
+      content = content.replace(userPattern, `I'm ${username}, and I'm stepping`);
+      console.log("Replaced any existing username pattern with:", username);
+    } else if (content.includes("I'm") && content.includes("stepping onto this path")) {
+      // If pattern isn't exact but contains relevant parts, try more general replacement
+      content = content.replace(/I'm\s+[^,\n]+/, `I'm ${username}`);
+      console.log("Replaced partial username match with:", username);
+    }
+    
+    // Also handle specific cases that might have been set before
+    if (content.includes("I'm User")) {
+      content = content.replace(/I'm User/g, `I'm ${username}`);
+      console.log("Replaced 'I'm User' with:", username);
+    }
+    
+    if (content.includes("I'm Guest") && username !== 'Guest') {
+      content = content.replace(/I'm Guest/g, `I'm ${username}`);
+      console.log("Replaced 'I'm Guest' with actual username:", username);
+    }
+    
+    if (username === 'Guest' && !content.includes("I'm Guest")) {
+      // For Guest users, ensure username shows as Guest
+      content = content.replace(/I'm\s+[^,\n]+/, `I'm Guest`);
+      console.log("Forced 'I'm Guest' for Guest user");
+    }
     
     try {
       // Process declaration content in paragraphs (only if content is long enough)
@@ -442,6 +602,10 @@ Because the path is already beneath my feet—it's really not that complicated. 
       );
     }
     
+    // Get fresh username when rendering editable declaration
+    const username = getUsernameFromTempOrUser();
+    console.log("Using username for editable declaration:", username);
+    
     return (
       <div className={styles.declaration}>
         <Typography variant="h4" className={styles.title}>
@@ -456,7 +620,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          I'm stepping onto this path because <EditableField 
+          I'm {username}, and I'm stepping onto this path because <EditableField 
             value={editedData.motivation} 
             onChange={(value) => handleFieldChange('motivation', value)}
             multiline 
@@ -518,6 +682,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       setError('');
       
       console.log("Starting preparation of declaration data...");
+      console.log("Using motivation value:", editedData.motivation);
       console.log("Current goal object:", {
         id: goal._id || goal.id,
         hasId: !!(goal._id || goal.id),
@@ -528,6 +693,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
       // Prepare update data
       const updatedGoal = {
         title: editedData.title,
+        // Set motivation as a top-level property for immediate access
+        motivation: editedData.motivation,
         details: {
           ...(goal.details || {}),
           motivation: editedData.motivation,
@@ -583,19 +750,31 @@ Because the path is already beneath my feet—it's really not that complicated. 
         
         console.log("Declaration saved successfully, API result:", result);
         
-        // Key improvement: Immediately update declaration content display locally, without waiting for reload
-        // Create a local object with new declaration content
+        // Update the declaration reward in the Zustand store
+        if (goalId && editedData.dailyReward) {
+          console.log("Updating declaration reward in Zustand store:", {
+            goalId,
+            reward: editedData.dailyReward
+          });
+          setDeclarationReward(goalId, editedData.dailyReward);
+        }
+        
+        // Create a more complete localUpdatedGoal with consistent motivation across all fields
         const localUpdatedGoal = {
           ...goal,
           _id: goalId, // Ensure ID remains consistent
           id: goalId,  // Update both possible ID formats
+          title: editedData.title,
           declaration: {
             content: updatedGoal.declaration.content,
             updatedAt: new Date()
           },
+          // Ensure motivation is available in ALL places it might be accessed from
+          motivation: editedData.motivation,
+          description: editedData.motivation, // Add to description as fallback
           details: {
             ...(goal.details || {}),
-            motivation: editedData.motivation,
+            motivation: editedData.motivation, // Ensure details.motivation is set
             resources: editedData.resources,
             nextStep: editedData.nextStep,
             ultimateReward: editedData.ultimateReward,
@@ -606,17 +785,54 @@ Because the path is already beneath my feet—it's really not that complicated. 
             ...(goal.currentSettings || {}),
             dailyTask: editedData.dailyTask,
             dailyReward: editedData.dailyReward
-          }
+          },
+          // Add rewards array with dailyReward to ensure it gets passed properly
+          rewards: Array.isArray(goal.rewards) 
+            ? [...goal.rewards.filter(r => r !== editedData.dailyReward), editedData.dailyReward]
+            : [editedData.dailyReward]
         };
         
-        // Force update local goal object, this is a hack but effective
-        Object.assign(goal, localUpdatedGoal);
+        console.log("Local updated goal with motivation:", {
+          motivation: localUpdatedGoal.motivation,
+          detailsMotivation: localUpdatedGoal.details?.motivation,
+          description: localUpdatedGoal.description
+        });
+        
+        // Make sure rewards include the dailyReward value for DailyCardRecord
+        console.log("Updated rewards array:", {
+          dailyReward: editedData.dailyReward,
+          rewards: localUpdatedGoal.rewards
+        });
+        
+        // Ensure the goal object is completely updated (more thoroughly)
+        for (const key in localUpdatedGoal) {
+          if (localUpdatedGoal.hasOwnProperty(key)) {
+            goal[key] = localUpdatedGoal[key];
+          }
+        }
         
         // Exit edit mode
         setIsEditing(false);
         
         // Show success message
         setSuccess('Goal declaration successfully updated');
+        
+        // First make sure motivation is directly accessible on the goal
+        if (goal && typeof goal === 'object') {
+          // Double-check that motivation is set on the goal object
+          goal.motivation = editedData.motivation;
+          if (goal.details) goal.details.motivation = editedData.motivation;
+        }
+        
+        // Signal parent component to update immediately without closing the dialog
+        if (onClose) {
+          // Pass a clean copy of the local goal to prevent reference issues
+          const cleanCopy = JSON.parse(JSON.stringify(localUpdatedGoal));
+          console.log("Sending updated goal to parent with motivation:", cleanCopy.motivation);
+          console.log("Sending updated goal with dailyReward:", cleanCopy.currentSettings?.dailyReward);
+          console.log("Sending updated rewards array:", cleanCopy.rewards);
+          onClose(cleanCopy, false); // Pass updated goal and false for "don't close dialog"
+        }
         
         // Clear success message after 3 seconds
         setTimeout(() => {
@@ -637,7 +853,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
   return (
     <Dialog
       open={isOpen}
-      onClose={() => !isSaving && onClose()}
+      onClose={() => !isSaving && onClose(null, true)}
       maxWidth="md"
       fullWidth
       className={styles.declarationDialog}
@@ -656,7 +872,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
       <DialogContent className={styles.dialogContent}>
         {/* Header buttons */}
         <div className={styles.header}>
-          <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose()} disabled={isSaving}>
+          <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose(null, true)} disabled={isSaving}>
             <CloseIcon />
           </IconButton>
           
@@ -735,17 +951,23 @@ Because the path is already beneath my feet—it's really not that complicated. 
             renderEditableDeclaration()
           ) : (
             // Modified rendering logic to ensure content is always displayed, even if empty
-            formatDeclarationContent(goal.declaration?.content || `# ${goal.title || 'My Goal'}
+            formatDeclarationContent(goal.declaration?.content || (() => {
+              // 使用优化后的函数获取用户名
+              const username = getUsernameFromTempOrUser();
+              console.log("Using username for default content:", username);
+              
+              return `# ${goal.title || 'My Goal'}
 
 This goal isn't just another item on my list—it's something I genuinely want to achieve.
 
-I'm stepping onto this path because this is a deeply meaningful pursuit to me, a desire that comes straight from my heart.
+I'm ${username}, and I'm stepping onto this path because this is a deeply meaningful pursuit to me, a desire that comes straight from my heart.
 
 I trust that I have what it takes, because I already have the preparation I need. These are my sources of confidence and strength.
 
 I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me forward.
 
-I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.`)
+I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.`;
+            })())
           )}
         </div>
         

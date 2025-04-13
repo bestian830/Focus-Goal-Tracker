@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Badge } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import styles from './DailyCard.module.css';
 import DailyCardRecord from './DailyCardRecord';
 import apiService from '../../services/api';
+import useRewardsStore from '../../store/rewardsStore';
 
 /**
  * DailyCard - Displays a single date's card showing task completion status
@@ -14,10 +15,26 @@ import apiService from '../../services/api';
  * @param {Boolean} props.isToday - Whether this card represents today
  * @param {Function} props.onUpdate - Callback for when card data is updated
  * @param {Function} props.onViewDeclaration - Optional callback for viewing declaration
+ * @param {Boolean} props.isArchived - Whether the goal is archived
  */
-export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration }) {
+export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclaration, isArchived }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Get reward data from Zustand store
+  const getGoalReward = useRewardsStore(state => state.getGoalReward);
+  const currentReward = goal?._id ? getGoalReward(goal._id) : null;
+  
+  // Effect to log when reward changes from declaration
+  useEffect(() => {
+    if (goal?._id) {
+      const reward = getGoalReward(goal._id);
+      console.log('DailyCard detected reward change:', {
+        goalId: goal._id,
+        reward
+      });
+    }
+  }, [goal?._id, getGoalReward]);
 
   // Format the date for display
   const formatDate = (dateString) => {
@@ -65,8 +82,15 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
     setLoading(true);
     
     try {
-      // If we have an onUpdate callback (which should come from WeeklyDailyCards),
-      // we can use it to refresh the goal data before opening the dialog
+      // Get the latest reward from Zustand store
+      let latestReward = goal?._id ? getGoalReward(goal._id) : null;
+      console.log('DailyCard opening with reward:', {
+        goalId: goal?._id,
+        reward: latestReward,
+        originalReward: goal?.currentSettings?.dailyReward
+      });
+      
+      // If we have an onUpdate callback, use it to refresh the goal data
       if (onUpdate && goal && goal._id) {
         console.log('DailyCard - Refreshing goal data before opening record dialog');
         
@@ -94,6 +118,26 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
             });
             
             console.log('DailyCard - Data refresh completed, found card:', foundCard);
+            
+            // Store the current reward in Zustand if available
+            if (refreshedGoal && refreshedGoal._id) {
+              // First, check dailyReward in the currentSettings
+              const dailyReward = refreshedGoal.currentSettings?.dailyReward || '';
+              
+              // Also check rewards array
+              const rewards = refreshedGoal.rewards || [];
+              
+              // Store reward data in Zustand
+              console.log('Storing reward data in Zustand:', { 
+                goalId: refreshedGoal._id,
+                dailyReward,
+                rewards 
+              });
+              
+              // We don't need to update the Zustand store here as we're
+              // just opening the dialog with the current state
+              // The declaration rewards should have priority anyway
+            }
           }
         } catch (error) {
           console.error('DailyCard - Error refreshing data before opening dialog:', error);
@@ -142,25 +186,36 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
         className={`${styles.card} ${today ? styles.today : ''}`}
         onClick={handleCardClick}
         elevation={1}
+        sx={{ 
+          width: '100%',
+          maxWidth: '100%',
+          padding: {xs: '4px', sm: '6px'},
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          boxSizing: 'border-box',
+          height: {xs: '120px', sm: '140px', md: '150px'},
+          margin: 0
+        }}
       >
-        <Box className={styles.dateInfo}>
-          <Typography variant="caption" className={styles.day}>
+        <Box className={styles.dateInfo} sx={{ width: '100%', textAlign: 'center' }}>
+          <Typography variant="caption" className={styles.day} sx={{ fontSize: {xs: '0.7rem', sm: '0.8rem'} }}>
             {formattedDay}
           </Typography>
-          <Typography variant="h6" className={styles.date}>
+          <Typography variant="h6" className={styles.date} sx={{ fontSize: {xs: '1.2rem', sm: '1.5rem'}, my: 0.5 }}>
             {formattedDate}
           </Typography>
         </Box>
         
-        <Box className={styles.todayLabelContainer}>
+        <Box className={styles.todayLabelContainer} sx={{ width: '100%', textAlign: 'center' }}>
           {today && (
-            <Typography variant="caption" className={styles.todayLabel}>
+            <Typography variant="caption" className={styles.todayLabel} sx={{ fontSize: '0.65rem', py: 0.5, px: 1 }}>
               Today
             </Typography>
           )}
         </Box>
         
-        <Box className={styles.bottomSection}>
+        <Box className={styles.bottomSection} sx={{ width: '100%', mt: 1 }}>
           <Box className={styles.statusInfo}>
             <Badge 
               color="success" 
@@ -170,13 +225,25 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
               <AssignmentIcon 
                 color={hasCompletedTasks ? "primary" : "action"} 
                 fontSize="small" 
+                sx={{ fontSize: {xs: '1rem', sm: '1.2rem'} }}
               />
             </Badge>
           </Box>
           
           <Box className={styles.recordsInfo}>
             {hasRecords ? (
-              <Typography variant="caption" className={styles.recordsCount}>
+              <Typography 
+                variant="caption" 
+                className={styles.recordsCount}
+                sx={{ 
+                  visibility: 'visible',
+                  display: 'block',
+                  textAlign: 'center',
+                  width: '100%',
+                  fontSize: {xs: '0.65rem', sm: '0.75rem'},
+                  mb: 1
+                }}
+              >
                 {card.records.length} {card.records.length === 1 ? 'note' : 'notes'}
               </Typography>
             ) : (
@@ -193,6 +260,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
         onClose={handleCloseDetails}
         onSave={handleSaveCard}
         onViewDeclaration={handleViewDeclaration}
+        isArchived={isArchived}
       />
     </>
   );

@@ -76,34 +76,10 @@ function GuestLogin() {
       }
     } catch (error) {
       console.error('Failed to create temporary session:', error);
-      setError('Login failed. Please try using the "前往主頁" button or try again later.');
+      setError('Login failed. Please try again later.');
     } finally {
       setLoading(false);
     }
-  };
-
-  // Handle manual navigation
-  const handleManualNavigation = () => {
-    // check if tempId exists in localStorage
-    const existingTempId = localStorage.getItem('tempId');
-      
-    if (existingTempId) {
-      // if there is an existing tempId, use it and redirect
-      console.log('Using existing temporary user ID (manual navigation):', existingTempId);
-      navigate('/', { replace: true });
-      return;
-    }
-    
-    // if we have a successful API response but navigation failed, try to use that
-    if (apiResponse?.success && apiResponse?.data?.tempId) {
-      localStorage.setItem('tempId', apiResponse.data.tempId);
-    } else {
-      // fallback to client-side temp ID generation
-      const tempId = `temp_${Math.random().toString(36).substring(2, 10)}`;
-      localStorage.setItem('tempId', tempId);
-    }
-    
-    navigate('/', { replace: true });
   };
 
   return (
@@ -131,17 +107,6 @@ function GuestLogin() {
           <Link to="/register" className="auth-link">
             Register
           </Link>
-        </div>
-        
-        {/* Backup navigation button */}
-        <div style={{ marginTop: '20px' }}>
-          <button 
-            onClick={handleManualNavigation}
-            className="debug-button"
-          >
-            Go to Home
-          </button>
-            <p className="debug-text">(If the automatic redirect does not work, please use this button)</p>
         </div>
       </div>
     </div>

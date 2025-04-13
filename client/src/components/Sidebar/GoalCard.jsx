@@ -219,27 +219,87 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
   // Safe access to goal properties
   const goalTitle = goal.title || "Unnamed Goal";
   const goalStatus = goal.status || "active";
+  const isArchived = goalStatus === 'archived';
 
   return (
       <div className={`goal-card ${goalStatus === "active" ? "active" : ""}`}>
-        {/* Header with Title and Archive Button */}
-        <div className="goal-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          {/* Goal Title */}
-          <h5 style={{ margin: 0, flexGrow: 1, marginRight: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-             {goalTitle}
+        {/* Header Area */}
+        <div className="goal-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h5 style={{ display: 'flex', alignItems: 'center', margin: 0, overflow: 'hidden' }}>
+            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {goalTitle}
+            </span>
+            
+            {/* Priority Section - Moved here */}
+            <Box 
+              component="span" 
+              className="priority-container"
+              sx={{ 
+                display: 'inline-flex', 
+                alignItems: 'center',
+                ml: 1,
+                flexShrink: 0
+              }}
+            >
+              <Chip
+                size="small"
+                label={`Prio: ${priorityNumber}`}
+                className={`priority-chip priority-${priorityClass}`}
+                sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
+              />
+              <Tooltip 
+                title="Edit Priority" 
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '1rem',
+                      fontWeight: 500,
+                      padding: '8px 12px'
+                    }
+                  }
+                }}
+              >
+                <IconButton
+                  size="small"
+                  className="edit-priority-btn"
+                  onClick={handleOpenMenu}
+                  aria-label="Edit Priority"
+                  sx={{ padding: '4px' }}
+                  disabled={isArchived}
+                >
+                  <EditIcon sx={{ fontSize: '1rem' }} />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleCloseMenu}
+              >
+                <MenuItem onClick={() => handlePriorityChange("High")}>Priority: 1 (High)</MenuItem>
+                <MenuItem onClick={() => handlePriorityChange("Medium")}>Priority: 2 (Medium)</MenuItem>
+                <MenuItem onClick={() => handlePriorityChange("Low")}>Priority: 3 (Low)</MenuItem>
+              </Menu>
+            </Box>
           </h5>
 
-          {/* Archive Button */}
-          <Tooltip title="Archive Goal">
-            <div> {/* Wrapper div might help with layout consistency */}
+          <Tooltip title={isArchived ? "Goal Archived" : "Archive Goal"}>
+            <div className="card-icon-container">
               <IconButton
-                aria-label="archive goal"
+                className="archive-btn"
                 onClick={(e) => { e.stopPropagation(); handleArchive(); }} // Prevent card click while archiving
-                disabled={isArchiving || goalStatus === 'archived'}
-                size="small"
-                sx={{ color: 'action.active' }} // Use theme color for consistency
+                disabled={isArchiving || isArchived}
+                size="medium"
+                sx={{ 
+                  color: isArchived ? 'text.disabled' : 'action.active',
+                  padding: '6px',
+                  '&:hover': {
+                    color: isArchived ? 'text.disabled' : 'primary.main',
+                    backgroundColor: isArchived ? 'transparent' : 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
               >
-                {isArchiving ? <CircularProgress size={20} color="inherit"/> : <ArchiveIcon fontSize="inherit" />}
+                {isArchiving ? <CircularProgress size={24} color="inherit"/> : <ArchiveIcon sx={{ fontSize: '1.5rem' }} />}
               </IconButton>
             </div>
           </Tooltip>
@@ -247,57 +307,38 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
 
         {/* Content Area */}
         <div className="goal-card-content">
-          {/* Priority Section */}
-          <div className="priority-container">
-            <Chip
-              size="small"
-              label={`Prio: ${priorityNumber}`}
-              className={`priority-chip priority-${priorityClass}`}
-              sx={{ height: 'auto', '& .MuiChip-label': { lineHeight: '1.2' } }}
-            />
-            <Tooltip title="Edit Priority" arrow>
-              <IconButton
-                size="small"
-                className="edit-priority-btn"
-                onClick={handleOpenMenu}
-                aria-label="Edit Priority"
-                sx={{ padding: '4px' }}
-              >
-                <EditIcon sx={{ fontSize: '1rem' }} />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleCloseMenu}
-            >
-              <MenuItem onClick={() => handlePriorityChange("High")}>Priority: 1 (High)</MenuItem>
-              <MenuItem onClick={() => handlePriorityChange("Medium")}>Priority: 2 (Medium)</MenuItem>
-              <MenuItem onClick={() => handlePriorityChange("Low")}>Priority: 3 (Low)</MenuItem>
-            </Menu>
-          </div>
-
-          {/* Date Picker Section */}
+          {/* Due Date */}
           <div className="due-date-container">
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Target Date"
-                value={targetDate}
-                onChange={handleDateChange}
-                disablePast
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined",
-                    size: "small",
-                    InputLabelProps: { shrink: true },
-                    sx: { marginTop: 1 }
-                  },
-                  actionBar: { actions: ['clear', 'today', 'accept'] }
-                }}
-                 sx={{ width: '100%' }}
-              />
-            </LocalizationProvider>
+            {isArchived ? (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Completed on
+                </Typography>
+                <Typography variant="body2">
+                  {targetDate ? new Date(targetDate).toLocaleDateString() : 'Unknown date'}
+                </Typography>
+              </Box>
+            ) : (
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Target Date"
+                  value={targetDate}
+                  onChange={handleDateChange}
+                  disablePast
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined",
+                      size: "small",
+                      InputLabelProps: { shrink: true },
+                      sx: { marginTop: 1 }
+                    },
+                    actionBar: { actions: ['clear', 'today', 'accept'] }
+                  }}
+                   sx={{ width: '100%' }}
+                />
+              </LocalizationProvider>
+            )}
           </div>
 
           {/* Display archive error subtly */}

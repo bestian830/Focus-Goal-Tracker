@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Checkbox, FormControlLabel } from '@mui/material';
 
 /**
@@ -10,6 +10,15 @@ import { Box, Typography, Checkbox, FormControlLabel } from '@mui/material';
  * @param {boolean} props.disabled - Whether the checkbox should be disabled
  */
 export default function DailyReward({ reward, claimed = false, onClaimedChange, disabled = false }) {
+  // Log props for debugging
+  useEffect(() => {
+    console.log('DailyReward component rendered with props:', {
+      reward,
+      claimed,
+      disabled
+    });
+  }, [reward, claimed, disabled]);
+
   return (
     <Box className="daily-reward" sx={{ my: 2, p: 1, borderTop: '1px solid #eee' }}>
       <FormControlLabel
@@ -34,7 +43,7 @@ export default function DailyReward({ reward, claimed = false, onClaimedChange, 
                 textDecoration: claimed ? 'line-through' : 'none'
               }}
             >
-              {reward || 'No reward set'}
+              {reward ? String(reward) : 'No reward set'}
             </Typography>
           </Box>
         }

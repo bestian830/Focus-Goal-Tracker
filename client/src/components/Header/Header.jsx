@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { FaUser } from "react-icons/fa";
 import "../../styles/Home.css"; // import styles
+import apiService from "../../services/api";
+import { useUserStore } from "../../store/userStore";
 
 /**
  * Header Component
@@ -20,20 +21,28 @@ export default function Header({
   toggleProfileModal,
 }) {
   const navigate = useNavigate();
+  
+  // Use Zustand store for user data - with fallback to props
+  const storeUser = useUserStore(state => state.user);
+  const isStoreLoading = useUserStore(state => state.isLoading);
+  
+  // Determine which user data to display (prefer Zustand store if available)
+  const displayUser = storeUser || user;
+  const isLoading = isStoreLoading || loading;
 
   return (
     <header className="app-header">
       <h1>Focus Goal Tracker</h1>
       <div className="user-info">
-        {loading ? (
+        {isLoading ? (
           <span>Loading...</span>
-        ) : user ? (
+        ) : displayUser ? (
           <div className="logged-in-user">
-            <span>Welcome, {user.username}</span>
+            <span>Welcome, {displayUser.username}</span>
             <div className="avatar-container" onClick={toggleProfileModal}>
-              {user.avatarUrl ? (
+              {displayUser.avatarUrl ? (
                 <img
-                  src={user.avatarUrl}
+                  src={displayUser.avatarUrl}
                   alt="User Avatar"
                   className="avatar-image"
                 />

@@ -144,6 +144,10 @@ function ProfileModal({ isOpen, onClose, user }) {
         setProfile(response.data.data);
         setSuccessMessage("資料已成功更新！");
         setIsEditing(false);
+        
+        // No need to dispatch custom events here
+        // The apiService.users.updateProfile method now handles notification
+        // to all components through the centralized userEvents system
       }
     } catch (error) {
       console.error("Failed to update profile:", error);

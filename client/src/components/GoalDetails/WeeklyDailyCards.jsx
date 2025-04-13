@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button, IconButton, Fade } from '@mui/material';
+import { Box, Typography, Button, IconButton, Fade, CircularProgress, Tooltip } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
 import DailyCard from './DailyCard';
+import DailyTasks from './DailyTasks';
 import styles from './WeeklyDailyCards.module.css';
 import apiService from '../../services/api';
+import { getWeek, getStartOfWeek } from '../../utils/dateUtils';
 
 /**
  * WeeklyDailyCards - Displays a week of daily cards for a goal
@@ -15,11 +18,13 @@ import apiService from '../../services/api';
  * @param {Array} props.dailyCards - Array of daily card data
  * @param {Function} props.onCardsUpdate - Callback for when cards are updated
  * @param {Function} props.onViewDeclaration - Callback for viewing goal declaration
+ * @param {boolean} props.isArchived - Indicates if the goal is archived
  */
-export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate, onViewDeclaration }) {
+export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate, onViewDeclaration, isArchived }) {
   const [currentWeekCards, setCurrentWeekCards] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeCard, setActiveCard] = useState(null);
   
   // Generate a week of dates based on goal creation date or current date
   const generateWeekDates = (goalDate, offset = 0) => {
@@ -342,17 +347,63 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
     }
   };
 
+  // Return loading UI if data is not yet loaded
+  if (isLoading) {
+    return (
+      <Box className={styles.loadingContainer} sx={{ textAlign: 'center', py: 4 }}>
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2, color: 'text.secondary' }}>
+          Loading your progress data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Return empty state if no cards yet
+  if (currentWeekCards.length === 0) {
+    return (
+      <Box className={styles.emptyContainer} sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="h6" sx={{ color: 'text.secondary', mb: 2 }}>
+          No progress data yet
+        </Typography>
+        <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, maxWidth: '80%', mx: 'auto' }}>
+          Start tracking your daily progress by adding notes and tasks for each day.
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={handleViewDeclaration}
+          startIcon={<BookmarkIcon />}
+          sx={{ borderRadius: '20px' }}
+        >
+          View Goal Declaration
+        </Button>
+      </Box>
+    );
+  }
+
   return (
-    <Box className={styles.container}>
+    <Box className={styles.container} sx={{ 
+      maxWidth: '100%', 
+      width: '100%', 
+      overflow: 'hidden',
+      boxSizing: 'border-box'
+    }}>
       <Box className={styles.header}>
         <Typography variant="h6" className={styles.title}>
           Weekly Progress Cards
         </Typography>
         
         <Box className={styles.weekControls}>
-          <IconButton onClick={handlePreviousWeek} size="small">
-            <ChevronLeftIcon />
-          </IconButton>
+          <Tooltip title="Previous week">
+            <IconButton
+              onClick={handlePreviousWeek}
+              disabled={isLoading || isArchived}
+              size="small"
+              sx={{ borderRadius: '4px' }}
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+          </Tooltip>
           
           <Button 
             variant="text" 
@@ -364,55 +415,92 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
             {getWeekTitle()}
           </Button>
           
-          <IconButton 
-            onClick={handleNextWeek} 
-            size="small"
-            disabled={weekOffset >= 0} // Don't allow viewing future weeks
-          >
-            <ChevronRightIcon />
-          </IconButton>
+          <Tooltip title="Next week">
+            <IconButton
+              onClick={handleNextWeek}
+              disabled={isLoading || isArchived}
+              size="small"
+              sx={{ borderRadius: '4px' }}
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
       
       <Fade in={!isLoading} timeout={500}>
-        <Box className={styles.cardsContainer}>
-          {currentWeekCards.map((card, index) => {
-            // 检查是否重复的周六日期（解决日期重复问题）
-            if (index > 0 && index < currentWeekCards.length) {
-              const prevCardDate = new Date(currentWeekCards[index-1].date);
-              const thisCardDate = new Date(card.date);
-              
-              // 如果前后两个日期相同，跳过渲染
-              if (
-                prevCardDate.getFullYear() === thisCardDate.getFullYear() &&
-                prevCardDate.getMonth() === thisCardDate.getMonth() &&
-                prevCardDate.getDate() === thisCardDate.getDate()
-              ) {
-                console.log('跳过重复的日期卡片:', {
-                  前一个卡片: prevCardDate.toLocaleDateString(),
-                  当前卡片: thisCardDate.toLocaleDateString(),
-                  索引: index
-                });
-                return null;
+        <Box sx={{ 
+          width: '100%', 
+          pb: 1,
+          overflow: 'hidden'
+        }}>
+          <Box 
+            sx={{ 
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: 0.5,
+              width: '100%',
+              boxSizing: 'border-box'
+            }}
+          >
+            {currentWeekCards.map((card, index) => {
+              // 检查是否重复的周六日期（解决日期重复问题）
+              if (index > 0 && index < currentWeekCards.length) {
+                const prevCardDate = new Date(currentWeekCards[index-1].date);
+                const thisCardDate = new Date(card.date);
+                
+                // 如果前后两个日期相同，跳过渲染
+                if (
+                  prevCardDate.getFullYear() === thisCardDate.getFullYear() &&
+                  prevCardDate.getMonth() === thisCardDate.getMonth() &&
+                  prevCardDate.getDate() === thisCardDate.getDate()
+                ) {
+                  console.log('跳过重复的日期卡片:', {
+                    前一个卡片: prevCardDate.toLocaleDateString(),
+                    当前卡片: thisCardDate.toLocaleDateString(),
+                    索引: index
+                  });
+                  return null;
+                }
               }
-            }
 
-            // 验证卡片数据，确保日期有效
-            const validatedCard = validateCardData(card);
-            
-            return (
-              <DailyCard 
-                key={`${validatedCard.date}-${index}`}
-                card={validatedCard}
-                goal={goal}
-                isToday={isToday(validatedCard.date)}
-                onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
-                onViewDeclaration={onViewDeclaration}
-              />
-            );
-          }).filter(Boolean)} {/* 过滤掉null值 */}
+              // 验证卡片数据，确保日期有效
+              const validatedCard = validateCardData(card);
+              
+              return (
+                <Box 
+                  key={`${validatedCard.date}-${index}`} 
+                  sx={{ 
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <DailyCard 
+                    card={validatedCard}
+                    goal={goal}
+                    isToday={isToday(validatedCard.date)}
+                    onUpdate={(updatedCard) => handleCardUpdate(updatedCard, index)}
+                    onViewDeclaration={handleViewDeclaration}
+                    isArchived={isArchived}
+                  />
+                </Box>
+              );
+            }).filter(Boolean)} {/* 过滤掉null值 */}
+          </Box>
         </Box>
       </Fade>
+
+      {/* Task detail dialog */}
+      {activeCard && (
+        <DailyTasks
+          open={!!activeCard}
+          onClose={() => setActiveCard(null)}
+          card={activeCard}
+          goal={goal}
+          onCardUpdate={handleCardUpdate}
+          isArchived={isArchived}
+        />
+      )}
     </Box>
   );
 } 
