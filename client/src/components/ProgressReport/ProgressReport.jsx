@@ -17,7 +17,7 @@ export default function ProgressReport({ goalId, sx = {} }) {
 
   return (
     <Box className={styles.reportContainer} sx={{ ...sx }}>
-      <ExportButton />
+      <ExportButton goalId={goalId} />
       <AIFeedback goalId={goalId} />
     </Box>
   );
