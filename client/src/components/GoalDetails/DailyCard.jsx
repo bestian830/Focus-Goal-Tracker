@@ -194,7 +194,8 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
           flexDirection: 'column',
           justifyContent: 'space-between',
           boxSizing: 'border-box',
-          mx: 'auto'
+          height: {xs: '120px', sm: '140px', md: '150px'},
+          margin: 0
         }}
       >
         <Box className={styles.dateInfo} sx={{ width: '100%', textAlign: 'center' }}>
@@ -214,7 +215,7 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
           )}
         </Box>
         
-        <Box className={styles.bottomSection} sx={{ width: '100%' }}>
+        <Box className={styles.bottomSection} sx={{ width: '100%', mt: 1 }}>
           <Box className={styles.statusInfo}>
             <Badge 
               color="success" 
@@ -239,7 +240,8 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
                   display: 'block',
                   textAlign: 'center',
                   width: '100%',
-                  fontSize: {xs: '0.65rem', sm: '0.75rem'}
+                  fontSize: {xs: '0.65rem', sm: '0.75rem'},
+                  mb: 1
                 }}
               >
                 {card.records.length} {card.records.length === 1 ? 'note' : 'notes'}
