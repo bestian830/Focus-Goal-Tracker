@@ -145,7 +145,8 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
 
   // Date change handler
   const handleDateChange = async (newDate) => {
-    // Allow clearing the date
+    // Only proceed if user confirmed with OK button (actionBar)
+    // or cleared the date (newDate will be null)
     const dateChanged = (!newDate && targetDate) || (newDate && !targetDate) || (newDate && targetDate && newDate.getTime() !== targetDate.getTime());
     if (!dateChanged) return; 
 
@@ -333,9 +334,15 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
                       InputLabelProps: { shrink: true },
                       sx: { marginTop: 1 }
                     },
-                    actionBar: { actions: ['clear', 'today', 'accept'] }
+                    actionBar: { actions: ['clear', 'today', 'accept'] },
+                    // Force day selection mode to close only on accept
+                    day: { 
+                      disableAutoFocus: true,
+                      autoFocus: false
+                    }
                   }}
-                   sx={{ width: '100%' }}
+                  closeOnSelect={false} // Prevent auto-close on day selection
+                  sx={{ width: '100%' }}
                 />
               </LocalizationProvider>
             )}
