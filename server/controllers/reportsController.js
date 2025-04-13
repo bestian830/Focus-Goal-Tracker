@@ -1,6 +1,7 @@
 import Goal from '../models/Goal.js';
 import axios from 'axios'; // Keep axios
 // import OpenAI from 'openai'; // Remove OpenAI library import
+import mongoose from 'mongoose';
 
 // --- Configuration ---
 const HUGGINGFACE_API_URL = process.env.HUGGINGFACE_API_URL; // Read standard API URL
@@ -233,13 +234,20 @@ export const generateReport = async (req, res) => {
     // 3. Call AI Service
     const feedbackContent = await callAIService(prompt);
 
-    // 4. Return Feedback to Frontend
+    // 4. Generate a unique report ID 
+    const reportId = new mongoose.Types.ObjectId().toString();
+    
+    // 5. Format the report content in a structured way
+    const formattedContent = formatAIResponse(feedbackContent);
+    
+    // 6. Return standardized feedback format to Frontend
     console.log(`Successfully generated feedback for goal: ${goalId}`);
     res.status(200).json({
       success: true,
       data: {
+        id: reportId,
         goalId: goalId,
-        content: feedbackContent,
+        content: formattedContent,
         generatedAt: new Date(),
         dateRange: {
           startDate: startDate,
@@ -258,4 +266,82 @@ export const generateReport = async (req, res) => {
       }
     });
   }
+};
+
+/**
+ * Formats AI response to ensure consistent structure
+ * @param {string} rawContent - The raw content from AI service
+ * @returns {object} Structured content object
+ */
+const formatAIResponse = (rawContent) => {
+  // Default structure if parsing fails
+  const defaultStructure = {
+    summary: rawContent.substring(0, Math.min(200, rawContent.length)) + (rawContent.length > 200 ? '...' : ''),
+    details: rawContent,
+    sections: []
+  };
+  
+  try {
+    // Simple section detection - look for headings
+    const sections = [];
+    const lines = rawContent.split('\n');
+    let currentSection = null;
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      
+      // Skip separator lines
+      if (trimmedLine.match(/^-{3,}$/) || trimmedLine === '---') {
+        continue;
+      }
+      
+      // Check if line looks like a heading (starts with ** or # or is all caps)
+      if (trimmedLine.startsWith('**') || 
+          trimmedLine.startsWith('#') || 
+          (trimmedLine.length > 0 && trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length < 50)) {
+        if (currentSection) {
+          sections.push(currentSection);
+        }
+        
+        // Clean up the title - remove ** markers
+        let title = trimmedLine.replace(/^\*\*|\*\*$/g, '').trim();
+        title = title.replace(/^#+\s*/, '').trim(); // Remove # symbols
+        
+        // Skip creating a section with empty or just --- title
+        if (title === '' || title === '---') {
+          continue;
+        }
+        
+        currentSection = {
+          title: title,
+          content: []
+        };
+      } else if (currentSection && trimmedLine.length > 0) {
+        // Add non-empty lines to current section
+        currentSection.content.push(trimmedLine);
+      }
+    }
+    
+    // Add the last section if exists
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+    
+    // If we found sections, return structured format
+    if (sections.length > 0) {
+      return {
+        summary: sections[0].content.join(' ').substring(0, 200) + '...',
+        details: rawContent,
+        sections: sections.map(section => ({
+          title: section.title,
+          content: section.content.join('\n')
+        }))
+      };
+    }
+  } catch (err) {
+    console.error('Error formatting AI response:', err);
+  }
+  
+  // Fallback to default structure
+  return defaultStructure;
 };
