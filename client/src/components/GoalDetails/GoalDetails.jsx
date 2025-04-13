@@ -59,33 +59,6 @@ export default function GoalDetails({
   const [isDeleting, setIsDeleting] = useState(false);
   const [dailyCards, setDailyCards] = useState([]);
   const [declarationOpen, setDeclarationOpen] = useState(false);
-  const [isLoadingDeclaration, setIsLoadingDeclaration] = useState(false);
-
-  // New effect to handle export button click for declaration
-  useEffect(() => {
-    // Function to handle export button clicks
-    const handleExportButtonClick = () => {
-      // Check if declaration dialog should be temporarily opened for export
-      const shouldOpenDeclaration = document.querySelector('[data-export-id="goal-declaration-content"]') === null;
-      
-      if (shouldOpenDeclaration && selectedGoal) {
-        console.log("Opening declaration dialog for export");
-        handleOpenDeclaration();
-      }
-    };
-
-    // Add event listener for export button clicks
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('button') && e.target.textContent.includes('Export')) {
-        handleExportButtonClick();
-      }
-    });
-
-    return () => {
-      // Clean up event listener
-      document.removeEventListener('click', handleExportButtonClick);
-    };
-  }, [selectedGoal]);
 
   // select goal from goals array
   useEffect(() => {
@@ -630,18 +603,12 @@ Because the path is already beneath my feet—it's really not that complicated. 
           {/* declaration button */}
           <Tooltip title="View goal declaration">
             <IconButton
-              color="primary"
-              size="small"
               onClick={handleOpenDeclaration}
+              color="primary"
               aria-label="View goal declaration"
               sx={{ marginTop: "8px", marginRight: "8px" }}
-              disabled={isLoadingDeclaration}
             >
-              {isLoadingDeclaration ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                <MenuBookIcon />
-              )}
+              <MenuBookIcon />
             </IconButton>
           </Tooltip>
           
