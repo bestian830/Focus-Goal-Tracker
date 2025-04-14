@@ -84,10 +84,22 @@ api.interceptors.response.use(
     }
     // handle authorization errors
     else if (error.response && error.response.status === 401) {
-      console.log("Unauthorized, please log in again");
-      // clear local storage and redirect to login page
+      console.log("Unauthorized, checking user type for redirect");
+      
+      // Check if this is a temporary user
+      const tempId = localStorage.getItem("tempId");
+      
+      // Clear userId if exists (it's unauthorized anyway)
       localStorage.removeItem("userId");
-      window.location.href = "/login";
+      
+      // Redirect based on user type
+      if (tempId) {
+        console.log("Unauthorized tempId user, redirecting to guest login");
+        window.location.href = "/guest-login";
+      } else {
+        console.log("Unauthorized registered user, redirecting to login");
+        window.location.href = "/login";
+      }
     }
     // handle other errors
     else {
