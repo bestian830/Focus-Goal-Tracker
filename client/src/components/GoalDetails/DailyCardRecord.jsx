@@ -82,6 +82,17 @@ export default function DailyCardRecord({
     return `${month}/${day} ${weekday}`;
   };
   
+  // Add a separate function for date comparison
+  const getSimpleDateString = (dateObj) => {
+    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return '';
+    }
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  };
+
   // State for the daily card data
   const [cardData, setCardData] = useState({
     date: date,
@@ -177,11 +188,26 @@ export default function DailyCardRecord({
     if (existingCard) {
       console.log(`Found existing card for ${cardDateFormatted}:`, existingCard);
       
-      if (cardDateFormatted >= todayFormatted) {
+      // Use new date comparison method to determine if it's today or a future date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const cardDate = new Date(date);
+      cardDate.setHours(0, 0, 0, 0);
+      
+      const isCurrentOrFutureDate = cardDate >= today;
+      
+      console.log('Date comparison:', {
+        today: today.toISOString(),
+        cardDate: cardDate.toISOString(),
+        isCurrentOrFutureDate
+      });
+      
+      if (isCurrentOrFutureDate) {
         // For today or future dates, update with latest settings but preserve completion status
         setCardData({
           ...existingCard,
-          // 优先使用 Zustand 中的主任务，然后是 goal 中的设置，最后是现有卡片中的任务
+          // 今天和将来的日期使用Zustand中的最新主任务
           dailyTask: zustandMainTask || goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
           // Try to use reward from Zustand first, then fallback to other sources
           dailyReward: zustandReward || goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
@@ -190,12 +216,12 @@ export default function DailyCardRecord({
           taskCompletions // 保留任务完成状态
         });
       } else {
-        // For past dates, use existing card data unchanged, but ensure records is an array
+        // For past dates, use existing card data unchanged, including existing dailyTask
         setCardData({
           ...existingCard,
-          // 即使是过去的日期，也尝试使用 Zustand 中的主任务，保持一致性
-          dailyTask: zustandMainTask || existingCard.dailyTask || '',
-          // Still prefer Zustand reward if available
+          // 过去的日期保留原有的主任务，不使用Zustand中的最新主任务
+          dailyTask: existingCard.dailyTask || '',
+          // Still prefer Zustand reward if available for consistency in UI
           dailyReward: zustandReward || existingCard.dailyReward || '',
           records: Array.isArray(existingCard.records) ? existingCard.records : [],
           taskCompletions // 保留任务完成状态
@@ -895,6 +921,9 @@ export default function DailyCardRecord({
       }}
       maxWidth="md"
       fullWidth
+      PaperProps={{
+        elevation: 24
+      }}
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
         <IconButton
@@ -1014,23 +1043,35 @@ export default function DailyCardRecord({
                           })
                         }}
                       >
-                        {task.text}
+                        {task.text || (task.isMainTask && 'No main task set')}
                         {task.isMainTask && (
-                          <span style={{
-                            backgroundColor: 'rgba(255, 127, 102, 0.2)',
-                            color: '#FF7F66',
-                            border: '1px solid rgba(255, 127, 102, 0.5)',
-                            borderRadius: '12px',
-                            padding: '2px 8px',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            marginLeft: '8px'
-                          }}>
-                            main task
-                          </span>
+                          <>
+                            <span style={{
+                              backgroundColor: 'rgba(255, 127, 102, 0.2)',
+                              color: '#FF7F66',
+                              border: '1px solid rgba(255, 127, 102, 0.5)',
+                              borderRadius: '12px',
+                              padding: '2px 8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              marginLeft: '8px'
+                            }}>
+                              main task
+                            </span>
+                            {!task.text && (
+                              <span style={{
+                                fontSize: '0.75rem',
+                                fontStyle: 'italic',
+                                marginLeft: '8px',
+                                color: 'rgba(0, 0, 0, 0.6)'
+                              }}>
+                                (Set in declaration)
+                              </span>
+                            )}
+                          </>
                         )}
                       </Typography>
-                      {!task.isLegacy && (
+                      {!task.isLegacy && !task.isMainTask && (
                         <Box>
                           <IconButton 
                             size="small" 
@@ -1048,6 +1089,30 @@ export default function DailyCardRecord({
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Box>
+                      )}
+                      {task.isMainTask && (
+                        <Tooltip 
+                          title="Edit main task in declaration" 
+                          arrow
+                          componentsProps={{
+                            tooltip: {
+                              sx: {
+                                fontSize: '0.75rem',
+                                padding: '8px 12px',
+                                backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                              }
+                            }
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={handleViewDeclaration}
+                            disabled={isSaving || isArchived}
+                          >
+                            <MenuBookIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       )}
                     </Box>
                   )}
@@ -1193,6 +1258,9 @@ export default function DailyCardRecord({
         open={taskDeleteConfirmOpen}
         onClose={handleCancelTaskDelete}
         aria-labelledby="delete-task-dialog-title"
+        PaperProps={{
+          elevation: 24
+        }}
       >
         <DialogTitle id="delete-task-dialog-title">
           Delete Daily Task
@@ -1220,6 +1288,9 @@ export default function DailyCardRecord({
         onClose={handleCancelDelete}
         aria-labelledby="delete-dialog-title"
         aria-describedby="delete-dialog-description"
+        PaperProps={{
+          elevation: 24
+        }}
       >
         <DialogTitle id="delete-dialog-title">
           Delete Progress Record

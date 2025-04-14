@@ -29,7 +29,8 @@
 .closeButton,
 .editButton,
 .cancelButton,
-.saveButton {
+.saveButton,
+.todayButton {
   margin-left: 8px;
 }
 
@@ -294,3 +295,17 @@ textarea.editInput {
   display: flex;
   flex-direction: column;
 } 
+
+/* Today button style */
+.todayButton {
+  color: #0D5E6D;
+  transition: all 0.2s ease;
+}
+
+.todayButton:hover {
+  background-color: rgba(13, 94, 109, 0.1) !important;
+}
+
+.todayButton:disabled {
+  opacity: 0.5;
+}

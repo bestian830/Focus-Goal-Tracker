@@ -9,7 +9,7 @@ import TaskItem from './TaskItem';
  * @param {Function} props.onTaskStatusChange - Callback when task status changes
  */
 export default function DailyTasks({ tasks, onTaskStatusChange }) {
-  // 对任务进行排序，确保主任务始终在最上方
+  // Sort tasks to ensure main tasks are always at the top
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.isMainTask) return -1;
     if (b.isMainTask) return 1;

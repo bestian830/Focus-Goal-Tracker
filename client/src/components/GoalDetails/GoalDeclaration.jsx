@@ -22,6 +22,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import FlagIcon from '@mui/icons-material/Flag';
+import TodayIcon from '@mui/icons-material/Today';
 import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 import { useUserStore } from '../../store/userStore';
@@ -125,8 +126,15 @@ const defaultTheme = createTheme({
  * @param {boolean} props.isOpen - Whether to display the dialog
  * @param {Function} props.onClose - Close callback
  * @param {Function} props.onSave - Save callback
+ * @param {Function} props.onViewTodayCard - Callback to view today's card
  */
-export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
+export default function GoalDeclaration({ 
+  goal, 
+  isOpen, 
+  onClose, 
+  onSave,
+  onViewTodayCard
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -964,6 +972,35 @@ Because the path is already beneath my feet—it's really not that complicated. 
                 <CloseIcon />
               </IconButton>
             </Tooltip>
+            
+            {onViewTodayCard && (
+              <Tooltip 
+                title="View today's card" 
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                    }
+                  }
+                }}
+              >
+                <IconButton 
+                  className={styles.todayButton} 
+                  onClick={() => {
+                    onViewTodayCard(goal);
+                    onClose(null, true);
+                  }} 
+                  disabled={isSaving}
+                  color="primary"
+                >
+                  <TodayIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             
             <Tooltip 
               title="Edit declaration" 
