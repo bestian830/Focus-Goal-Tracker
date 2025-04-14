@@ -34,7 +34,8 @@ app.use(cors({
       "http://localhost:5173", 
       "https://focusappdeploy-frontend.onrender.com", 
       "https://focusfinalproject-frontend-original.onrender.com", 
-      "https://focusfinalproject-frontend-original-repo.onrender.com"
+      "https://focusfinalproject-frontend-original-repo.onrender.com",
+      "https://focusfinalproject-main-frontend.onrender.com"
     ];
     
     // Add CLIENT_URL from environment variable if available
