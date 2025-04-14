@@ -33,6 +33,7 @@ Focus App is a full-stack application designed to help users set, track, and acc
 - **dotenv**: For environment variable management
 
 ## Project Structure
+```
 FocusFinalProject/
 ├── client/                   # Frontend application
 │   ├── src/                  # Source code
@@ -60,7 +61,7 @@ FocusFinalProject/
 │
 ├── .env                      # Environment variables (root directory)
 └── package.json              # Project dependencies and scripts
-
+```
 ## Database Design
 
 ### Model Design (MongoDB Schemas)
