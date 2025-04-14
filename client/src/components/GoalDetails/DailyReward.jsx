@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import RewardItem from './RewardItem';
 
 /**
@@ -30,8 +31,31 @@ export default function DailyReward({
 
   return (
     <Box className="daily-reward" sx={{ my: 2, p: 1, borderTop: '1px solid #eee' }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        Daily Reward
+      <Typography variant="h6" sx={{ 
+        mb: 1, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between'
+      }}>
+        <span>Daily Reward</span>
+        {disabled && !claimed && (
+          <Tooltip 
+            title="Complete the main task first to claim this reward" 
+            arrow
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                }
+              }
+            }}
+          >
+            <InfoIcon fontSize="small" sx={{ color: 'rgba(0, 0, 0, 0.5)', ml: 1 }} />
+          </Tooltip>
+        )}
       </Typography>
       
       <RewardItem 

@@ -677,18 +677,31 @@ export default function DailyCardRecord({
   // Tasks for the DailyTasks component
   const tasksForComponent = [];
   
-  // 如果goal有dailyTasks数组，添加到任务列表
+  // 首先检查是否有主任务，并优先添加到列表
+  const mainTask = getMainTask(goal?._id);
+  if (mainTask) {
+    const mainTaskId = `main-task-${mainTask.replace(/\s+/g, '-').toLowerCase()}`;
+    tasksForComponent.push({
+      id: mainTaskId,
+      text: mainTask,
+      completed: cardData.taskCompletions[mainTaskId] || false,
+      isMainTask: true // 标记为主任务
+    });
+  }
+  
+  // 然后添加其他任务
   if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
     goal.dailyTasks.forEach((taskText, index) => {
-      // 使用任务文本的哈希作为稳定的ID，而不是索引
-      // 这样即使任务顺序改变，同一个任务的ID也会保持一致
       const taskId = `task-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
-      tasksForComponent.push({
-        id: taskId,
-        text: taskText,
-        completed: cardData.taskCompletions[taskId] || false,
-        index: index // 添加索引以便编辑和删除
-      });
+      // 确保我们不会添加重复的主任务
+      if (taskText !== mainTask) {
+        tasksForComponent.push({
+          id: taskId,
+          text: taskText,
+          completed: cardData.taskCompletions[taskId] || false,
+          index: index
+        });
+      }
     });
   }
   
@@ -849,6 +862,18 @@ export default function DailyCardRecord({
     }
   }, [open, goal?._id, getGoalReward]);
 
+  // 检查主任务是否已完成
+  const isMainTaskCompleted = () => {
+    // 如果没有主任务，返回true（不阻止奖励领取）
+    if (!mainTask) return true;
+    
+    // 找到主任务并检查其完成状态
+    const mainTaskItem = tasksForComponent.find(task => task.isMainTask);
+    if (!mainTaskItem) return true;
+    
+    return cardData.taskCompletions[mainTaskItem.id] || false;
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -971,44 +996,60 @@ export default function DailyCardRecord({
                       </IconButton>
                     </Box>
                   ) : (
-                    <>
-                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <Checkbox
-                          checked={task.completed}
-                          onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
-                          color="primary"
-                          disabled={isSaving || isArchived}
-                        />
-                        <Typography 
-                          sx={{ 
-                            flex: 1,
-                            color: task.completed ? 'success.main' : 'text.primary',
-                            textDecoration: task.completed ? 'line-through' : 'none'
-                          }}
-                        >
-                          {task.text}
-                        </Typography>
-                        {!task.isLegacy && (
-                          <Box>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleInitiateTaskEdit(task.id, task.text)}
-                              disabled={isSaving || isArchived}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              color="error" 
-                              onClick={() => handleInitiateTaskDelete(task.id, task.index)}
-                              disabled={isSaving || isArchived}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <Checkbox
+                        checked={task.completed}
+                        onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
+                        color="primary"
+                        disabled={isSaving || isArchived}
+                      />
+                      <Typography 
+                        sx={{ 
+                          flex: 1,
+                          color: task.completed ? 'success.main' : 'text.primary',
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          ...(task.isMainTask && {
+                            fontWeight: 600,
+                            color: task.completed ? 'success.main' : '#0D5E6D'
+                          })
+                        }}
+                      >
+                        {task.text}
+                        {task.isMainTask && (
+                          <span style={{
+                            backgroundColor: 'rgba(255, 127, 102, 0.2)',
+                            color: '#FF7F66',
+                            border: '1px solid rgba(255, 127, 102, 0.5)',
+                            borderRadius: '12px',
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            marginLeft: '8px'
+                          }}>
+                            main task
+                          </span>
                         )}
-                      </Box>
-                    </>
+                      </Typography>
+                      {!task.isLegacy && (
+                        <Box>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleInitiateTaskEdit(task.id, task.text)}
+                            disabled={isSaving || isArchived}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
+                            color="error" 
+                            onClick={() => handleInitiateTaskDelete(task.id, task.index)}
+                            disabled={isSaving || isArchived}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      )}
+                    </Box>
                   )}
                 </ListItem>
               ))}
@@ -1060,7 +1101,7 @@ export default function DailyCardRecord({
             reward={goal?._id ? (getGoalReward(goal._id) || cardData.dailyReward || 'No reward set') : (cardData.dailyReward || 'No reward set')}
             claimed={cardData.completed?.dailyReward || false}
             onClaimedChange={handleRewardStatusChange}
-            disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean)) || isArchived}
+            disabled={!isMainTaskCompleted() || isArchived}
           />
         </Box>
         
