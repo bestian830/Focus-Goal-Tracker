@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Box, Typography, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import RewardItem from './RewardItem';
 
 /**
  * DailyReward component displays the daily reward for a goal with a checkbox to mark as claimed
@@ -8,46 +9,37 @@ import { Box, Typography, Checkbox, FormControlLabel } from '@mui/material';
  * @param {boolean} props.claimed - Whether the reward has been claimed
  * @param {Function} props.onClaimedChange - Callback for when claimed status changes
  * @param {boolean} props.disabled - Whether the checkbox should be disabled
+ * @param {boolean} props.isMainReward - Whether this is the main reward from declaration
  */
-export default function DailyReward({ reward, claimed = false, onClaimedChange, disabled = false }) {
+export default function DailyReward({ 
+  reward, 
+  claimed = false, 
+  onClaimedChange, 
+  disabled = false,
+  isMainReward = true // Default to true as typically this is the main reward
+}) {
   // Log props for debugging
   useEffect(() => {
     console.log('DailyReward component rendered with props:', {
       reward,
       claimed,
-      disabled
+      disabled,
+      isMainReward
     });
-  }, [reward, claimed, disabled]);
+  }, [reward, claimed, disabled, isMainReward]);
 
   return (
     <Box className="daily-reward" sx={{ my: 2, p: 1, borderTop: '1px solid #eee' }}>
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={claimed}
-            onChange={(e) => onClaimedChange && onClaimedChange(e.target.checked)}
-            disabled={disabled}
-          />
-        }
-        label={
-          <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body1" component="span" sx={{ mr: 1 }}>
-              Daily Reward:
-            </Typography>
-            <Typography 
-              variant="body1" 
-              component="span" 
-              fontWeight={500}
-              sx={{ 
-                color: claimed ? 'success.main' : 'text.primary',
-                textDecoration: claimed ? 'line-through' : 'none'
-              }}
-            >
-              {reward ? String(reward) : 'No reward set'}
-            </Typography>
-          </Box>
-        }
-        sx={{ display: 'flex', mr: 0 }}
+      <Typography variant="h6" sx={{ mb: 1 }}>
+        Daily Reward
+      </Typography>
+      
+      <RewardItem 
+        reward={reward}
+        claimed={claimed}
+        onClaimedChange={onClaimedChange}
+        isMainReward={isMainReward}
+        disabled={disabled}
       />
     </Box>
   );

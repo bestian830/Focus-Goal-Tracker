@@ -39,6 +39,7 @@ import DailyReward from './DailyReward';
 import apiService from '../../services/api';
 import { toast } from 'react-hot-toast';
 import useRewardsStore from '../../store/rewardsStore';
+import useMainTaskStore from '../../store/mainTaskStore';
 
 /**
  * DailyCardRecord component displays and manages a daily card with tasks, rewards, and progress records
@@ -63,6 +64,9 @@ export default function DailyCardRecord({
   // Get reward from Zustand store
   const getGoalReward = useRewardsStore(state => state.getGoalReward);
   const setGoalReward = useRewardsStore(state => state.setGoalReward);
+  
+  // Get main task from Zustand store
+  const getMainTask = useMainTaskStore(state => state.getMainTask);
   
   // Format the date for display (e.g., "4/9 Wednesday")
   const formatDisplayDate = (dateString) => {
@@ -144,58 +148,41 @@ export default function DailyCardRecord({
     console.warn('Cannot open declaration dialog: onViewDeclaration callback not provided or goal is empty');
   };
 
-  // Load daily card data when goal or date changes
+  // Initialize card data when the component opens
   useEffect(() => {
-    if (!goal || !date) return;
+    if (!goal || !date || !open) return;
+    
+    const goalId = goal._id || goal.id;
+    
+    // 尝试从Zustand获取奖励
+    const zustandReward = goalId ? getGoalReward(goalId) : null;
+    console.log('From Zustand store - reward:', zustandReward);
+    
+    // 尝试从Zustand获取主任务
+    const zustandMainTask = goalId ? getMainTask(goalId) : null;
+    console.log('From Zustand store - main task:', zustandMainTask);
+    
+    // Check if there's an existing card for this date
+    const existingCard = goal.dailyCards?.find(card => 
+      card.date && formatDisplayDate(new Date(card.date)) === formatDisplayDate(new Date(date))
+    );
 
-    // Find existing daily card for this date
-    const existingCard = goal.dailyCards && goal.dailyCards.find(card => {
-      // 比较日期（只比较年月日，不比较时分秒）
-      const cardDate = new Date(card.date);
-      const targetDate = new Date(date);
-      return (
-        cardDate.getFullYear() === targetDate.getFullYear() &&
-        cardDate.getMonth() === targetDate.getMonth() &&
-        cardDate.getDate() === targetDate.getDate()
-      );
-    });
-
-    // Try to get reward from Zustand store
-    const zustandReward = goal._id ? getGoalReward(goal._id) : null;
-    console.log('Checking for reward in Zustand store:', {
-      goalId: goal._id,
-      zustandReward
-    });
-
+    // 确保 taskCompletions 对象存在
+    const taskCompletions = existingCard?.taskCompletions || {};
+    
+    // Format dates for comparison 
+    const todayFormatted = formatDisplayDate(new Date());
+    const cardDateFormatted = formatDisplayDate(new Date(date));
+    
     if (existingCard) {
-      // 使用本地日期格式處理，而不是 UTC
-      const today = new Date();
-      const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-      // 解析卡片日期
-      let cardDateObj = new Date(date);
-      const cardDateFormatted = `${cardDateObj.getFullYear()}-${String(cardDateObj.getMonth() + 1).padStart(2, '0')}-${String(cardDateObj.getDate()).padStart(2, '0')}`;
-
-      // 記錄日期比較信息
-      console.log('Comparing card date with today:', {
-        cardDate: cardDateFormatted,
-        today: todayFormatted,
-        isToday: cardDateFormatted === todayFormatted,
-        isFuture: cardDateFormatted > todayFormatted
-      });
-
-      // 初始化任务完成状态 - 确保使用现有的保存状态
-      // 检查existingCard中是否已有taskCompletions字段
-      const taskCompletions = existingCard.taskCompletions || {};
+      console.log(`Found existing card for ${cardDateFormatted}:`, existingCard);
       
-      console.log('加载已保存的任务完成状态:', taskCompletions);
-
-      // Check if the card is for today or a future date
       if (cardDateFormatted >= todayFormatted) {
         // For today or future dates, update with latest settings but preserve completion status
         setCardData({
           ...existingCard,
-          dailyTask: goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
+          // 优先使用 Zustand 中的主任务，然后是 goal 中的设置，最后是现有卡片中的任务
+          dailyTask: zustandMainTask || goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
           // Try to use reward from Zustand first, then fallback to other sources
           dailyReward: zustandReward || goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
           // Ensure records is an array
@@ -206,6 +193,8 @@ export default function DailyCardRecord({
         // For past dates, use existing card data unchanged, but ensure records is an array
         setCardData({
           ...existingCard,
+          // 即使是过去的日期，也尝试使用 Zustand 中的主任务，保持一致性
+          dailyTask: zustandMainTask || existingCard.dailyTask || '',
           // Still prefer Zustand reward if available
           dailyReward: zustandReward || existingCard.dailyReward || '',
           records: Array.isArray(existingCard.records) ? existingCard.records : [],
@@ -222,16 +211,20 @@ export default function DailyCardRecord({
           taskCompletions[taskId] = false;
         });
       }
-      if (goal && goal.currentSettings?.dailyTask) {
+      
+      // 对主任务也创建完成状态
+      const mainTask = zustandMainTask || goal.currentSettings?.dailyTask || '';
+      if (mainTask) {
         // 使用与任务列表生成相同的ID逻辑
-        const taskId = `daily-task-${goal.currentSettings.dailyTask.replace(/\s+/g, '-').toLowerCase()}`;
+        const taskId = `daily-task-${mainTask.replace(/\s+/g, '-').toLowerCase()}`;
         taskCompletions[taskId] = false;
       }
       
       // Create new card with current goal settings
       setCardData({
         date: date,
-        dailyTask: goal.currentSettings?.dailyTask || '',
+        // 优先使用 Zustand 中的主任务
+        dailyTask: mainTask,
         // Use Zustand reward for new cards too
         dailyReward: zustandReward || goal.currentSettings?.dailyReward || '',
         completed: {
@@ -247,12 +240,14 @@ export default function DailyCardRecord({
     console.log('Daily card data initialized:', {
       date,
       existingCard: existingCard ? 'found' : 'not found',
+      zustandMainTask,
       zustandReward,
+      finalTask: zustandMainTask || goal.currentSettings?.dailyTask || (existingCard?.dailyTask || ''),
       finalReward: zustandReward || goal.currentSettings?.dailyReward || (existingCard?.dailyReward || ''),
       recordsType: existingCard ? (Array.isArray(existingCard.records) ? 'array' : typeof existingCard.records) : 'N/A',
       taskCompletionsLoaded: existingCard ? (existingCard.taskCompletions ? 'yes' : 'no') : 'N/A'
     });
-  }, [goal, date, open, getGoalReward]);
+  }, [goal, date, open, getGoalReward, getMainTask]);
 
   // Effect to update reward when goal settings change
   useEffect(() => {

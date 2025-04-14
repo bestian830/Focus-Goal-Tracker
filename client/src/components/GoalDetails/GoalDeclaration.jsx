@@ -26,6 +26,7 @@ import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 import { useUserStore } from '../../store/userStore';
 import useRewardsStore from '../../store/rewardsStore';
+import useMainTaskStore from '../../store/mainTaskStore';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 /**
@@ -147,6 +148,9 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   
   // Get the setDeclarationReward function from the Zustand store
   const setDeclarationReward = useRewardsStore(state => state.setDeclarationReward);
+  
+  // Get the setMainTask function from the Zustand store
+  const setMainTask = useMainTaskStore(state => state.setMainTask);
   
   // When dialog opens, fetch fresh user data
   useEffect(() => {
@@ -817,6 +821,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
             reward: editedData.dailyReward
           });
           setDeclarationReward(goalId, editedData.dailyReward);
+        }
+        
+        // Update the main task in the Zustand store
+        if (goalId && editedData.dailyTask) {
+          console.log("Updating main task in Zustand store:", {
+            goalId,
+            dailyTask: editedData.dailyTask
+          });
+          setMainTask(goalId, editedData.dailyTask);
         }
         
         // Create a more complete localUpdatedGoal with consistent motivation across all fields
