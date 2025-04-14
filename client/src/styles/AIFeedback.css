@@ -2,11 +2,13 @@
 .ai-feedback-paper {
   padding: 24px;
   margin-bottom: 24px;
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 .ai-feedback-header {
   margin-bottom: 20px;
   text-align: center;
+  border-bottom: 1px solid #eee;
 }
 
 .ai-feedback-title {
@@ -60,6 +62,7 @@
   overflow-y: visible;
   min-height: 300px;
   height: auto;
+  padding-top: 5px;
 }
 
 .ai-feedback-section-content {
@@ -79,7 +82,7 @@
 
 /* Time range selector styles */
 .ai-feedback-controls {
-  margin-bottom: 16px;
+  /* Styles removed as elements are positioned directly */
 }
 
 .ai-feedback-date-range {
@@ -88,9 +91,7 @@
 }
 
 .ai-feedback-generate-btn {
-  display: block;
-  width: 100%;
-  padding: 10px 0;
+  /* Styles set in JSX */
 }
 
 .ai-feedback-date-picker-container {
@@ -153,4 +154,14 @@
 .report-table-responsive {
   overflow-x: auto;
   margin-bottom: 24px;
+}
+
+.ai-feedback-structured-content button {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Ensure Popover styles don't interfere */
+.MuiPopover-paper {
+  animation: popoverFadeIn 0.2s ease-out;
+  z-index: 1400;
 } 

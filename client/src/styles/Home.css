@@ -145,11 +145,11 @@
   margin-bottom: 16px;
   padding: 1rem;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: #ffffff !important; /* Force white background with !important */
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
-  min-height: 200px; /* Ensure minimum height for better visibility */
+  min-height: 600px; /* Increase minimum height for consistency */
 }
 
 /* Specific styles for each section in mobile view */
@@ -209,44 +209,76 @@
 /* Desktop layout (> 900px) */
 @media (min-width: 900px) {
   .app-header {
-    padding: 1rem 2.5rem; /* More horizontal space */
+    padding: 1rem 2.5rem; /* 40px horizontal padding */
   }
-  
+
   .app-header, 
   .main-content {
     max-width: 1200px;
-    padding: 20px;
+    /* Adjust main-content padding to align with header */
+    padding-left: 2.5rem;  /* Match header horizontal padding */
+    padding-right: 2.5rem; /* Match header horizontal padding */
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
-  
+
   .main-content {
     flex-direction: row;
     flex-wrap: nowrap;
     margin: 0 auto;
-    gap: 24px; /* Increased gap between columns */
+    gap: 20px; /* Keep gap */
+    box-sizing: border-box; /* Ensure padding is included */
   }
-  
-  /* Sidebar - 15% */
-  .main-content > :nth-child(1) {
-    flex: 0 0 15%;
-    max-width: 15%;
+
+  /* Sidebar - Approx 20-22%, let's try 300px fixed width */
+  .main-content > :nth-child(1) { /* Sidebar */
+    flex: 0 0 300px; /* Increased fixed width for Goal Card visibility */
+    max-width: 300px;
     order: unset;
+    margin-left: 0; /* Remove previous negative margin */
+    padding: 1rem; /* Reset padding */
+    box-sizing: border-box;
+    background-color: #ffffff !important; /* Ensure white background */
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Height handled below */
   }
-  
-  /* GoalDetails - 60% */
-  .main-content > :nth-child(2) {
-    flex: 0 0 60%;
-    max-width: 60%;
+
+  /* GoalDetails - Adjust flex-grow to fill remaining space */
+  .main-content > :nth-child(2) { /* GoalDetails */
+    flex: 1 1 auto; /* Let GoalDetails grow to fill space */
+    max-width: none; /* Remove explicit max-width */
     order: unset;
-    border-left: 1px solid #eee;
-    border-right: 1px solid #eee;
+    border-left: none; /* Remove left border */
+    border-right: none; /* Remove right border */
+    padding: 1rem; /* Reset padding */
+    box-sizing: border-box;
+    background-color: #ffffff !important; /* Ensure white background */
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Height handled below */
   }
-  
-  /* ProgressReport - 25% */
-  .main-content > :nth-child(3) {
-    flex: 0 0 25%;
-    max-width: 25%;
+
+  /* ProgressReport - Fixed width to align right */
+  .main-content > :nth-child(3) { /* ProgressReport */
+    flex: 0 0 320px; /* Adjusted fixed width */
+    max-width: 320px;
     order: unset;
     margin-left: 0;
+    padding: 1rem; /* Reset padding */
+    box-sizing: border-box;
+    background-color: #ffffff !important; /* Ensure white background */
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Height handled below */
+  }
+
+  /* Consistent Height for all columns */
+  .main-content > :nth-child(1),
+  .main-content > :nth-child(2),
+  .main-content > :nth-child(3) {
+    min-height: calc(100vh - 120px); /* Example: Adjust 120px based on header height + margins */
+    height: auto; /* Allow content to define height if larger */
   }
 }
 
