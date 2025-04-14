@@ -385,7 +385,7 @@ export default function AIFeedback({ goalId }) {
       </Popover>
 
       {/* AI Feedback Sections Container */} 
-      <Box sx={{ px: 2, pt: 0, pb: 2, mt: '5px' /* Move sections up */ }}>
+      <Box sx={{ px: 0, pt: 1, pb: 2, mt: '5px' /* Move sections up */ }}>
         {loading && (
           <Box className="ai-feedback-loading-container">
             <CircularProgress />
@@ -438,7 +438,7 @@ export default function AIFeedback({ goalId }) {
                           sx={{
                             justifyContent: 'space-between', /* Push icon to right */
                             textAlign: 'left',
-                            padding: '10px 12px', /* Adjust padding */
+                            padding: '10px 8px', /* Adjust padding */
                             borderRadius: '8px', /* Apple-like radius */
                             color: '#333', /* Standard text color */
                             backgroundColor: '#ffffff', /* White background */
@@ -468,12 +468,12 @@ export default function AIFeedback({ goalId }) {
             )}
             
             {/* Analysis Timestamp */}
-            <Box className="ai-feedback-timestamp" sx={{ textAlign: 'right', mt: 1 }}>
+            <Box className="ai-feedback-timestamp" sx={{ textAlign: 'right', mt: 0 }}>
               <Typography 
                 variant="caption" 
                 sx={{ 
                   color: '#888',
-                  fontSize: '0.75rem' /* Slightly larger caption */
+                  fontSize: '0.65rem' /* Slightly larger caption */
                 }}
               >
                 Analysis time: {lastUpdate ? formatTimestampAppleStyle(lastUpdate) : 'N/A'}
