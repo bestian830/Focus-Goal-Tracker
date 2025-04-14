@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import apiService from "../services/api";
 import styles from "./GuestLogin.module.css";
@@ -18,6 +18,45 @@ function GuestLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
+  // Carousel state
+  const [activeSlide, setActiveSlide] = useState(0);
+  
+  // Carousel data
+  const carouselItems = [
+    {
+      // Note: Adjust image paths based on your project structure
+      // If images are in public/images folder, use "/images/filename.png"
+      // If images are imported, use imported variables instead
+      image: "/images/GoalGuide.png", 
+      title: "Goal Guide",
+      description: "Set clear goals with confidence"
+    },
+    {
+      image: "/images/DailyLog.png",
+      title: "Daily Log",
+      description: "Celebrate small wins"
+    },
+    {
+      image: "/images/AIFeedback.png",
+      title: "AI Feedback",
+      description: "Know what's working"
+    }
+  ];
+  
+  // Auto-rotate carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % carouselItems.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [carouselItems.length]);
+  
+  // Handle manual carousel navigation
+  const handleSlideChange = (index) => {
+    setActiveSlide(index);
+  };
+  
   // Navigation hook
   const navigate = useNavigate();
   
@@ -31,7 +70,7 @@ function GuestLogin() {
     try {
       // check if tempId exists in localStorage
       const existingTempId = localStorage.getItem('tempId');
-      console.log('检查localStorage中的tempId:', existingTempId);
+      console.log('check localStorage中的tempId:', existingTempId);
       
       // whether there is an existing tempId, send a request to the backend
       // if there is an existing tempId, pass it to the backend for verification
@@ -68,6 +107,51 @@ function GuestLogin() {
       <br />
       Track one goal now — no sign-up needed.
       </p>
+      
+      {/* Carousel section */}
+      <div className={styles.carouselContainer}>
+        <div className={styles.carouselLayout}>
+          {/* Left side - static image */}
+          <div className={styles.leftImageContainer}>
+            <img 
+              src="/images/login_page.png" 
+              alt="Login Page" 
+              className={styles.leftImage}
+              // Note: Adjust image path if needed based on your project structure
+            />
+          </div>
+          
+          {/* Right side - carousel */}
+          <div className={styles.carouselWrapper}>
+            <div 
+              className={styles.carouselSlides}
+              style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+            >
+              {carouselItems.map((item, index) => (
+                <div key={index} className={styles.slide}>
+                  <img src={item.image} alt={item.title} className={styles.slideImage} />
+                  <div className={styles.slideCaption}>
+                    <h3>{item.title}</h3>
+                    <p>{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Carousel indicators */}
+            <div className={styles.carouselIndicators}>
+              {carouselItems.map((_, index) => (
+                <button
+                  key={index}
+                  className={`${styles.indicator} ${activeSlide === index ? styles.activeIndicator : ''}`}
+                  onClick={() => handleSlideChange(index)}
+                  aria-label={`Slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
       
       {error && <div className={styles.errorMessage}>{error}</div>}
       

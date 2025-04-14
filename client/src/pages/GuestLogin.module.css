@@ -24,8 +24,119 @@
 .subtitle {
   font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
   max-width: 500px;
+}
+
+/* Carousel container and layout */
+.carouselContainer {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.carouselLayout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Left side - static image */
+.leftImageContainer {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.leftImage {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* Right side - carousel */
+.carouselWrapper {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 0 0 12px 12px;
+}
+
+.carouselSlides {
+  display: flex;
+  transition: transform 0.5s ease;
+  width: 100%;
+}
+
+.slide {
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+
+.slideImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.slideCaption {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.slideCaption h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.slideCaption p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Carousel indicators */
+.carouselIndicators {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  margin: 0 6px;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  transition: all 0.3s ease;
+  position: relative;
+  outline: none;
+}
+
+.indicator:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+}
+
+.activeIndicator {
+  background-color: #4CD7D0; /* Match with brand teal color */
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(76, 215, 208, 0.5);
 }
 
 .guestLoginButton {
@@ -138,4 +249,50 @@
 .guestLoginContainer {
   background-size: 200% 200%;
   animation: gradient 15s ease infinite;
+}
+
+/* Responsive design - tablet and larger */
+@media (min-width: 768px) {
+  .carouselLayout {
+    flex-direction: row;
+  }
+
+  .leftImageContainer {
+    width: 50%;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .carouselWrapper {
+    width: 50%;
+    border-radius: 0 12px 12px 0;
+  }
+
+  .subtitle {
+    margin-bottom: 2.5rem;
+  }
+
+  .slideCaption h3 {
+    font-size: 1.8rem;
+  }
+
+  .slideCaption p {
+    font-size: 1.1rem;
+  }
+}
+
+/* Larger screens */
+@media (min-width: 1024px) {
+  .carouselContainer {
+    margin-bottom: 3rem;
+  }
+
+  .slide {
+    padding: 1.5rem;
+  }
+
+  .indicator {
+    width: 12px;
+    height: 12px;
+    margin: 0 8px;
+  }
 } 
