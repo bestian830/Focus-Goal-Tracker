@@ -262,7 +262,7 @@ function ProfileModal({ isOpen, onClose, user }) {
           <FaTimes />
         </button>
 
-        <h1>Profile</h1>
+        <h1 style={{ color: '#0D5E6D', marginBottom: '1.5rem', textAlign: 'center' }}>Profile</h1>
 
         {error && <p className="error-message">{error}</p>}
         {successMessage && <p className="success-message">{successMessage}</p>}
@@ -275,7 +275,7 @@ function ProfileModal({ isOpen, onClose, user }) {
               {!isEditing && !isChangingPassword && !showDeleteConfirm && (
                 <div className="profile-info">
                   <div className="info-row">
-                    <span className="info-label">用戶名：</span>
+                    <span className="info-label">Username:</span>
                     <span className="info-value">{profile.username}</span>
                   </div>
                   {!profile.isGuest && (
@@ -312,12 +312,14 @@ function ProfileModal({ isOpen, onClose, user }) {
                         <button
                           onClick={() => setIsEditing(true)}
                           className="btn edit-btn"
+                          style={{ backgroundColor: '#0D5E6D' }}
                         >
                           Edit Data
                         </button>
                         <button
                           onClick={() => setIsChangingPassword(true)}
                           className="btn password-btn"
+                          style={{ backgroundColor: '#4CD7D0' }}
                         >
                           Change Password
                         </button>
@@ -359,7 +361,7 @@ function ProfileModal({ isOpen, onClose, user }) {
                     />
                   </div>
                   <div className="form-actions">
-                    <button type="submit" className="btn save-btn">
+                    <button type="submit" className="btn save-btn" style={{ backgroundColor: '#0D5E6D' }}>
                       Save
                     </button>
                     <button
@@ -416,7 +418,7 @@ function ProfileModal({ isOpen, onClose, user }) {
                     />
                   </div>
                   <div className="form-actions">
-                    <button type="submit" className="btn save-btn">
+                    <button type="submit" className="btn save-btn" style={{ backgroundColor: '#0D5E6D' }}>
                       Change Password
                     </button>
                     <button

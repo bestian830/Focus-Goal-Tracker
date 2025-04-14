@@ -31,20 +31,20 @@ export default function Header({
   const isLoading = isStoreLoading || loading;
 
   return (
-    <header className="app-header" style={{ backgroundColor: "#f5f7fa", borderBottom: "1px solid #e0e0e0" }}>
-      <h1 style={{ color: "#0D5E6D" }}>Focus Goal Tracker</h1>
+    <header className="app-header" style={{ backgroundColor: '#0D5E6D', color: 'white', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}>
+      <h1 style={{ color: 'white' }}>Focus Goal Tracker</h1>
       <div className="user-info">
         {isLoading ? (
           <span>Loading...</span>
         ) : displayUser ? (
           <div className="logged-in-user">
-            <span style={{ color: "#333" }}>Welcome, {displayUser.username}</span>
+            <span style={{ color: "white" }}>Welcome, {displayUser.username}</span>
             <div 
               className="avatar-container" 
               onClick={toggleProfileModal}
               style={{ 
-                backgroundColor: "rgba(13, 94, 109, 0.1)",
-                border: "1px solid rgba(13, 94, 109, 0.2)"
+                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                border: "1px solid rgba(255, 255, 255, 0.3)"
               }}
             >
               {displayUser.avatarUrl ? (
@@ -54,7 +54,7 @@ export default function Header({
                   className="avatar-image"
                 />
               ) : (
-                <FaUser className="avatar-icon" style={{ color: "#0D5E6D" }} />
+                <FaUser className="avatar-icon" style={{ color: "white" }} />
               )}
             </div>
             <button 

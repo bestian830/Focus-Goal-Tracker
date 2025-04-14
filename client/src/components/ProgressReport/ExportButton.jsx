@@ -494,7 +494,12 @@ export default function ExportButton({ goalId }) {
         width: '100%',
         maxWidth: { sm: '200px' },
         display: 'block',
-        mx: 'auto'
+        mx: 'auto',
+        backgroundColor: '#4CD7D0',
+        border: '2px solid #0D5E6D',
+        '&:hover': {
+          backgroundColor: '#3AC0B9'
+        }
       }}
     >
       {exporting ? 'Exporting...' : 'Export Report'}
