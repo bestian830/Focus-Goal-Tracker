@@ -6,6 +6,10 @@
   margin-bottom: 12px;
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  width: 100%;
 }
 
 .goalCard:hover {
@@ -20,16 +24,16 @@
 
 .goalCardHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  width: 100%;
   margin-bottom: 8px;
 }
 
 .goalTitle {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   margin: 0;
-  overflow: hidden;
+  width: 100%;
   font-size: 1rem;
   font-weight: 500;
   color: #0D5E6D;
@@ -38,21 +42,32 @@
 .titleActions {
   display: flex;
   align-items: center;
-  margin-right: 8px;
+  width: 100%;
 }
 
 .goalTitleText {
-  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
   overflow: hidden;
-  white-space: nowrap;
-  flex: 1;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+  line-height: 1.4;
+  min-height: 1.4em; /* At least one line */
+  max-height: 4.2em; /* Maximum three lines - increased from two */
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Show up to three lines on mobile - increased from two */
+  -webkit-box-orient: vertical;
 }
 
 .priorityContainer {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  margin-left: 8px;
-  flex-shrink: 0;
+  margin-top: 4px;
+  width: 100%;
 }
 
 .priorityChip {
@@ -81,6 +96,98 @@
   border: 1px solid rgba(13, 94, 109, 0.3);
 }
 
+/* Tablet layout (600px - 900px) */
+@media (min-width: 600px) {
+  .goalCardHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .goalTitle {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .goalTitleText {
+    margin: 0 8px;
+    flex: 1;
+    min-width: 0; /* Allow text to shrink */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Show up to two lines on tablet - increased from one */
+    -webkit-box-orient: vertical;
+    max-height: 2.8em; /* 2 lines × 1.4 line-height */
+  }
+  
+  .priorityContainer {
+    margin-top: 0;
+    margin-left: auto;
+    width: auto;
+    justify-content: flex-end;
+    min-width: 100px; /* 确保有足够空间显示优先级 */
+  }
+  
+  .dueDate {
+    width: auto; /* Adjust width for larger screens */
+    margin-top: 0;
+  }
+}
+
+/* Desktop layout (> 900px) */
+@media (min-width: 900px) {
+  .goalCard {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  
+  .goalTitle {
+    display: grid;
+    grid-template-columns: 15% 60% 25%;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .titleActions {
+    width: auto;
+    grid-column: 1;
+    justify-content: flex-start;
+  }
+  
+  .goalTitleText {
+    grid-column: 2;
+    padding: 0 8px;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Show up to two lines on desktop */
+    -webkit-box-orient: vertical;
+    max-height: 2.8em; /* 2 lines × 1.4 line-height */
+  }
+  
+  .priorityContainer {
+    grid-column: 3;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  
+  .cardFooter {
+    max-width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .dueDate {
+    margin-right: 8px; /* Add some space between date and actions */
+    flex-shrink: 0; /* Prevent date from shrinking */
+  }
+}
+
 .cardContent {
   font-size: 0.875rem;
   color: rgba(0, 0, 0, 0.7);
@@ -103,6 +210,8 @@
   align-items: center;
   color: rgba(0, 0, 0, 0.6);
   font-size: 0.75rem;
+  width: 100%; /* Ensure full width on mobile */
+  margin-top: 4px; /* Add some space */
 }
 
 .dateIcon {

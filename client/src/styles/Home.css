@@ -20,10 +20,12 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem; /* Reduced from 2rem for mobile */
   border-bottom: 1px solid #eee;
   background-color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .app-header h1 {
@@ -116,39 +118,106 @@
   background-color: #757575;
 }
 
-/* Main content area */
+/* Main content area - Mobile First Design */
 .main-content {
-  /* padding: 2rem; */ /* Removed padding to allow children to fill space */
   display: flex;
-  /* flex-wrap: wrap; */ /* Remove wrap to keep items in one row */
-  /* gap: 2rem; */ /* Remove gap, control spacing with flex properties */
-  flex-grow: 1; /* Allow main content to fill remaining vertical space */
-  width: 100%; /* Ensure it takes full width */
+  flex-direction: column;
+  width: 100%;
+  gap: 16px;
+  padding: 12px;
+  flex-grow: 1;
+  box-sizing: border-box;
 }
 
-/* Assign flex ratios to children */
+/* Ensure all main sections take full width on mobile */
+.main-content > :nth-child(1), /* Sidebar */
+.main-content > :nth-child(2), /* GoalDetails */
+.main-content > :nth-child(3) { /* ProgressReport */
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  min-height: 200px; /* Ensure minimum height for better visibility */
+}
+
+/* Specific styles for each section in mobile view */
 .main-content > :nth-child(1) { /* Sidebar */
-  flex: 1 1 0%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
-  min-width: 250px; /* Optional: Ensure sidebar has a minimum width */
-  overflow-y: auto; /* Allow sidebar to scroll if content overflows */
+  order: 1; /* Show Sidebar first */
 }
 
 .main-content > :nth-child(2) { /* GoalDetails */
-  flex: 2 1 0%; /* flex-grow: 2, flex-shrink: 1, flex-basis: 0% */
-  overflow-y: auto; /* Allow details to scroll */
-  border-left: 1px solid #eee; /* Optional separator */
-  border-right: 1px solid #eee; /* Optional separator */
+  order: 2; /* Show GoalDetails second */
+  border-left: none;
+  border-right: none;
 }
 
 .main-content > :nth-child(3) { /* ProgressReport */
-  flex: 1 1 0%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 0% */
-  min-width: 250px; /* Optional: Ensure report has a minimum width */
-  overflow-y: auto; /* Allow report to scroll */
+  order: 3; /* Show ProgressReport third */
 }
 
-/* Style adjustments for children if needed */
-.main-content > * { 
-  padding: 1rem; /* Add padding back to individual children */
+/* Tablet layout (600px - 900px) */
+@media (min-width: 600px) {
+  .app-header {
+    margin-bottom: 2rem; /* Restored for tablet and up */
+  }
+
+  .main-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 16px;
+    gap: 20px;
+    justify-content: space-between;
+  }
+  
+  /* Left sidebar */
+  .main-content > :nth-child(1) {
+    width: 220px;
+    flex: 0 0 220px;
+    order: unset; /* Reset order for tablet layout */
+  }
+  
+  /* Right section container - for GoalDetails and ProgressReport */
+  .main-content > :nth-child(2),
+  .main-content > :nth-child(3) {
+    flex: 1 1 calc(100% - 240px);
+    min-width: 0;
+    order: unset; /* Reset order for tablet layout */
+  }
+}
+
+/* Desktop layout (> 900px) */
+@media (min-width: 900px) {
+  .main-content {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  /* Sidebar - 15% */
+  .main-content > :nth-child(1) {
+    flex: 0 0 15%;
+    max-width: 15%;
+  }
+  
+  /* GoalDetails - 60% */
+  .main-content > :nth-child(2) {
+    flex: 0 0 60%;
+    max-width: 60%;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #eee;
+  }
+  
+  /* ProgressReport - 25% */
+  .main-content > :nth-child(3) {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
 }
 
 .welcome-message {
