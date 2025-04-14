@@ -1,41 +1,47 @@
+/* Mobile first design */
 .container {
-  padding: 16px;
+  padding: 12px;
   background-color: #f5f5f5;
   border-radius: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
 .title {
   font-weight: 500;
-  margin-bottom: 0;
-  font-size: 1.25rem;
-  color: #3f51b5;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: #0D5E6D;
 }
 
 .weekControls {
   display: flex;
   align-items: center;
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 8px;
 }
 
 .weekTitle {
   margin: 0 8px;
+  font-size: 0.9rem;
 }
 
 .cardsContainer {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -44,56 +50,74 @@
 
 /* Ensure cards maintain a consistent width */
 .cardsContainer > * {
-  min-width: 0; /* 允许子元素收缩，防止溢出 */
+  min-width: 0; /* Allow children to shrink to prevent overflow */
   width: 100%;
 }
 
-/* 進度條容器 */
+/* Progress container */
 .progressContainer {
   margin-top: 1rem;
 }
 
-/* 每個卡片的容器 */
+/* Card wrapper */
 .cardWrapper {
   width: 100%;
   min-width: 0;
 }
 
-/* 今日按鈕 */
+/* Today button */
 .todayButton {
-  margin-right: 1rem;
+  margin-right: 0.5rem;
   margin-top: 0.5rem;
   align-self: flex-end;
 }
 
-/* 響應式設計 */
-@media (max-width: 900px) {
-  .cardsContainer {
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-  }
-}
-
-@media (max-width: 768px) {
-  .cardsContainer {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .cardsContainer {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+/* Tablet layout */
+@media (min-width: 600px) {
+  .container {
+    padding: 16px;
+    margin-bottom: 20px;
   }
   
   .header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .title {
+    margin-bottom: 0;
+    font-size: 1.2rem;
   }
   
   .weekControls {
-    margin-top: 8px;
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    margin-top: 0;
+  }
+  
+  .weekTitle {
+    font-size: 1rem;
+  }
+  
+  .cardsContainer {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  
+  .todayButton {
+    margin-right: 1rem;
+  }
+}
+
+/* Desktop layout */
+@media (min-width: 900px) {
+  .cardsContainer {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+  }
+  
+  .title {
+    font-size: 1.25rem;
   }
 } 

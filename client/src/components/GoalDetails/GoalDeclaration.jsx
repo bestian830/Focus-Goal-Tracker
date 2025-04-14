@@ -11,17 +11,24 @@ import {
   Fade,
   TextField,
   Input,
-  DialogActions
+  DialogActions,
+  Tooltip
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import FlagIcon from '@mui/icons-material/Flag';
+import TodayIcon from '@mui/icons-material/Today';
 import styles from './GoalDeclaration.module.css';
 import apiService from '../../services/api';
 import { useUserStore } from '../../store/userStore';
 import useRewardsStore from '../../store/rewardsStore';
+import useMainTaskStore from '../../store/mainTaskStore';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 /**
  * Editable field component - allows direct text editing
@@ -71,6 +78,45 @@ const EditableField = ({ value, onChange, multiline = false }) => {
   );
 };
 
+// create a custom theme for GoalDeclaration component
+const defaultTheme = createTheme({
+  shadows: [
+    'none',
+    '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
+    '0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12)',
+    '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)',
+    '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+    '0px 3px 5px -1px rgba(0,0,0,0.2),0px 5px 8px 0px rgba(0,0,0,0.14),0px 1px 14px 0px rgba(0,0,0,0.12)',
+    '0px 3px 5px -1px rgba(0,0,0,0.2),0px 6px 10px 0px rgba(0,0,0,0.14),0px 1px 18px 0px rgba(0,0,0,0.12)',
+    '0px 4px 5px -2px rgba(0,0,0,0.2),0px 7px 10px 1px rgba(0,0,0,0.14),0px 2px 16px 1px rgba(0,0,0,0.12)',
+    '0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12)',
+    '0px 5px 6px -3px rgba(0,0,0,0.2),0px 9px 12px 1px rgba(0,0,0,0.14),0px 3px 16px 2px rgba(0,0,0,0.12)',
+    '0px 6px 6px -3px rgba(0,0,0,0.2),0px 10px 14px 1px rgba(0,0,0,0.14),0px 4px 18px 3px rgba(0,0,0,0.12)',
+    '0px 6px 7px -4px rgba(0,0,0,0.2),0px 11px 15px 1px rgba(0,0,0,0.14),0px 4px 20px 3px rgba(0,0,0,0.12)',
+    '0px 7px 8px -4px rgba(0,0,0,0.2),0px 12px 17px 2px rgba(0,0,0,0.14),0px 5px 22px 4px rgba(0,0,0,0.12)',
+    '0px 7px 8px -4px rgba(0,0,0,0.2),0px 13px 19px 2px rgba(0,0,0,0.14),0px 5px 24px 4px rgba(0,0,0,0.12)',
+    '0px 7px 9px -4px rgba(0,0,0,0.2),0px 14px 21px 2px rgba(0,0,0,0.14),0px 5px 26px 4px rgba(0,0,0,0.12)',
+    '0px 8px 9px -5px rgba(0,0,0,0.2),0px 15px 22px 2px rgba(0,0,0,0.14),0px 6px 28px 5px rgba(0,0,0,0.12)',
+    '0px 8px 10px -5px rgba(0,0,0,0.2),0px 16px 24px 2px rgba(0,0,0,0.14),0px 6px 30px 5px rgba(0,0,0,0.12)',
+    '0px 8px 11px -5px rgba(0,0,0,0.2),0px 17px 26px 2px rgba(0,0,0,0.14),0px 6px 32px 5px rgba(0,0,0,0.12)',
+    '0px 9px 11px -5px rgba(0,0,0,0.2),0px 18px 28px 2px rgba(0,0,0,0.14),0px 7px 34px 6px rgba(0,0,0,0.12)',
+    '0px 9px 12px -6px rgba(0,0,0,0.2),0px 19px 29px 2px rgba(0,0,0,0.14),0px 7px 36px 6px rgba(0,0,0,0.12)',
+    '0px 10px 13px -6px rgba(0,0,0,0.2),0px 20px 31px 3px rgba(0,0,0,0.14),0px 8px 38px 7px rgba(0,0,0,0.12)',
+    '0px 10px 13px -6px rgba(0,0,0,0.2),0px 21px 33px 3px rgba(0,0,0,0.14),0px 8px 40px 7px rgba(0,0,0,0.12)',
+    '0px 10px 14px -6px rgba(0,0,0,0.2),0px 22px 35px 3px rgba(0,0,0,0.14),0px 8px 42px 7px rgba(0,0,0,0.12)',
+    '0px 11px 14px -7px rgba(0,0,0,0.2),0px 23px 36px 3px rgba(0,0,0,0.14),0px 9px 44px 8px rgba(0,0,0,0.12)',
+    '0px 11px 15px -7px rgba(0,0,0,0.2),0px 24px 38px 3px rgba(0,0,0,0.14),0px 9px 46px 8px rgba(0,0,0,0.12)'
+  ],
+  palette: {
+    primary: {
+      main: '#0D5E6D', // use the green color as the primary color
+      light: '#4CD7D0',
+      dark: '#0a4a56',
+      contrastText: '#fff',
+    },
+  },
+});
+
 /**
  * GoalDeclaration - Goal declaration component
  * Display and edit user's goal declaration
@@ -80,8 +126,15 @@ const EditableField = ({ value, onChange, multiline = false }) => {
  * @param {boolean} props.isOpen - Whether to display the dialog
  * @param {Function} props.onClose - Close callback
  * @param {Function} props.onSave - Save callback
+ * @param {Function} props.onViewTodayCard - Callback to view today's card
  */
-export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
+export default function GoalDeclaration({ 
+  goal, 
+  isOpen, 
+  onClose, 
+  onSave,
+  onViewTodayCard
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +156,9 @@ export default function GoalDeclaration({ goal, isOpen, onClose, onSave }) {
   
   // Get the setDeclarationReward function from the Zustand store
   const setDeclarationReward = useRewardsStore(state => state.setDeclarationReward);
+  
+  // Get the setMainTask function from the Zustand store
+  const setMainTask = useMainTaskStore(state => state.setMainTask);
   
   // When dialog opens, fetch fresh user data
   useEffect(() => {
@@ -515,13 +571,19 @@ Because the path is already beneath my feet—it's really not that complicated. 
             // Process possible variable fields
             const variablePatterns = [
               // Detect patterns for variables using regex
-              { regex: /stepping onto this path because (.*?)\./, group: 1 }, // motivation
-              { regex: /I already hold (.*?) in my hands/, group: 1 }, // resources
-              { regex: /Next, I'll (.*?),/, group: 1 }, // nextStep
-              { regex: /I commit to (.*?) each day/, group: 1 }, // dailyTask
-              { regex: /something small and meaningful: (.*?)\./, group: 1 }, // dailyReward
-              { regex: /treating myself to (.*?),/, group: 1 }, // ultimateReward
-              { regex: /deadline for myself: (.*?)\./, group: 1 }, // targetDate
+              { regex: /stepping onto this path because ([^.]+)/, group: 1 }, // motivation
+              { regex: /I already hold ([^.]+) in my hands/, group: 1 }, // resources
+              { regex: /Next, I'll ([^,]+)/, group: 1 }, // nextStep
+              { regex: /I commit to ([^.]+) each day/, group: 1 }, // dailyTask
+              { regex: /something small and meaningful: ([^.]+)/, group: 1 }, // dailyReward
+              { regex: /treating myself to ([^,]+)/, group: 1 }, // ultimateReward
+              { regex: /deadline for myself: ([^.]+)/, group: 1 }, // targetDate
+              // 添加更多模式匹配
+              { regex: /(picuture is beautiful|great)/i, group: 1 }, // 匹配特定单词
+              { regex: /(take my first step and let the momentum carry me onward)/i, group: 1 }, // 匹配短语
+              { regex: /(daily persistence)/i, group: 1 }, // 匹配短语
+              { regex: /(appropriate reward)/i, group: 1 }, // 匹配短语
+              { regex: /([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}|[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})/, group: 1 } // 匹配日期格式
             ];
             
             // Apply variable detection and style replacement
@@ -602,10 +664,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
       );
     }
     
-    // Get fresh username when rendering editable declaration
     const username = getUsernameFromTempOrUser();
-    console.log("Using username for editable declaration:", username);
-    
+
     return (
       <div className={styles.declaration}>
         <Typography variant="h4" className={styles.title}>
@@ -616,47 +676,59 @@ Because the path is already beneath my feet—it's really not that complicated. 
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          This goal isn't just another item on my list—it's something I genuinely want to achieve
+          This goal isn't just another item on my list—it's something I genuinely want to achieve.
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          I'm {username}, and I'm stepping onto this path because <EditableField 
+          I'm {username}, and I'm stepping onto this path because{' '}
+          <EditableField 
             value={editedData.motivation} 
             onChange={(value) => handleFieldChange('motivation', value)}
             multiline 
-          />. It's something deeply meaningful to me, a desire that comes straight from my heart.
+          />
+          {'. '}It's something deeply meaningful to me, a desire that comes straight from my heart.
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          I trust that I have what it takes, because I already hold <EditableField 
+          I trust that I have what it takes, because I already hold{' '}
+          <EditableField 
             value={editedData.resources} 
             onChange={(value) => handleFieldChange('resources', value)}
             multiline 
-          /> in my hands—these are my sources of confidence and strength as I move forward.
+          />
+          {' '}in my hands—these are my sources of confidence and strength as I move forward.
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll <EditableField 
+          I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll{' '}
+          <EditableField 
             value={editedData.nextStep} 
             onChange={(value) => handleFieldChange('nextStep', value)}
-          />, beginning with this first step and letting the momentum carry me onward.
+          />
+          {', '}beginning with this first step and letting the momentum carry me onward.
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          I understand that as long as I commit to <EditableField 
+          I understand that as long as I commit to{' '}
+          <EditableField 
             value={editedData.dailyTask} 
             onChange={(value) => handleFieldChange('dailyTask', value)}
-          /> each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
+          />
+          {' '}each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
-          Every time I complete my daily milestone, I'll reward myself with something small and meaningful: <EditableField 
+          Every time I complete my daily milestone, I'll reward myself with something small and meaningful:{' '}
+          <EditableField 
             value={editedData.dailyReward} 
             onChange={(value) => handleFieldChange('dailyReward', value)}
-          />. When I fully accomplish my goal, I'll celebrate this journey by treating myself to <EditableField 
+          />
+          {'. '}When I fully accomplish my goal, I'll celebrate this journey by treating myself to{' '}
+          <EditableField 
             value={editedData.ultimateReward} 
             onChange={(value) => handleFieldChange('ultimateReward', value)}
-          />, as recognition for what I've achieved.
+          />
+          {', '}as recognition for what I've achieved.
         </Typography>
         
         <Typography className={styles.paragraph} variant="body1">
@@ -759,6 +831,15 @@ Because the path is already beneath my feet—it's really not that complicated. 
           setDeclarationReward(goalId, editedData.dailyReward);
         }
         
+        // Update the main task in the Zustand store
+        if (goalId && editedData.dailyTask) {
+          console.log("Updating main task in Zustand store:", {
+            goalId,
+            dailyTask: editedData.dailyTask
+          });
+          setMainTask(goalId, editedData.dailyTask);
+        }
+        
         // Create a more complete localUpdatedGoal with consistent motivation across all fields
         const localUpdatedGoal = {
           ...goal,
@@ -851,112 +932,201 @@ Because the path is already beneath my feet—it's really not that complicated. 
   };
   
   return (
-    <Dialog
-      open={isOpen}
-      onClose={() => !isSaving && onClose(null, true)}
-      maxWidth="md"
-      fullWidth
-      className={styles.declarationDialog}
-      sx={{ 
-        '& .MuiDialog-paper': { 
-          maxHeight: '90vh',
-          // Make sure dialog is visible to html2canvas even if it's normally hidden
-          '&.MuiDialog-paper': {
-            visibility: 'visible !important',
-            position: 'absolute !important',
-            zIndex: 1000
-          }
-        } 
-      }}
-    >
-      <DialogContent className={styles.dialogContent}>
-        {/* Header buttons */}
-        <div className={styles.header}>
-          <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose(null, true)} disabled={isSaving}>
-            <CloseIcon />
-          </IconButton>
-          
-          {!isEditing && (
-            <IconButton 
-              className={styles.editButton} 
-              onClick={() => setIsEditing(true)} 
-              disabled={isSaving}
+    <ThemeProvider theme={defaultTheme}>
+      <Dialog
+        open={isOpen}
+        onClose={() => !isSaving && onClose(null, true)}
+        maxWidth="md"
+        fullWidth
+        className={styles.declarationDialog}
+        sx={{ 
+          '& .MuiDialog-paper': { 
+            maxHeight: '90vh',
+            // Make sure dialog is visible to html2canvas even if it's normally hidden
+            '&.MuiDialog-paper': {
+              visibility: 'visible !important',
+              position: 'absolute !important',
+              zIndex: 1000
+            }
+          } 
+        }}
+      >
+        <DialogContent className={styles.dialogContent}>
+          {/* Header buttons */}
+          <div className={styles.header}>
+            <Tooltip 
+              title="Back to main page" 
+              arrow
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    padding: '8px 12px',
+                    backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                  }
+                }
+              }}
             >
-              <EditIcon />
-            </IconButton>
+              <IconButton className={styles.closeButton} onClick={() => !isSaving && onClose(null, true)} disabled={isSaving}>
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
+            
+            {onViewTodayCard && (
+              <Tooltip 
+                title="View today's card" 
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                    }
+                  }
+                }}
+              >
+                <IconButton 
+                  className={styles.todayButton} 
+                  onClick={() => {
+                    onViewTodayCard(goal);
+                    onClose(null, true);
+                  }} 
+                  disabled={isSaving}
+                >
+                  <TodayIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            
+            {!isEditing && (
+              <Tooltip 
+                title="Edit declaration" 
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                    }
+                  }
+                }}
+              >
+                <IconButton 
+                  className={styles.editButton} 
+                  onClick={() => setIsEditing(true)} 
+                  disabled={isSaving}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            
+            {isEditing && (
+              <>
+                <Tooltip 
+                  title="Cancel changes" 
+                  arrow
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        padding: '8px 12px',
+                        backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                      }
+                    }
+                  }}
+                >
+                  <IconButton 
+                    className={styles.cancelButton} 
+                    onClick={() => setIsEditing(false)} 
+                    disabled={isSaving}
+                  >
+                    <CancelIcon />
+                  </IconButton>
+                </Tooltip>
+                
+                <Tooltip 
+                  title="Save declaration" 
+                  arrow
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        padding: '8px 12px',
+                        backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                      }
+                    }
+                  }}
+                >
+                  <IconButton 
+                    className={styles.saveButton} 
+                    onClick={handleSave} 
+                    disabled={isSaving}
+                    sx={{ color: '#0D5E6D' }}
+                  >
+                    <CheckCircleIcon />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+          </div>
+          
+          {/* Declaration icon */}
+          <div className={styles.declarationIcon}>
+            <EmojiEventsIcon className={styles.bookIcon} />
+          </div>
+          
+          {/* Error alert */}
+          {error && (
+            <Alert severity="error" className={styles.alert}>
+              {error}
+            </Alert>
           )}
           
-          {isEditing && (
-            <>
-              <IconButton 
-                className={styles.cancelButton} 
-                onClick={() => setIsEditing(false)} 
-                disabled={isSaving}
-              >
-                <CancelIcon />
-              </IconButton>
-              
-              <IconButton 
-                className={styles.saveButton} 
-                onClick={handleSave} 
-                disabled={isSaving}
-                color="primary"
-              >
-                <CheckCircleIcon />
-              </IconButton>
-            </>
+          {/* Success alert */}
+          {success && (
+            <Fade in={!!success}>
+              <Alert severity="success" className={styles.alert}>
+                {success}
+              </Alert>
+            </Fade>
           )}
-        </div>
-        
-        {/* Declaration icon */}
-        <div className={styles.declarationIcon}>
-          <MenuBookIcon className={styles.bookIcon} />
-        </div>
-        
-        {/* Error alert */}
-        {error && (
-          <Alert severity="error" className={styles.alert}>
-            {error}
-          </Alert>
-        )}
-        
-        {/* Success alert */}
-        {success && (
-          <Fade in={!!success}>
-            <Alert severity="success" className={styles.alert}>
-              {success}
-            </Alert>
-          </Fade>
-        )}
-        
-        {/* Loading indicator */}
-        {isSaving && (
-          <Box className={styles.loadingContainer}>
-            <CircularProgress size={24} />
-            <Typography variant="body2" className={styles.loadingText}>
-              Saving...
-            </Typography>
-          </Box>
-        )}
-        
-        {/* Declaration content - Fixed DOM structure */}
-        <div className={styles.contentContainer} data-export-id="goal-declaration-content">
-          {!goal ? (
-            <Box className={styles.emptyState}>
-              <Typography variant="body1">
-                Unable to load goal data. Please close and try again.
+          
+          {/* Loading indicator */}
+          {isSaving && (
+            <Box className={styles.loadingContainer}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" className={styles.loadingText}>
+                Saving...
               </Typography>
             </Box>
-          ) : isEditing ? (
-            renderEditableDeclaration()
-          ) : (
-            // Modified rendering logic to ensure content is always displayed, even if empty
-            formatDeclarationContent(goal.declaration?.content || (() => {
-              // 使用优化后的函数获取用户名
-              const username = getUsernameFromTempOrUser();
-              console.log("Using username for default content:", username);
-              
-              return `# ${goal.title || 'My Goal'}
+          )}
+          
+          {/* Declaration content - Fixed DOM structure */}
+          <div className={styles.contentContainer} data-export-id="goal-declaration-content">
+            {!goal ? (
+              <Box className={styles.emptyState}>
+                <Typography variant="body1">
+                  Unable to load goal data. Please close and try again.
+                </Typography>
+              </Box>
+            ) : isEditing ? (
+              renderEditableDeclaration()
+            ) : (
+              // Modified rendering logic to ensure content is always displayed, even if empty
+              formatDeclarationContent(goal.declaration?.content || (() => {
+                // 使用优化后的函数获取用户名
+                const username = getUsernameFromTempOrUser();
+                console.log("Using username for default content:", username);
+                
+                return `# ${goal.title || 'My Goal'}
 
 This goal isn't just another item on my list—it's something I genuinely want to achieve.
 
@@ -967,25 +1137,31 @@ I trust that I have what it takes, because I already have the preparation I need
 I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me forward.
 
 I understand that as long as I commit to consistent progress each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.`;
-            })())
-          )}
-        </div>
-        
-        {/* Bottom buttons */}
-        <Box className={styles.actionButtons}>
-          {isEditing && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSave}
-              disabled={isSaving}
-              startIcon={<CheckCircleIcon />}
-            >
-              {isSaving ? 'Saving...' : 'Confirm Save'}
-            </Button>
-          )}
-        </Box>
-      </DialogContent>
-    </Dialog>
+              })())
+            )}
+          </div>
+          
+          {/* Bottom buttons */}
+          <Box className={styles.actionButtons}>
+            {isEditing && (
+              <Button
+                variant="contained"
+                sx={{ 
+                  backgroundColor: '#0D5E6D',
+                  '&:hover': {
+                    backgroundColor: '#0a4a56'
+                  }
+                }}
+                onClick={handleSave}
+                disabled={isSaving}
+                startIcon={<CheckCircleIcon />}
+              >
+                {isSaving ? 'Saving...' : 'Confirm Save'}
+              </Button>
+            )}
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </ThemeProvider>
   );
 } 

@@ -1,13 +1,14 @@
 import React from 'react';
+import styles from './GoalCard.module.css';
 
 export default function AddGoalButton({ onAddGoalClick, disabled }) {
   return (
     <button 
-      className={`add-goal-btn ${disabled ? 'disabled' : ''}`} 
+      className={`${styles.addGoalButton} ${disabled ? styles.disabled : ''}`} 
       onClick={onAddGoalClick}
       disabled={disabled}
     >
-      Add Goal
+      Add New Goal
     </button>
   );
 }

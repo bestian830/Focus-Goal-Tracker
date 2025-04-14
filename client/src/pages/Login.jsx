@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import apiService from "../services/api";
-import "../styles/Login.css"; // We'll create this CSS file later
+import { useUserStore } from "../store/userStore";
+import styles from "./Login.module.css";
 
 /**
  * Login Component
@@ -31,27 +32,8 @@ function Login() {
   // Navigation hook for redirect after login
   const navigate = useNavigate();
 
-  // Check if user is already logged in
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    const tempId = localStorage.getItem("tempId");
-    
-    // Check if user just logged out
-    const justLoggedOut = localStorage.getItem("justLoggedOut");
-    
-    // If user just logged out, clear the flag and stay on login page
-    if (justLoggedOut) {
-      localStorage.removeItem("justLoggedOut");
-      return;
-    }
-    
-    // Only auto-redirect to home page for users with userId
-    // For tempId users, they need to click login button manually
-    if (userId) {
-      console.log("User already logged in, redirecting to home page");
-      navigate("/");
-    }
-  }, [navigate]);
+  // User store from Zustand
+  const setUser = useUserStore((state) => state.setUser);
 
   /**
    * Update form data when inputs change
@@ -83,7 +65,6 @@ function Login() {
 
     try {
       // use wrapped API service for login
-      console.log("Sending login request...");
       const response = await apiService.auth.login(formData);
       console.log("Login successful, response:", response.data);
 
@@ -97,6 +78,12 @@ function Login() {
       // Store user ID in localStorage
       localStorage.setItem("userId", response.data.data.id);
       console.log("User ID saved to localStorage:", response.data.data.id);
+      
+      // Remove tempId if it exists (user was previously a guest)
+      localStorage.removeItem("tempId");
+      
+      // Update Zustand store with user data
+      setUser(response.data.data);
 
       // Redirect to home page
       console.log("Redirecting to home page...");
@@ -111,20 +98,24 @@ function Login() {
         setError("Login failed. Please try again.");
       }
     } finally {
+      // Stop loading state
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h1>Focus</h1>
-      <p className="subtitle">Log in to track your goals</p>
+    <div className={styles.loginContainer}>
+      <h1 className={styles.appTitle}>Focus</h1>
+      <p className={styles.subtitle}>Track your goals, boost productivity, 
+        <br />
+        and achieve more every day
+      </p>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
+      <form onSubmit={handleSubmit} className={styles.loginForm}>
+        <div className={styles.formGroup}>
+          <label htmlFor="email" className={styles.formLabel}>Email</label>
           <input
             type="email"
             id="email"
@@ -133,11 +124,12 @@ function Login() {
             onChange={handleChange}
             disabled={loading}
             placeholder="your@email.com"
+            className={styles.formInput}
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="password" className={styles.formLabel}>Password</label>
           <input
             type="password"
             id="password"
@@ -146,20 +138,21 @@ function Login() {
             onChange={handleChange}
             disabled={loading}
             placeholder="Your password"
+            className={styles.formInput}
           />
         </div>
 
-        <button type="submit" className="login-button" disabled={loading}>
+        <button type="submit" className={styles.loginButton} disabled={loading}>
           {loading ? "Logging in..." : "Log In"}
         </button>
       </form>
 
-      <div className="login-options">
+      <div className={styles.loginOptions}>
         <p>
           Don't have an account? <Link to="/register">Sign Up</Link>
         </p>
-        <p className="or-divider">or</p>
-        <Link to="/guest-login" className="guest-login-link">
+        <p className={styles.orDivider}>or</p>
+        <Link to="/guest-login" className={styles.guestLoginLink}>
           Continue as Guest
         </Link>
       </div>

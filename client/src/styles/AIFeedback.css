@@ -51,18 +51,22 @@
   padding: 16px;
   border-radius: 4px;
   background-color: #fff;
+  min-height: 200px;
 }
 
 /* Remove unnecessary report header styles */
 .ai-feedback-structured-content {
-  max-height: 600px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
+  min-height: 300px;
+  height: auto;
 }
 
 .ai-feedback-section-content {
   padding: 8px;
   background-color: #fafafa;
   line-height: 1.6;
+  min-height: 100px;
 }
 
 .ai-feedback-error {

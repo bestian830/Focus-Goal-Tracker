@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import apiService from '../services/api';
-import '../styles/Register.css'; // We'll create this CSS file later
+import { useUserStore } from '../store/userStore';
+import styles from './Register.module.css';
 
 /**
  * Register Component
@@ -33,6 +33,9 @@ function Register() {
   
   // Navigation hook for redirect after registration
   const navigate = useNavigate();
+  
+  // User store from Zustand
+  const setUser = useUserStore((state) => state.setUser);
 
   /**
    * Update form data when inputs change
@@ -53,87 +56,67 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form data
+    // Validate form fields
     if (!formData.username || !formData.email || !formData.password) {
-      setError('Please fill in all required fields');
+      setError('Please fill out all required fields.');
       return;
     }
     
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       return;
     }
-    
+
+    // Start loading state
     setLoading(true);
     
     try {
-      // Check for temp user ID in localStorage
-      const tempId = localStorage.getItem('tempId');
-      console.log("Registration process: checking for temporary user ID", tempId ? `Found ID: ${tempId}` : "No temporary ID found");
-      
-      // Prepare registration data
-      const registrationData = {
+      // Send registration request using API service
+      const response = await apiService.auth.register({
         username: formData.username,
         email: formData.email,
         password: formData.password
-      };
-      
-      // Include tempId if available to migrate guest data
-      if (tempId) {
-        console.log(`Including temporary ID ${tempId} in registration data for data migration`);
-        registrationData.tempId = tempId;
-      }
-      
-      console.log("Preparing to send registration data:", {
-        ...registrationData,
-        password: "******" // hide password, only for logging
       });
       
-      // Call the registration API
-      const response = await apiService.auth.register(registrationData);
-      console.log("Registration successful, server response:", response.data);
+      console.log("Registration successful, response:", response.data);
       
-      // Store user data and token in localStorage
+      // Store user ID in localStorage
       localStorage.setItem('userId', response.data.data.id);
       
-      // Only remove tempId if registration was successful AND we had a tempId
-      if (tempId) {
-        console.log(`Registration successful, removing temporary ID: ${tempId}`);
-        localStorage.removeItem('tempId');
-      }
+      // Remove tempId if it exists (user was previously a guest)
+      localStorage.removeItem('tempId');
+      
+      // Update Zustand store with user data
+      setUser(response.data.data);
       
       // Redirect to home page
       navigate('/');
     } catch (error) {
-      console.error('Registration failed:', error);
+      // Handle network/server errors
+      console.error('Registration error:', error);
       
       // Display appropriate error message
       if (error.response && error.response.data && error.response.data.error) {
-        const errorMessage = error.response.data.error.message;
-        console.error("Server returned error:", errorMessage);
-        setError(errorMessage);
+        setError(error.response.data.error.message);
       } else {
-        setError('Registration failed. Please try again.');
+        setError('Could not create account. Please try again later.');
       }
     } finally {
+      // End loading state
       setLoading(false);
     }
   };
 
   return (
-    <div className="register-container">
-      <h1>Focus</h1>
-      <p className="subtitle">Create your account</p>
+    <div className={styles.registerContainer}>
+      <h1 className={styles.appTitle}>Focus</h1>
+      <p className={styles.subtitle}>Create an account to track your goals</p>
       
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
       
-      <form onSubmit={handleSubmit} className="register-form">
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
+      <form onSubmit={handleSubmit} className={styles.registerForm}>
+        <div className={styles.formGroup}>
+          <label htmlFor="username" className={styles.formLabel}>Username</label>
           <input
             type="text"
             id="username"
@@ -141,12 +124,13 @@ function Register() {
             value={formData.username}
             onChange={handleChange}
             disabled={loading}
-            placeholder="Choose a username"
+            placeholder="Your username"
+            className={styles.formInput}
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="email" className={styles.formLabel}>Email</label>
           <input
             type="email"
             id="email"
@@ -155,11 +139,12 @@ function Register() {
             onChange={handleChange}
             disabled={loading}
             placeholder="your@email.com"
+            className={styles.formInput}
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="password" className={styles.formLabel}>Password</label>
           <input
             type="password"
             id="password"
@@ -167,12 +152,13 @@ function Register() {
             value={formData.password}
             onChange={handleChange}
             disabled={loading}
-            placeholder="Choose a password"
+            placeholder="Create a password"
+            className={styles.formInput}
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password</label>
+        <div className={styles.formGroup}>
+          <label htmlFor="confirmPassword" className={styles.formLabel}>Confirm Password</label>
           <input
             type="password"
             id="confirmPassword"
@@ -181,19 +167,20 @@ function Register() {
             onChange={handleChange}
             disabled={loading}
             placeholder="Confirm your password"
+            className={styles.formInput}
           />
         </div>
         
         <button 
           type="submit"
-          className="register-button"
+          className={styles.registerButton}
           disabled={loading}
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
       
-      <div className="register-options">
+      <div className={styles.registerOptions}>
         <p>
           Already have an account? <Link to="/login">Log In</Link>
         </p>

@@ -118,10 +118,16 @@ function Home() {
         console.log("User information in localStorage:", { userId, tempId });
 
         if (!userId && !tempId) {
-          console.log("No user information found, redirecting to login page");
+          console.log("No user information found, redirecting to guest login page");
           setLoading(false);
-          // Redirect to login page instead of showing welcome message
-          navigate("/login");
+          
+          // Clear any previous navigation attempts
+          localStorage.removeItem("lastRedirect");
+          localStorage.setItem("lastRedirect", "/guest-login");
+          
+          // Force immediate redirect to guest login page with explicit return
+          console.log("REDIRECTING NOW to /guest-login");
+          navigate("/guest-login", { replace: true });
           return;
         }
 

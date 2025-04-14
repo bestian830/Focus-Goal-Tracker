@@ -39,6 +39,7 @@ import DailyReward from './DailyReward';
 import apiService from '../../services/api';
 import { toast } from 'react-hot-toast';
 import useRewardsStore from '../../store/rewardsStore';
+import useMainTaskStore from '../../store/mainTaskStore';
 
 /**
  * DailyCardRecord component displays and manages a daily card with tasks, rewards, and progress records
@@ -64,6 +65,9 @@ export default function DailyCardRecord({
   const getGoalReward = useRewardsStore(state => state.getGoalReward);
   const setGoalReward = useRewardsStore(state => state.setGoalReward);
   
+  // Get main task from Zustand store
+  const getMainTask = useMainTaskStore(state => state.getMainTask);
+  
   // Format the date for display (e.g., "4/9 Wednesday")
   const formatDisplayDate = (dateString) => {
     if (!dateString) return '';
@@ -78,6 +82,17 @@ export default function DailyCardRecord({
     return `${month}/${day} ${weekday}`;
   };
   
+  // Add a separate function for date comparison
+  const getSimpleDateString = (dateObj) => {
+    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return '';
+    }
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  };
+
   // State for the daily card data
   const [cardData, setCardData] = useState({
     date: date,
@@ -144,58 +159,56 @@ export default function DailyCardRecord({
     console.warn('Cannot open declaration dialog: onViewDeclaration callback not provided or goal is empty');
   };
 
-  // Load daily card data when goal or date changes
+  // Initialize card data when the component opens
   useEffect(() => {
-    if (!goal || !date) return;
+    if (!goal || !date || !open) return;
+    
+    const goalId = goal._id || goal.id;
+    
+    // 尝试从Zustand获取奖励
+    const zustandReward = goalId ? getGoalReward(goalId) : null;
+    console.log('From Zustand store - reward:', zustandReward);
+    
+    // 尝试从Zustand获取主任务
+    const zustandMainTask = goalId ? getMainTask(goalId) : null;
+    console.log('From Zustand store - main task:', zustandMainTask);
+    
+    // Check if there's an existing card for this date
+    const existingCard = goal.dailyCards?.find(card => 
+      card.date && formatDisplayDate(new Date(card.date)) === formatDisplayDate(new Date(date))
+    );
 
-    // Find existing daily card for this date
-    const existingCard = goal.dailyCards && goal.dailyCards.find(card => {
-      // 比较日期（只比较年月日，不比较时分秒）
-      const cardDate = new Date(card.date);
-      const targetDate = new Date(date);
-      return (
-        cardDate.getFullYear() === targetDate.getFullYear() &&
-        cardDate.getMonth() === targetDate.getMonth() &&
-        cardDate.getDate() === targetDate.getDate()
-      );
-    });
-
-    // Try to get reward from Zustand store
-    const zustandReward = goal._id ? getGoalReward(goal._id) : null;
-    console.log('Checking for reward in Zustand store:', {
-      goalId: goal._id,
-      zustandReward
-    });
-
+    // 确保 taskCompletions 对象存在
+    const taskCompletions = existingCard?.taskCompletions || {};
+    
+    // Format dates for comparison 
+    const todayFormatted = formatDisplayDate(new Date());
+    const cardDateFormatted = formatDisplayDate(new Date(date));
+    
     if (existingCard) {
-      // 使用本地日期格式處理，而不是 UTC
-      const today = new Date();
-      const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-      // 解析卡片日期
-      let cardDateObj = new Date(date);
-      const cardDateFormatted = `${cardDateObj.getFullYear()}-${String(cardDateObj.getMonth() + 1).padStart(2, '0')}-${String(cardDateObj.getDate()).padStart(2, '0')}`;
-
-      // 記錄日期比較信息
-      console.log('Comparing card date with today:', {
-        cardDate: cardDateFormatted,
-        today: todayFormatted,
-        isToday: cardDateFormatted === todayFormatted,
-        isFuture: cardDateFormatted > todayFormatted
-      });
-
-      // 初始化任务完成状态 - 确保使用现有的保存状态
-      // 检查existingCard中是否已有taskCompletions字段
-      const taskCompletions = existingCard.taskCompletions || {};
+      console.log(`Found existing card for ${cardDateFormatted}:`, existingCard);
       
-      console.log('加载已保存的任务完成状态:', taskCompletions);
-
-      // Check if the card is for today or a future date
-      if (cardDateFormatted >= todayFormatted) {
+      // Use new date comparison method to determine if it's today or a future date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const cardDate = new Date(date);
+      cardDate.setHours(0, 0, 0, 0);
+      
+      const isCurrentOrFutureDate = cardDate >= today;
+      
+      console.log('Date comparison:', {
+        today: today.toISOString(),
+        cardDate: cardDate.toISOString(),
+        isCurrentOrFutureDate
+      });
+      
+      if (isCurrentOrFutureDate) {
         // For today or future dates, update with latest settings but preserve completion status
         setCardData({
           ...existingCard,
-          dailyTask: goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
+          // 今天和将来的日期使用Zustand中的最新主任务
+          dailyTask: zustandMainTask || goal.currentSettings?.dailyTask || existingCard.dailyTask || '',
           // Try to use reward from Zustand first, then fallback to other sources
           dailyReward: zustandReward || goal.currentSettings?.dailyReward || existingCard.dailyReward || '',
           // Ensure records is an array
@@ -203,10 +216,12 @@ export default function DailyCardRecord({
           taskCompletions // 保留任务完成状态
         });
       } else {
-        // For past dates, use existing card data unchanged, but ensure records is an array
+        // For past dates, use existing card data unchanged, including existing dailyTask
         setCardData({
           ...existingCard,
-          // Still prefer Zustand reward if available
+          // 过去的日期保留原有的主任务，不使用Zustand中的最新主任务
+          dailyTask: existingCard.dailyTask || '',
+          // Still prefer Zustand reward if available for consistency in UI
           dailyReward: zustandReward || existingCard.dailyReward || '',
           records: Array.isArray(existingCard.records) ? existingCard.records : [],
           taskCompletions // 保留任务完成状态
@@ -222,16 +237,20 @@ export default function DailyCardRecord({
           taskCompletions[taskId] = false;
         });
       }
-      if (goal && goal.currentSettings?.dailyTask) {
+      
+      // 对主任务也创建完成状态
+      const mainTask = zustandMainTask || goal.currentSettings?.dailyTask || '';
+      if (mainTask) {
         // 使用与任务列表生成相同的ID逻辑
-        const taskId = `daily-task-${goal.currentSettings.dailyTask.replace(/\s+/g, '-').toLowerCase()}`;
+        const taskId = `daily-task-${mainTask.replace(/\s+/g, '-').toLowerCase()}`;
         taskCompletions[taskId] = false;
       }
       
       // Create new card with current goal settings
       setCardData({
         date: date,
-        dailyTask: goal.currentSettings?.dailyTask || '',
+        // 优先使用 Zustand 中的主任务
+        dailyTask: mainTask,
         // Use Zustand reward for new cards too
         dailyReward: zustandReward || goal.currentSettings?.dailyReward || '',
         completed: {
@@ -247,12 +266,14 @@ export default function DailyCardRecord({
     console.log('Daily card data initialized:', {
       date,
       existingCard: existingCard ? 'found' : 'not found',
+      zustandMainTask,
       zustandReward,
+      finalTask: zustandMainTask || goal.currentSettings?.dailyTask || (existingCard?.dailyTask || ''),
       finalReward: zustandReward || goal.currentSettings?.dailyReward || (existingCard?.dailyReward || ''),
       recordsType: existingCard ? (Array.isArray(existingCard.records) ? 'array' : typeof existingCard.records) : 'N/A',
       taskCompletionsLoaded: existingCard ? (existingCard.taskCompletions ? 'yes' : 'no') : 'N/A'
     });
-  }, [goal, date, open, getGoalReward]);
+  }, [goal, date, open, getGoalReward, getMainTask]);
 
   // Effect to update reward when goal settings change
   useEffect(() => {
@@ -682,18 +703,31 @@ export default function DailyCardRecord({
   // Tasks for the DailyTasks component
   const tasksForComponent = [];
   
-  // 如果goal有dailyTasks数组，添加到任务列表
+  // 首先检查是否有主任务，并优先添加到列表
+  const mainTask = getMainTask(goal?._id);
+  if (mainTask) {
+    const mainTaskId = `main-task-${mainTask.replace(/\s+/g, '-').toLowerCase()}`;
+    tasksForComponent.push({
+      id: mainTaskId,
+      text: mainTask,
+      completed: cardData.taskCompletions[mainTaskId] || false,
+      isMainTask: true // 标记为主任务
+    });
+  }
+  
+  // 然后添加其他任务
   if (goal && goal.dailyTasks && goal.dailyTasks.length > 0) {
     goal.dailyTasks.forEach((taskText, index) => {
-      // 使用任务文本的哈希作为稳定的ID，而不是索引
-      // 这样即使任务顺序改变，同一个任务的ID也会保持一致
       const taskId = `task-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
-      tasksForComponent.push({
-        id: taskId,
-        text: taskText,
-        completed: cardData.taskCompletions[taskId] || false,
-        index: index // 添加索引以便编辑和删除
-      });
+      // 确保我们不会添加重复的主任务
+      if (taskText !== mainTask) {
+        tasksForComponent.push({
+          id: taskId,
+          text: taskText,
+          completed: cardData.taskCompletions[taskId] || false,
+          index: index
+        });
+      }
     });
   }
   
@@ -854,6 +888,18 @@ export default function DailyCardRecord({
     }
   }, [open, goal?._id, getGoalReward]);
 
+  // 检查主任务是否已完成
+  const isMainTaskCompleted = () => {
+    // 如果没有主任务，返回true（不阻止奖励领取）
+    if (!mainTask) return true;
+    
+    // 找到主任务并检查其完成状态
+    const mainTaskItem = tasksForComponent.find(task => task.isMainTask);
+    if (!mainTaskItem) return true;
+    
+    return cardData.taskCompletions[mainTaskItem.id] || false;
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -875,6 +921,9 @@ export default function DailyCardRecord({
       }}
       maxWidth="md"
       fullWidth
+      PaperProps={{
+        elevation: 16
+      }}
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
         <IconButton
@@ -909,9 +958,9 @@ export default function DailyCardRecord({
           
           <Tooltip title="View and edit goal declaration">
             <IconButton
-              color="primary"
-                  onClick={handleViewDeclaration}
+              onClick={handleViewDeclaration}
               size="small"
+              sx={{ color: '#0D5E6D' }}
             >
               <MenuBookIcon />
             </IconButton>
@@ -964,6 +1013,7 @@ export default function DailyCardRecord({
                         color="primary" 
                         onClick={() => handleSaveTaskEdit(task.id, task.index)}
                         disabled={isSaving}
+                        sx={{ color: '#0D5E6D' }}
                       >
                         <SaveIcon />
                       </IconButton>
@@ -976,44 +1026,101 @@ export default function DailyCardRecord({
                       </IconButton>
                     </Box>
                   ) : (
-                    <>
-                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <Checkbox
-                          checked={task.completed}
-                          onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
-                          color="primary"
-                          disabled={isSaving || isArchived}
-                        />
-                        <Typography 
-                          sx={{ 
-                            flex: 1,
-                            color: task.completed ? 'success.main' : 'text.primary',
-                            textDecoration: task.completed ? 'line-through' : 'none'
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <Checkbox
+                        checked={task.completed}
+                        onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
+                        sx={{ 
+                          color: 'rgba(0, 0, 0, 0.54)',
+                          '&.Mui-checked': {
+                            color: '#0D5E6D',
+                          },
+                        }}
+                        disabled={isSaving || isArchived}
+                      />
+                      <Typography 
+                        sx={{ 
+                          flex: 1,
+                          color: task.completed ? 'success.main' : 'text.primary',
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          ...(task.isMainTask && {
+                            fontWeight: 600,
+                            color: task.completed ? 'success.main' : '#0D5E6D'
+                          })
+                        }}
+                      >
+                        {task.text || (task.isMainTask && 'No main task set')}
+                        {task.isMainTask && (
+                          <>
+                            <span style={{
+                              backgroundColor: 'rgba(255, 127, 102, 0.2)',
+                              color: '#FF7F66',
+                              border: '1px solid rgba(255, 127, 102, 0.5)',
+                              borderRadius: '12px',
+                              padding: '2px 8px',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              marginLeft: '8px'
+                            }}>
+                              main task
+                            </span>
+                            {!task.text && (
+                              <span style={{
+                                fontSize: '0.75rem',
+                                fontStyle: 'italic',
+                                marginLeft: '8px',
+                                color: 'rgba(0, 0, 0, 0.6)'
+                              }}>
+                                (Set in declaration)
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Typography>
+                      {!task.isLegacy && !task.isMainTask && (
+                        <Box>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleInitiateTaskEdit(task.id, task.text)}
+                            disabled={isSaving || isArchived}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton 
+                            size="small" 
+                            color="error" 
+                            onClick={() => handleInitiateTaskDelete(task.id, task.index)}
+                            disabled={isSaving || isArchived}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      )}
+                      {task.isMainTask && (
+                        <Tooltip 
+                          title="Edit main task in declaration" 
+                          arrow
+                          componentsProps={{
+                            tooltip: {
+                              sx: {
+                                fontSize: '0.75rem',
+                                padding: '8px 12px',
+                                backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                              }
+                            }
                           }}
                         >
-                          {task.text}
-                        </Typography>
-                        {!task.isLegacy && (
-                          <Box>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleInitiateTaskEdit(task.id, task.text)}
-                              disabled={isSaving || isArchived}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              color="error" 
-                              onClick={() => handleInitiateTaskDelete(task.id, task.index)}
-                              disabled={isSaving || isArchived}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        )}
-                      </Box>
-                    </>
+                          <IconButton
+                            size="small"
+                            onClick={handleViewDeclaration}
+                            disabled={isSaving || isArchived}
+                            sx={{ color: '#0D5E6D' }}
+                          >
+                            <MenuBookIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
                   )}
                 </ListItem>
               ))}
@@ -1039,9 +1146,9 @@ export default function DailyCardRecord({
                   <InputAdornment position="end">
                     <IconButton 
                       edge="end" 
-                      color="primary"
                       onClick={handleAddTask}
                       disabled={!newTaskText.trim() || isSaving || isArchived}
+                      sx={{ color: '#0D5E6D' }}
                     >
                       <AddIcon />
                     </IconButton>
@@ -1065,7 +1172,7 @@ export default function DailyCardRecord({
             reward={goal?._id ? (getGoalReward(goal._id) || cardData.dailyReward || 'No reward set') : (cardData.dailyReward || 'No reward set')}
             claimed={cardData.completed?.dailyReward || false}
             onClaimedChange={handleRewardStatusChange}
-            disabled={!(cardData.taskCompletions && Object.values(cardData.taskCompletions).some(Boolean)) || isArchived}
+            disabled={!isMainTaskCompleted() || isArchived}
           />
         </Box>
         
@@ -1121,11 +1228,17 @@ export default function DailyCardRecord({
                   <Button 
               variant="contained" 
               onClick={handleAddRecord}
-              sx={{ ml: 1 }}
-                    disabled={!newRecord.trim() || isSaving || isArchived}
-                  >
+              sx={{ 
+                ml: 1,
+                backgroundColor: '#0D5E6D',
+                '&:hover': { 
+                  backgroundColor: '#0a4a56' 
+                }
+              }}
+              disabled={!newRecord.trim() || isSaving || isArchived}
+            >
               {isSaving ? <CircularProgress size={20} /> : 'Add'}
-                  </Button>
+            </Button>
           </Box>
         </Box>
       </DialogContent>
@@ -1133,10 +1246,15 @@ export default function DailyCardRecord({
       <DialogActions sx={{ px: 3, pb: 2 }}>
               <Button 
           variant="contained"
-          color="primary"
-                onClick={handleSave} 
-                disabled={isSaving || isArchived}
+          onClick={handleSave} 
+          disabled={isSaving || isArchived}
           startIcon={isSaving ? <CircularProgress size={20} /> : <CheckCircleIcon />}
+          sx={{ 
+            backgroundColor: '#0D5E6D', 
+            '&:hover': { 
+              backgroundColor: '#0a4a56' 
+            } 
+          }}
               >
           {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
@@ -1157,6 +1275,9 @@ export default function DailyCardRecord({
         open={taskDeleteConfirmOpen}
         onClose={handleCancelTaskDelete}
         aria-labelledby="delete-task-dialog-title"
+        PaperProps={{
+          elevation: 16
+        }}
       >
         <DialogTitle id="delete-task-dialog-title">
           Delete Daily Task
@@ -1169,7 +1290,7 @@ export default function DailyCardRecord({
           </DialogContentText>
       </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelTaskDelete} color="primary">
+          <Button onClick={handleCancelTaskDelete} sx={{ color: '#0D5E6D' }}>
             Cancel
           </Button>
           <Button onClick={handleConfirmTaskDelete} color="error" variant="contained">
@@ -1184,6 +1305,9 @@ export default function DailyCardRecord({
         onClose={handleCancelDelete}
         aria-labelledby="delete-dialog-title"
         aria-describedby="delete-dialog-description"
+        PaperProps={{
+          elevation: 16
+        }}
       >
         <DialogTitle id="delete-dialog-title">
           Delete Progress Record
@@ -1194,7 +1318,7 @@ export default function DailyCardRecord({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete} color="primary">
+          <Button onClick={handleCancelDelete} sx={{ color: '#0D5E6D' }}>
                 Cancel
               </Button>
           <Button onClick={handleConfirmDelete} color="error" variant="contained">

@@ -223,9 +223,12 @@ export default function DailyCard({ card, goal, isToday, onUpdate, onViewDeclara
               invisible={!hasCompletedTasks}
             >
               <AssignmentIcon 
-                color={hasCompletedTasks ? "primary" : "action"} 
+                color={hasCompletedTasks ? "action" : "action"} 
                 fontSize="small" 
-                sx={{ fontSize: {xs: '1rem', sm: '1.2rem'} }}
+                sx={{ 
+                  fontSize: {xs: '1rem', sm: '1.2rem'},
+                  color: hasCompletedTasks ? "#0D5E6D" : "rgba(0, 0, 0, 0.54)"
+                }}
               />
             </Badge>
           </Box>

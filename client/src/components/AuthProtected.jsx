@@ -6,7 +6,7 @@ import { Navigate } from 'react-router-dom';
  * This component:
  * 1. Checks if the user is authenticated by looking for userId and token in localStorage
  * 2. If authenticated, renders the protected component
- * 3. If not authenticated, redirects to the login page
+ * 3. If not authenticated, redirects to the guest login page
  * 
  * @param {Object} ProtectedComponent - The component to render if authenticated
  * @returns React component
@@ -23,11 +23,11 @@ const AuthProtected = ({ component: ProtectedComponent }) => {
   };
 
   // If authenticated, render the protected component
-  // Otherwise, redirect to login page
+  // Otherwise, redirect to guest login page
   return isAuthenticated() ? (
     <ProtectedComponent />
   ) : (
-    <Navigate to="/login" replace />
+    <Navigate to="/guest-login" replace />
   );
 };
 

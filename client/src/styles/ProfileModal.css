@@ -16,7 +16,7 @@
 .profile-modal {
   position: relative;
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
   background-color: #ffffff;
@@ -103,8 +103,10 @@
 /* 按鈕樣式 */
 .profile-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 1rem;
   margin-top: 1.5rem;
 }
 
@@ -249,7 +251,6 @@
   .profile-modal {
     width: 95%;
     padding: 1.5rem;
-    max-height: 90vh;
   }
   
   .form-actions {
@@ -257,6 +258,16 @@
   }
   
   .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .profile-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .profile-actions .btn {
     width: 100%;
     margin-bottom: 0.5rem;
   }

@@ -14,6 +14,8 @@ import {
   Tooltip,
   CircularProgress,
   Chip,
+  ThemeProvider,
+  createTheme
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
@@ -22,6 +24,57 @@ import DailyTasks from "./DailyTasks";
 import WeeklyDailyCards from "./WeeklyDailyCards";
 import GoalDeclaration from "./GoalDeclaration";
 import apiService from "../../services/api";
+import styles from "./GoalDetails.module.css";
+import { toast } from "react-hot-toast";
+import DailyCardRecord from "./DailyCardRecord";
+
+// Create theme with proper elevation values
+const theme = createTheme({
+  shadows: [
+    'none',
+    '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
+    '0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12)',
+    '0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)',
+    '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+    '0px 3px 5px -1px rgba(0,0,0,0.2),0px 5px 8px 0px rgba(0,0,0,0.14),0px 1px 14px 0px rgba(0,0,0,0.12)',
+    '0px 3px 5px -1px rgba(0,0,0,0.2),0px 6px 10px 0px rgba(0,0,0,0.14),0px 1px 18px 0px rgba(0,0,0,0.12)',
+    '0px 4px 5px -2px rgba(0,0,0,0.2),0px 7px 10px 1px rgba(0,0,0,0.14),0px 2px 16px 1px rgba(0,0,0,0.12)',
+    '0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12)',
+    '0px 5px 6px -3px rgba(0,0,0,0.2),0px 9px 12px 1px rgba(0,0,0,0.14),0px 3px 16px 2px rgba(0,0,0,0.12)',
+    '0px 6px 6px -3px rgba(0,0,0,0.2),0px 10px 14px 1px rgba(0,0,0,0.14),0px 4px 18px 3px rgba(0,0,0,0.12)',
+    '0px 6px 7px -4px rgba(0,0,0,0.2),0px 11px 15px 1px rgba(0,0,0,0.14),0px 4px 20px 3px rgba(0,0,0,0.12)',
+    '0px 7px 8px -4px rgba(0,0,0,0.2),0px 12px 17px 2px rgba(0,0,0,0.14),0px 5px 22px 4px rgba(0,0,0,0.12)',
+    '0px 7px 8px -4px rgba(0,0,0,0.2),0px 13px 19px 2px rgba(0,0,0,0.14),0px 5px 24px 4px rgba(0,0,0,0.12)',
+    '0px 7px 9px -4px rgba(0,0,0,0.2),0px 14px 21px 2px rgba(0,0,0,0.14),0px 5px 26px 4px rgba(0,0,0,0.12)',
+    '0px 8px 9px -5px rgba(0,0,0,0.2),0px 15px 22px 2px rgba(0,0,0,0.14),0px 6px 28px 5px rgba(0,0,0,0.12)',
+    '0px 8px 10px -5px rgba(0,0,0,0.2),0px 16px 24px 2px rgba(0,0,0,0.14),0px 6px 30px 5px rgba(0,0,0,0.12)',
+    '0px 8px 11px -5px rgba(0,0,0,0.2),0px 17px 26px 2px rgba(0,0,0,0.14),0px 6px 32px 5px rgba(0,0,0,0.12)',
+    '0px 9px 11px -5px rgba(0,0,0,0.2),0px 18px 28px 2px rgba(0,0,0,0.14),0px 7px 34px 6px rgba(0,0,0,0.12)',
+    '0px 9px 12px -6px rgba(0,0,0,0.2),0px 19px 29px 2px rgba(0,0,0,0.14),0px 7px 36px 6px rgba(0,0,0,0.12)',
+    '0px 10px 13px -6px rgba(0,0,0,0.2),0px 20px 31px 3px rgba(0,0,0,0.14),0px 8px 38px 7px rgba(0,0,0,0.12)',
+    '0px 10px 13px -6px rgba(0,0,0,0.2),0px 21px 33px 3px rgba(0,0,0,0.14),0px 8px 40px 7px rgba(0,0,0,0.12)',
+    '0px 10px 14px -6px rgba(0,0,0,0.2),0px 22px 35px 3px rgba(0,0,0,0.14),0px 8px 42px 7px rgba(0,0,0,0.12)',
+    '0px 11px 14px -7px rgba(0,0,0,0.2),0px 23px 36px 3px rgba(0,0,0,0.14),0px 9px 44px 8px rgba(0,0,0,0.12)',
+    '0px 11px 15px -7px rgba(0,0,0,0.2),0px 24px 38px 3px rgba(0,0,0,0.14),0px 9px 46px 8px rgba(0,0,0,0.12)'
+  ],
+  components: {
+    MuiPaper: {
+      defaultProps: {
+        elevation: 1
+      }
+    },
+    MuiMenu: {
+      defaultProps: {
+        elevation: 8
+      }
+    },
+    MuiCard: {
+      defaultProps: {
+        elevation: 2
+      }
+    }
+  }
+});
 
 // add inspirational quotes
 const inspirationalQuotes = [
@@ -59,6 +112,9 @@ export default function GoalDetails({
   const [isDeleting, setIsDeleting] = useState(false);
   const [dailyCards, setDailyCards] = useState([]);
   const [declarationOpen, setDeclarationOpen] = useState(false);
+  const [dailyCardOpen, setDailyCardOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   // select goal from goals array
   useEffect(() => {
@@ -517,6 +573,50 @@ Because the path is already beneath my feet—it's really not that complicated. 
     }
   };
 
+  // 添加处理查看今日卡片的函数
+  const handleViewTodayCard = (goal) => {
+    if (!goal) return;
+    
+    try {
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      console.log('Navigating to today\'s card:', {
+        goalId: goal._id,
+        date: todayStr
+      });
+      
+      // Find today's card in the weekly cards list or create a new one
+      const todayCard = goal.dailyCards?.find(card => 
+        new Date(card.date).toISOString().split('T')[0] === todayStr
+      ) || {
+        date: todayStr,
+        dailyTask: '',
+        dailyReward: '',
+        completed: {},
+        taskCompletions: {},
+        records: []
+      };
+      
+      // Set the selected date and open the card dialog
+      setSelectedDate(todayStr);
+      setSelectedCard(todayCard);
+      setDailyCardOpen(true);
+      setDeclarationOpen(false);
+    } catch (error) {
+      console.error('Error navigating to today\'s card:', error);
+      toast.error('Failed to open today\'s card');
+    }
+  };
+
+  // 修改openDeclaration函数，传入onViewTodayCard回调
+  const openDeclaration = () => {
+    if (selectedGoal) {
+      setDeclarationOpen(true);
+    }
+  };
+
   // if no goal, show prompt information
   if (goals.length === 0 && !goalId) {
     return (
@@ -565,201 +665,223 @@ Because the path is already beneath my feet—it's really not that complicated. 
   };
 
   return (
-    <Box className="goal-details" sx={{ ...sx }}>
-      <Box
-        className="goal-header"
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
-        <div>
-          <h3>{selectedGoal.title}</h3>
-          {selectedGoal.status === 'archived' && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-              <Chip 
-                label="Archived" 
-                color="default" 
-                size="small"
-                icon={<ArchiveIcon fontSize="small" />}
-                sx={{ 
-                  mr: 1, 
-                  backgroundColor: 'rgba(0,0,0,0.08)', 
-                  '& .MuiChip-icon': { 
-                    color: 'text.secondary',
-                    ml: 0.5 
-                  }
-                }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                Completed on: {new Date(selectedGoal.targetDate || selectedGoal.completedAt || new Date()).toLocaleDateString()}
-              </Typography>
-            </Box>
-          )}
-        </div>
-
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* declaration button */}
-          <Tooltip title="View goal declaration">
-            <IconButton
-              onClick={handleOpenDeclaration}
-              color="primary"
-              aria-label="View goal declaration"
-              sx={{ marginTop: "8px", marginRight: "8px" }}
-            >
-              <MenuBookIcon />
-            </IconButton>
-          </Tooltip>
-          
-          {/* delete button */}
-          <IconButton
-            color="error"
-            size="small"
-            onClick={handleOpenDeleteDialog}
-            aria-label="Delete goal"
-            sx={{ marginTop: "8px" }}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      <Typography 
-        variant="body1" 
-        key={`goal-motivation-${selectedGoal._id}-${Date.now()}`}
-        sx={{ 
-          fontSize: '1.1rem',
-          fontStyle: 'italic',
-          color: 'text.primary',
-          my: 2,
-          px: 1,
-          py: 1.5,
-          borderLeft: '4px solid',
-          borderColor: selectedGoal.status === 'archived' ? 'grey.400' : 'primary.main',
-          backgroundColor: selectedGoal.status === 'archived' ? 'rgba(0, 0, 0, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-          borderRadius: '0 4px 4px 0',
-          ...(selectedGoal.status === 'archived' && { color: 'text.secondary' })
-        }}
-      >
-        I want to <strong>{selectedGoal.title}</strong>, because{' '}
-        <span style={{ color: selectedGoal.status === 'archived' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.7)' }}>
-          {(() => {
-            const motivationValue = (selectedGoal.details && selectedGoal.details.motivation) || 
-                                   selectedGoal.motivation || 
-                                   selectedGoal.description || 
-                                   "this goal is meaningful to my personal growth";
-            console.log("Displaying motivation:", motivationValue);
-            return motivationValue;
-          })()}
-        </span>
-      </Typography>
-
-      {/* Vision Image and inspirational quote */}
-      <Box className="vision-section" sx={{ my: 3, textAlign: 'center' }}>
-        {/* support both new and old data structures, prioritize new structure */}
-        {(selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)) ? (
-          <Fade in={true} timeout={800}>
-            <Box>
-              <img
-                src={selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)}
-                alt="goal vision"
-                style={{ 
-                  maxWidth: "100%", 
-                  maxHeight: "250px", 
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)" 
-                }}
-              />
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  mt: 2, 
-                  fontStyle: 'italic', 
-                  color: 'text.secondary',
-                  maxWidth: "80%",
-                  mx: 'auto'
-                }}
-              >
-                "{getRandomQuote().text}"
-                <Typography component="span" variant="body2" sx={{ display: 'block', mt: 0.5 }}>
-                  — {getRandomQuote().author}
+    <ThemeProvider theme={theme}>
+      <Box className="goal-details" sx={{ ...sx }}>
+        <Box
+          className="goal-header"
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <div>
+            <h3>{selectedGoal.title}</h3>
+            {selectedGoal.status === 'archived' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                <Chip 
+                  label="Archived" 
+                  color="default" 
+                  size="small"
+                  icon={<ArchiveIcon fontSize="small" />}
+                  sx={{ 
+                    mr: 1, 
+                    backgroundColor: 'rgba(0,0,0,0.08)', 
+                    '& .MuiChip-icon': { 
+                      color: 'text.secondary',
+                      ml: 0.5 
+                    }
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  Completed on: {new Date(selectedGoal.targetDate || selectedGoal.completedAt || new Date()).toLocaleDateString()}
                 </Typography>
-              </Typography>
-            </Box>
-          </Fade>
-        ) : (
-          <Fade in={true} timeout={800}>
-            <Box sx={{ 
-              py: 4, 
-              px: 3, 
-              bgcolor: 'background.paper', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              maxWidth: "90%",
-              mx: 'auto'
-            }}>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontStyle: 'italic', 
-                  color: 'text.primary',
-                  mb: 1
-                }}
+              </Box>
+            )}
+          </div>
+
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* declaration button */}
+            <Tooltip title="View goal declaration">
+              <IconButton
+                onClick={handleOpenDeclaration}
+                aria-label="View goal declaration"
+                sx={{ marginTop: "8px", marginRight: "8px", color: "#0D5E6D" }}
               >
-                "{getRandomQuote().text}"
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                — {getRandomQuote().author}
-              </Typography>
-            </Box>
-          </Fade>
+                <MenuBookIcon />
+              </IconButton>
+            </Tooltip>
+            
+            {/* delete button */}
+            <IconButton
+              color="error"
+              size="small"
+              onClick={handleOpenDeleteDialog}
+              aria-label="Delete goal"
+              sx={{ marginTop: "8px" }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        </Box>
+
+        <Typography 
+          variant="body1" 
+          key={`goal-motivation-${selectedGoal._id}-${Date.now()}`}
+          className={selectedGoal.status === 'archived' ? styles.archivedGoalMotivation : styles.goalMotivation}
+        >
+          I want to <strong>{selectedGoal.title}</strong>, because{' '}
+          <span>
+            {(() => {
+              const motivationValue = (selectedGoal.details && selectedGoal.details.motivation) || 
+                                     selectedGoal.motivation || 
+                                     selectedGoal.description || 
+                                     "this goal is meaningful to my personal growth";
+              console.log("Displaying motivation:", motivationValue);
+              return motivationValue;
+            })()}
+          </span>
+        </Typography>
+
+        {/* Vision Image and inspirational quote */}
+        <Box className="vision-section" sx={{ my: 3, textAlign: 'center' }}>
+          {/* support both new and old data structures, prioritize new structure */}
+          {(selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)) ? (
+            <Fade in={true} timeout={800}>
+              <Box>
+                <img
+                  src={selectedGoal.visionImageUrl || (selectedGoal.details && selectedGoal.details.visionImage)}
+                  alt="goal vision"
+                  className={styles.visionImage}
+                />
+                <Box className={styles.quoteContainer}>
+                  {(() => {
+                    const quote = getRandomQuote();
+                    return (
+                      <>
+                        <Typography className={styles.quoteText}>
+                          "{quote.text}"
+                        </Typography>
+                        <Typography className={styles.quoteAuthor}>
+                          — {quote.author}
+                        </Typography>
+                      </>
+                    );
+                  })()}
+                </Box>
+              </Box>
+            </Fade>
+          ) : (
+            <Fade in={true} timeout={800}>
+              <Box className={styles.quoteContainer}>
+                {(() => {
+                  const quote = getRandomQuote();
+                  return (
+                    <>
+                      <Typography className={styles.quoteText}>
+                        "{quote.text}"
+                      </Typography>
+                      <Typography className={styles.quoteAuthor}>
+                        — {quote.author}
+                      </Typography>
+                    </>
+                  );
+                })()}
+              </Box>
+            </Fade>
+          )}
+        </Box>
+
+        {/* weekly DailyCards display */}
+        <WeeklyDailyCards
+          goal={selectedGoal}
+          dailyCards={dailyCards}
+          onCardsUpdate={handleDailyCardsUpdate}
+          onViewDeclaration={handleOpenDeclaration}
+          isArchived={selectedGoal.status === 'archived'}
+        />
+
+        {/* <DailyTasks tasks={dailyTasks} /> */}
+
+        {/* goal declaration dialog */}
+        {declarationOpen && selectedGoal && (
+          <GoalDeclaration
+            goal={selectedGoal}
+            isOpen={declarationOpen}
+            onClose={(updatedGoal, shouldClose = true) => {
+              // Update goal if changes were made
+              if (updatedGoal) {
+                setSelectedGoal(updatedGoal);
+              }
+              
+              // Close dialog if requested
+              if (shouldClose) {
+                setDeclarationOpen(false);
+              }
+            }}
+            onSave={handleSaveDeclaration}
+            onViewTodayCard={handleViewTodayCard}
+          />
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog 
+          open={deleteDialogOpen} 
+          onClose={handleCloseDeleteDialog}
+          PaperProps={{
+            elevation: 16
+          }}
+        >
+          <DialogTitle>Delete Goal</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete the goal "{selectedGoal?.title}"?
+              This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteGoal}
+              color="error"
+              variant="contained"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Daily Card Dialog */}
+        {selectedGoal && selectedCard && (
+          <DailyCardRecord
+            goal={selectedGoal}
+            date={selectedDate}
+            open={dailyCardOpen}
+            onClose={() => setDailyCardOpen(false)}
+            onSave={(updatedCard) => {
+              // Update the card in dailyCards
+              const updatedCards = [...dailyCards];
+              const cardIndex = updatedCards.findIndex(card => 
+                new Date(card.date).toISOString().split('T')[0] === new Date(selectedDate).toISOString().split('T')[0]
+              );
+              
+              if (cardIndex !== -1) {
+                updatedCards[cardIndex] = updatedCard;
+              } else {
+                updatedCards.push(updatedCard);
+              }
+              
+              handleDailyCardsUpdate(updatedCards);
+            }}
+            onViewDeclaration={handleOpenDeclaration}
+            isArchived={selectedGoal.status === 'archived'}
+          />
         )}
       </Box>
-
-      {/* weekly DailyCards display */}
-      <WeeklyDailyCards
-        goal={selectedGoal}
-        dailyCards={dailyCards}
-        onCardsUpdate={handleDailyCardsUpdate}
-        onViewDeclaration={handleOpenDeclaration}
-        isArchived={selectedGoal.status === 'archived'}
-      />
-
-      {/* <DailyTasks tasks={dailyTasks} /> */}
-
-      {/* goal declaration dialog */}
-      <GoalDeclaration
-        goal={selectedGoal}
-        isOpen={declarationOpen}
-        onClose={handleCloseDeclaration}
-        onSave={handleSaveDeclaration}
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Delete Goal</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete the goal "{selectedGoal?.title}"?
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteGoal}
-            color="error"
-            variant="contained"
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+    </ThemeProvider>
   );
 }
 
