@@ -31,7 +31,7 @@ export default function Header({
   const isLoading = isStoreLoading || loading;
 
   return (
-    <header className="app-header" style={{ backgroundColor: '#0D5E6D', color: 'white', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}>
+    <header className="app-header" style={{ backgroundColor: '#0D5E6D', color: 'white', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', maxWidth: '1200px' }}>
       <h1 style={{ color: 'white' }}>Focus Goal Tracker</h1>
       <div className="user-info">
         {isLoading ? (

@@ -10,6 +10,9 @@
   flex-direction: column;
   max-width: 100%;
   width: 100%;
+  min-width: 220px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .goalCard:hover {
@@ -37,6 +40,7 @@
   font-size: 1rem;
   font-weight: 500;
   color: #0D5E6D;
+  min-width: 0; /* Allow text to shrink */
 }
 
 .titleActions {
@@ -57,9 +61,9 @@
   margin: 0.5rem 0;
   line-height: 1.4;
   min-height: 1.4em; /* At least one line */
-  max-height: 4.2em; /* Maximum three lines - increased from two */
+  max-height: none; /* Allow full height on mobile */
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Show up to three lines on mobile - increased from two */
+  -webkit-line-clamp: initial; /* No line clamp on mobile */
   -webkit-box-orient: vertical;
 }
 
@@ -136,6 +140,12 @@
 
 /* Desktop layout (> 900px) */
 @media (min-width: 900px) {
+  .goalCard,
+  .goalCardSelected {
+    min-width: 15%;
+    width: 100%;
+  }
+  
   .goalCard {
     flex-direction: row;
     align-items: center;
@@ -212,6 +222,9 @@
   font-size: 0.75rem;
   width: 100%; /* Ensure full width on mobile */
   margin-top: 4px; /* Add some space */
+  white-space: nowrap; /* Prevent date from wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dateIcon {
@@ -277,6 +290,10 @@
   margin-top: 16px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   padding-top: 16px;
+  width: 100%;
+  min-width: 220px;
+  box-sizing: border-box;
+  overflow: hidden; /* Hide scrollbar */
 }
 
 .archivedHeader {
@@ -285,6 +302,8 @@
   justify-content: space-between;
   margin-bottom: 12px;
   cursor: pointer;
+  width: 100%;
+  overflow: hidden; /* Hide scrollbar */
 }
 
 .archivedTitle {
@@ -293,6 +312,9 @@
   color: rgba(0, 0, 0, 0.6);
   font-size: 0.9rem;
   font-weight: 500;
+  overflow: hidden; /* Hide scrollbar */
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .archivedCount {
@@ -301,6 +323,7 @@
   padding: 2px 8px;
   font-size: 0.75rem;
   margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .archivedIcon {
@@ -314,6 +337,10 @@
 .goalCardSelected {
   border: 2px solid #fbc02d;
   background-color: #fffde7;
+  min-width: 220px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Add Goal Button Styles */
@@ -378,4 +405,22 @@
 .tooltipText {
   font-size: 0.875rem;
   color: rgba(0, 0, 0, 0.7);
+}
+
+/* Tablet and Desktop layout adjustments */
+@media (min-width: 600px) {
+  .archivedSection,
+  .archivedHeader,
+  .archivedTitle {
+    min-width: 220px;
+  }
+}
+
+@media (min-width: 900px) {
+  .archivedSection,
+  .archivedHeader,
+  .archivedTitle {
+    min-width: 15%;
+    width: 100%;
+  }
 } 
