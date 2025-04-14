@@ -958,9 +958,9 @@ export default function DailyCardRecord({
           
           <Tooltip title="View and edit goal declaration">
             <IconButton
-              color="primary"
-                  onClick={handleViewDeclaration}
+              onClick={handleViewDeclaration}
               size="small"
+              sx={{ color: '#0D5E6D' }}
             >
               <MenuBookIcon />
             </IconButton>
@@ -1106,9 +1106,9 @@ export default function DailyCardRecord({
                         >
                           <IconButton
                             size="small"
-                            color="primary"
                             onClick={handleViewDeclaration}
                             disabled={isSaving || isArchived}
+                            sx={{ color: '#0D5E6D' }}
                           >
                             <MenuBookIcon fontSize="small" />
                           </IconButton>

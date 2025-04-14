@@ -26,6 +26,7 @@ import GoalDeclaration from "./GoalDeclaration";
 import apiService from "../../services/api";
 import styles from "./GoalDetails.module.css";
 import { toast } from "react-hot-toast";
+import DailyCardRecord from "./DailyCardRecord";
 
 // Create theme with proper elevation values
 const theme = createTheme({
@@ -111,6 +112,9 @@ export default function GoalDetails({
   const [isDeleting, setIsDeleting] = useState(false);
   const [dailyCards, setDailyCards] = useState([]);
   const [declarationOpen, setDeclarationOpen] = useState(false);
+  const [dailyCardOpen, setDailyCardOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
 
   // select goal from goals array
   useEffect(() => {
@@ -849,6 +853,33 @@ Because the path is already beneath my feet—it's really not that complicated. 
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Daily Card Dialog */}
+        {selectedGoal && selectedCard && (
+          <DailyCardRecord
+            goal={selectedGoal}
+            date={selectedDate}
+            open={dailyCardOpen}
+            onClose={() => setDailyCardOpen(false)}
+            onSave={(updatedCard) => {
+              // Update the card in dailyCards
+              const updatedCards = [...dailyCards];
+              const cardIndex = updatedCards.findIndex(card => 
+                new Date(card.date).toISOString().split('T')[0] === new Date(selectedDate).toISOString().split('T')[0]
+              );
+              
+              if (cardIndex !== -1) {
+                updatedCards[cardIndex] = updatedCard;
+              } else {
+                updatedCards.push(updatedCard);
+              }
+              
+              handleDailyCardsUpdate(updatedCards);
+            }}
+            onViewDeclaration={handleOpenDeclaration}
+            isArchived={selectedGoal.status === 'archived'}
+          />
+        )}
       </Box>
     </ThemeProvider>
   );
