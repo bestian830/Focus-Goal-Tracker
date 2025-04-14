@@ -31,15 +31,22 @@ export default function Header({
   const isLoading = isStoreLoading || loading;
 
   return (
-    <header className="app-header">
-      <h1>Focus Goal Tracker</h1>
+    <header className="app-header" style={{ backgroundColor: "#f5f7fa", borderBottom: "1px solid #e0e0e0" }}>
+      <h1 style={{ color: "#0D5E6D" }}>Focus Goal Tracker</h1>
       <div className="user-info">
         {isLoading ? (
           <span>Loading...</span>
         ) : displayUser ? (
           <div className="logged-in-user">
-            <span>Welcome, {displayUser.username}</span>
-            <div className="avatar-container" onClick={toggleProfileModal}>
+            <span style={{ color: "#333" }}>Welcome, {displayUser.username}</span>
+            <div 
+              className="avatar-container" 
+              onClick={toggleProfileModal}
+              style={{ 
+                backgroundColor: "rgba(13, 94, 109, 0.1)",
+                border: "1px solid rgba(13, 94, 109, 0.2)"
+              }}
+            >
               {displayUser.avatarUrl ? (
                 <img
                   src={displayUser.avatarUrl}
@@ -47,21 +54,52 @@ export default function Header({
                   className="avatar-image"
                 />
               ) : (
-                <FaUser className="avatar-icon" />
+                <FaUser className="avatar-icon" style={{ color: "#0D5E6D" }} />
               )}
             </div>
-            <button onClick={handleLogout} className="logout-button">
+            <button 
+              onClick={handleLogout} 
+              className="logout-button"
+              style={{ 
+                backgroundColor: "#f44336",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
+            >
               Logout
             </button>
           </div>
         ) : (
           <div className="guest-options">
-            <button onClick={() => navigate("/login")} className="login-button">
+            <button 
+              onClick={() => navigate("/login")} 
+              className="login-button"
+              style={{ 
+                backgroundColor: "#0D5E6D",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                marginRight: "0.5rem"
+              }}
+            >
               Login
             </button>
             <button
               onClick={() => navigate("/guest-login")}
               className="guest-button"
+              style={{ 
+                backgroundColor: "#4CD7D0",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
             >
               Continue as Guest
             </button>

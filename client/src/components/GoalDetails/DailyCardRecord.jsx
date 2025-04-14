@@ -1013,6 +1013,7 @@ export default function DailyCardRecord({
                         color="primary" 
                         onClick={() => handleSaveTaskEdit(task.id, task.index)}
                         disabled={isSaving}
+                        sx={{ color: '#0D5E6D' }}
                       >
                         <SaveIcon />
                       </IconButton>
@@ -1029,7 +1030,12 @@ export default function DailyCardRecord({
                       <Checkbox
                         checked={task.completed}
                         onChange={(e) => handleTaskStatusChange(task.id, e.target.checked)}
-                        color="primary"
+                        sx={{ 
+                          color: 'rgba(0, 0, 0, 0.54)',
+                          '&.Mui-checked': {
+                            color: '#0D5E6D',
+                          },
+                        }}
                         disabled={isSaving || isArchived}
                       />
                       <Typography 
@@ -1140,9 +1146,9 @@ export default function DailyCardRecord({
                   <InputAdornment position="end">
                     <IconButton 
                       edge="end" 
-                      color="primary"
                       onClick={handleAddTask}
                       disabled={!newTaskText.trim() || isSaving || isArchived}
+                      sx={{ color: '#0D5E6D' }}
                     >
                       <AddIcon />
                     </IconButton>
@@ -1222,11 +1228,17 @@ export default function DailyCardRecord({
                   <Button 
               variant="contained" 
               onClick={handleAddRecord}
-              sx={{ ml: 1 }}
-                    disabled={!newRecord.trim() || isSaving || isArchived}
-                  >
+              sx={{ 
+                ml: 1,
+                backgroundColor: '#0D5E6D',
+                '&:hover': { 
+                  backgroundColor: '#0a4a56' 
+                }
+              }}
+              disabled={!newRecord.trim() || isSaving || isArchived}
+            >
               {isSaving ? <CircularProgress size={20} /> : 'Add'}
-                  </Button>
+            </Button>
           </Box>
         </Box>
       </DialogContent>
@@ -1234,10 +1246,15 @@ export default function DailyCardRecord({
       <DialogActions sx={{ px: 3, pb: 2 }}>
               <Button 
           variant="contained"
-          color="primary"
-                onClick={handleSave} 
-                disabled={isSaving || isArchived}
+          onClick={handleSave} 
+          disabled={isSaving || isArchived}
           startIcon={isSaving ? <CircularProgress size={20} /> : <CheckCircleIcon />}
+          sx={{ 
+            backgroundColor: '#0D5E6D', 
+            '&:hover': { 
+              backgroundColor: '#0a4a56' 
+            } 
+          }}
               >
           {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
@@ -1273,7 +1290,7 @@ export default function DailyCardRecord({
           </DialogContentText>
       </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelTaskDelete} color="primary">
+          <Button onClick={handleCancelTaskDelete} sx={{ color: '#0D5E6D' }}>
             Cancel
           </Button>
           <Button onClick={handleConfirmTaskDelete} color="error" variant="contained">
@@ -1301,7 +1318,7 @@ export default function DailyCardRecord({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete} color="primary">
+          <Button onClick={handleCancelDelete} sx={{ color: '#0D5E6D' }}>
                 Cancel
               </Button>
           <Button onClick={handleConfirmDelete} color="error" variant="contained">
