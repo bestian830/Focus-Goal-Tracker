@@ -184,9 +184,6 @@ export default function AIFeedback({ goalId }) {
     return date.toLocaleString('en-US', options);
   };
 
-  // Unified color
-  const accentColor = '#4a90e2'; // Use unified Apple blue color
-
   return (
     <Paper 
       elevation={0} /* Remove elevation for flatter Apple look */
@@ -264,13 +261,13 @@ export default function AIFeedback({ goalId }) {
             borderRadius: '8px', /* Slightly smaller radius */
             padding: '6px 16px', /* Adjust padding */
             minWidth: 'auto', /* Allow natural width */
-            bgcolor: accentColor, /* Use accent color */
+            bgcolor: '#0D5E6D', /* Use accent color */
             textTransform: 'none', /* No uppercase */
             fontWeight: 500,
             mb: 1, /* Keep margin bottom */
             boxShadow: 'none', /* Remove shadow */
             '&:hover': {
-              bgcolor: '#3a82e0' /* Slightly darker hover */
+              bgcolor: '#0A4A57' /* Slightly darker hover for the new color */
             }
           }}
         >
