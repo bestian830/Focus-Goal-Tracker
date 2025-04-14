@@ -922,7 +922,7 @@ export default function DailyCardRecord({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        elevation: 24
+        elevation: 16
       }}
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
@@ -1276,7 +1276,7 @@ export default function DailyCardRecord({
         onClose={handleCancelTaskDelete}
         aria-labelledby="delete-task-dialog-title"
         PaperProps={{
-          elevation: 24
+          elevation: 16
         }}
       >
         <DialogTitle id="delete-task-dialog-title">
@@ -1306,7 +1306,7 @@ export default function DailyCardRecord({
         aria-labelledby="delete-dialog-title"
         aria-describedby="delete-dialog-description"
         PaperProps={{
-          elevation: 24
+          elevation: 16
         }}
       >
         <DialogTitle id="delete-dialog-title">

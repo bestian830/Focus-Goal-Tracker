@@ -829,7 +829,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
           open={deleteDialogOpen} 
           onClose={handleCloseDeleteDialog}
           PaperProps={{
-            elevation: 24
+            elevation: 16
           }}
         >
           <DialogTitle>Delete Goal</DialogTitle>

@@ -29,6 +29,9 @@ export default function Header({
   // Determine which user data to display (prefer Zustand store if available)
   const displayUser = storeUser || user;
   const isLoading = isStoreLoading || loading;
+  
+  // Check if the user is a temporary user
+  const isTempUser = displayUser?.isGuest || localStorage.getItem("tempId");
 
   return (
     <header className="app-header" style={{ backgroundColor: '#0D5E6D', color: 'white', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', maxWidth: '1200px' }}>
@@ -69,7 +72,7 @@ export default function Header({
                 cursor: "pointer"
               }}
             >
-              Logout
+              {isTempUser ? "Leave" : "Logout"}
             </button>
           </div>
         ) : (
