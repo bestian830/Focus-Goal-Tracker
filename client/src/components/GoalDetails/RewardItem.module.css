@@ -24,6 +24,11 @@
 .rewardCheckbox {
   margin-right: 10px;
   cursor: pointer;
+  width: 1.2em;
+  height: 1.2em;
+  accent-color: #0D5E6D;
+  position: relative;
+  vertical-align: middle;
 }
 
 .rewardCheckbox:disabled {
