@@ -64,7 +64,10 @@ function GuestLogin() {
   return (
     <div className={styles.guestLoginContainer}>
       <h1 className={styles.appTitle}>Welcome to Focus</h1>
-      <p className={styles.subtitle}>Track your goals, boost productivity, and achieve more every day</p>
+      <p className={styles.subtitle}>Stay focused. Start small. Make it happen.
+      <br />
+      Track one goal now — no sign-up needed.
+      </p>
       
       {error && <div className={styles.errorMessage}>{error}</div>}
       
@@ -73,7 +76,7 @@ function GuestLogin() {
         onClick={handleGuestLogin}
         disabled={loading}
       >
-        {loading ? 'Setting up guest access...' : 'Enter as Guest'}
+        {loading ? 'Setting up guest access...' : 'Try it instantly'}
       </button>
       
       <div className={styles.loginOptions}>

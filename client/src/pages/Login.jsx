@@ -106,7 +106,10 @@ function Login() {
   return (
     <div className={styles.loginContainer}>
       <h1 className={styles.appTitle}>Focus</h1>
-      <p className={styles.subtitle}>Log in to track your goals</p>
+      <p className={styles.subtitle}>Track your goals, boost productivity, 
+        <br />
+        and achieve more every day
+      </p>
 
       {error && <div className={styles.errorMessage}>{error}</div>}
 
