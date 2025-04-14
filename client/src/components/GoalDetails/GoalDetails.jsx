@@ -701,9 +701,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
             <Tooltip title="View goal declaration">
               <IconButton
                 onClick={handleOpenDeclaration}
-                color="primary"
                 aria-label="View goal declaration"
-                sx={{ marginTop: "8px", marginRight: "8px" }}
+                sx={{ marginTop: "8px", marginRight: "8px", color: "#0D5E6D" }}
               >
                 <MenuBookIcon />
               </IconButton>

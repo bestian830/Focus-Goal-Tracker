@@ -995,35 +995,36 @@ Because the path is already beneath my feet—it's really not that complicated. 
                     onClose(null, true);
                   }} 
                   disabled={isSaving}
-                  color="primary"
                 >
                   <TodayIcon />
                 </IconButton>
               </Tooltip>
             )}
             
-            <Tooltip 
-              title="Edit declaration" 
-              arrow
-              componentsProps={{
-                tooltip: {
-                  sx: {
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    padding: '8px 12px',
-                    backgroundColor: 'rgba(13, 94, 109, 0.9)'
+            {!isEditing && (
+              <Tooltip 
+                title="Edit declaration" 
+                arrow
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(13, 94, 109, 0.9)'
+                    }
                   }
-                }
-              }}
-            >
-              <IconButton 
-                className={styles.editButton} 
-                onClick={() => setIsEditing(true)} 
-                disabled={isSaving}
+                }}
               >
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
+                <IconButton 
+                  className={styles.editButton} 
+                  onClick={() => setIsEditing(true)} 
+                  disabled={isSaving}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             
             {isEditing && (
               <>
@@ -1068,7 +1069,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
                     className={styles.saveButton} 
                     onClick={handleSave} 
                     disabled={isSaving}
-                    color="primary"
+                    sx={{ color: '#0D5E6D' }}
                   >
                     <CheckCircleIcon />
                   </IconButton>
@@ -1145,7 +1146,12 @@ I understand that as long as I commit to consistent progress each day, little by
             {isEditing && (
               <Button
                 variant="contained"
-                color="primary"
+                sx={{ 
+                  backgroundColor: '#0D5E6D',
+                  '&:hover': {
+                    backgroundColor: '#0a4a56'
+                  }
+                }}
                 onClick={handleSave}
                 disabled={isSaving}
                 startIcon={<CheckCircleIcon />}

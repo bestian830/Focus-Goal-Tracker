@@ -438,6 +438,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
             onClick={handleCurrentWeek}
             size="small"
             className={styles.weekTitle}
+            sx={{ color: '#0D5E6D' }}
           >
             {getWeekTitle()}
           </Button>
