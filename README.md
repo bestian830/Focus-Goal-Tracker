@@ -155,10 +155,13 @@ This will install all dependencies for the root directory, frontend, and backend
 3. Configure environment variables:
    
 Create `.env` file in the root directory:
+```c
 NODE_ENV=development
 MONGODB_URI=your_mongodb_connection_string
+```
 
 Create `.env` file in the `server` directory:
+```c
 JWT_SECRET=your_jwt_secret_key
 MONGODB_URI=your_mongodb_connection_string
 OPENAI_API_KEY=your_openai_api_key
@@ -167,9 +170,12 @@ CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 CLIENT_URL=http://localhost:5173
+```
 
 Create `.env` file in the `client` directory (needed for production):
+```c
 VITE_API_URL=http://localhost:5050/api
+```
 
 4. Start the development server:
 ```bash
