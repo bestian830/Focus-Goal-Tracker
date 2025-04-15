@@ -21,14 +21,14 @@ import styles from './GoalCard.module.css';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalArchived }) {
-  // 使用空值合并运算符确保安全访问
+  // Use nullish coalescing operator to ensure safe access
   const safeGoal = goal || {};
   const goalId = safeGoal._id || safeGoal.id;
   const goalTitle = safeGoal.title || "Unnamed Goal";
   const goalStatus = safeGoal.status || "active";
   const isArchived = goalStatus === 'archived';
   
-  // Hooks必须在组件顶部调用
+  // Hooks must be called at the top level of the component
   const [anchorEl, setAnchorEl] = useState(null);
   const [priority, setPriority] = useState(safeGoal.priority || "Medium");
   const [targetDate, setTargetDate] = useState(() => {
@@ -39,7 +39,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
   const [archiveError, setArchiveError] = useState(null);
   const [isValid, setIsValid] = useState(!!goal && typeof goal === 'object');
 
-  // 创建自定义主题
+  // Create custom theme
   const defaultTheme = createTheme({
     shadows: [
       'none',
@@ -78,21 +78,21 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
     },
   });
 
-  // 设置组件的有效性
+  // Set component validity
   useEffect(() => {
     setIsValid(!!goal && typeof goal === 'object');
   }, [goal]);
 
-  // 同步状态与属性
+  // Sync state with props
   useEffect(() => {
     if (!isValid) return;
 
-    // 更新优先级
+    // Update priority
     if (safeGoal.priority && safeGoal.priority !== priority) {
       setPriority(safeGoal.priority);
     }
 
-    // 更新目标日期
+    // Update target date
     const newDate = safeGoal.targetDate || safeGoal.dueDate;
     if (newDate) {
       const newDateObj = new Date(newDate);
@@ -105,7 +105,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
     }
   }, [isValid, safeGoal.priority, safeGoal.targetDate, safeGoal.dueDate, priority, targetDate]);
 
-  // 菜单处理函数
+  // Menu handler functions
   const handleOpenMenu = (event) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -115,14 +115,14 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
     setAnchorEl(null);
   };
 
-  // 优先级变更处理
+  // Priority change handler
   const handlePriorityChange = async (newPriority) => {
     try {
       handleCloseMenu();
       if (newPriority === priority || !isValid) return;
 
       const oldPriority = priority;
-      setPriority(newPriority); // UI立即更新
+      setPriority(newPriority); // UI immediately updates
 
       if (onPriorityChange) {
         onPriorityChange(goalId, newPriority);
@@ -137,7 +137,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
         }
       } catch (apiError) {
         console.error("API failed to update goal priority:", apiError);
-        setPriority(oldPriority); // 回滚UI
+        setPriority(oldPriority); // Rollback UI
         if (onPriorityChange) {
           onPriorityChange(goalId, oldPriority);
         }
@@ -147,7 +147,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
     }
   };
 
-  // 日期变更处理
+  // Date change handler
   const handleDateChange = async (newDate) => {
     if (!isValid) return;
     
@@ -180,7 +180,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
     }
   };
 
-  // 存档处理
+  // Archive handler
   const handleArchive = async () => {
     if (isArchiving || !isValid) return;
     
@@ -208,7 +208,7 @@ export default function GoalCard({ goal, onPriorityChange, onDateChange, onGoalA
     }
   };
 
-  // 无效目标对象时的渲染
+  // Render when goal object is invalid
   if (!isValid) {
     return (
       <div className="goal-card error">

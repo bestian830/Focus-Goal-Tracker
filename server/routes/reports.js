@@ -8,13 +8,13 @@ import Goal from '../models/Goal.js';
 
 const router = express.Router();
 
-// 测试路由 - 不需要身份验证
+// Test route - no authentication required
 router.get('/test', (req, res) => {
   console.log('test route called');
   res.json({ success: true, message: 'report API test success' });
 });
 
-// 鉴权测试路由
+// Authentication test route
 router.get('/auth-test', requireAuth, (req, res) => {
   console.log('auth test route called, user ID:', req.user.id);
   res.json({ 
@@ -64,7 +64,7 @@ router.get('/:goalId/latest', requireAuth, async (req, res) => {
       userId
     });
 
-    // 简化响应
+    // Simplified response
     res.json({ 
       success: true, 
       data: {

@@ -261,10 +261,10 @@ const apiService = {
   goals: {
     getAll: (userId) => api.get(`/api/goals/user/${userId}`),
     getUserGoals: (userId) => {
-      console.log(`API调用getUserGoals，用户ID: ${userId}`, { isTemporary: userId && userId.toString().startsWith('temp_') });
+      console.log(`API call getUserGoals, user ID: ${userId}`, { isTemporary: userId && userId.toString().startsWith('temp_') });
       return api.get(`/api/goals/${userId}`)
         .catch(error => {
-          console.error(`getUserGoals错误，用户ID: ${userId}`, error);
+          console.error(`getUserGoals error, user ID: ${userId}`, error);
           throw error;
         });
     },
@@ -274,7 +274,7 @@ const apiService = {
       // ensure goalData contains a valid userId
       if (!goalData.userId) {
         console.error("createGoal: missing userId");
-        return Promise.reject(new Error("目标数据缺少用户ID"));
+        return Promise.reject(new Error("Goal data missing user ID"));
       }
       
       // ensure description field exists
@@ -289,8 +289,7 @@ const apiService = {
         
         // generate declaration content
         const generateDeclarationText = (data) => {
-          const username = 'User';
-          const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : '未设置日期';
+          const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : 'Date not set';
           const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : 'daily commitment';
           const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : 'appropriate reward';
           const resource = data.resources && data.resources.length > 0 ? data.resources[0] : 'necessary preparation';
@@ -400,6 +399,30 @@ Because the path is already beneath my feet—it's really not that complicated. 
           });
           throw error;
         }),
+    generateGoalDeclaration: (goalData) => {
+      try {
+        const generateDeclarationText = (data) => {
+          const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : 'Date not set';
+          const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : 'daily commitment';
+          const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : 'appropriate reward';
+          
+          // Return declaration text template
+          return `I commit to achieve ${data.title} by ${formattedDate}. 
+                  Each day, I will ${dailyTask}.
+                  When I reach my goal, I will reward myself with ${reward}.`;
+        };
+        
+        // Generate and return the declaration content
+        const declarationContent = generateDeclarationText(goalData);
+        return {
+          content: declarationContent,
+          updatedAt: new Date()
+        };
+      } catch (error) {
+        console.error('generateGoalDeclaration: error:', error);
+        throw error;
+      }
+    },
   },
 
   // progress related

@@ -11,13 +11,13 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/auth.js";
 import tempUserRoutes from "./routes/tempUserRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import uploadsRoutes from "./routes/uploads.js"; // 添加上傳路由
+import uploadsRoutes from "./routes/uploads.js"; // Add upload routes
 // add other routes import as needed
 
 // import directly for routes that are immediately used
 import goalsRoutes from "./routes/goals.js";
 import progressRoutes from "./routes/progress.js";
-import reportsRoutes from './routes/reports.js'; // <--- 添加导入
+import reportsRoutes from './routes/reports.js'; // Add import
 
 // load env variables
 dotenv.config();
@@ -167,16 +167,16 @@ mongoose
   .then(async () => {
     console.log("Connected to MongoDB successfully!");
     
-    // 手动清理所有可能存在的唯一索引
+    // Manually clean all possible unique indexes
     try {
       const db = mongoose.connection.db;
-      console.log("开始检查并移除所有可能的唯一索引...");
+      console.log("Start checking and removing all possible unique indexes...");
       
-      // 获取当前集合上的所有索引
+      // Get all indexes on the current collection
       const indexes = await db.collection('goals').indexes();
-      console.log("现有索引:", JSON.stringify(indexes));
+      console.log("Existing indexes:", JSON.stringify(indexes));
       
-      // 尝试删除所有可能与userId和title相关的唯一索引
+      // Try to delete all indexes that might be related to userId and title
       const indexesToDrop = [
         'userId_1_title_1', 
         'title_1_userId_1',
@@ -187,19 +187,19 @@ mongoose
       for (const indexName of indexesToDrop) {
         try {
           await db.collection('goals').dropIndex(indexName);
-          console.log(`成功删除索引: ${indexName}`);
+          console.log(`Successfully deleted index: ${indexName}`);
         } catch (err) {
-          console.log(`尝试删除索引 ${indexName}: ${err.message}`);
+          console.log(`Attempted to delete index ${indexName}: ${err.message}`);
         }
       }
       
-      // 重建非唯一索引
+      // Rebuild non-unique index
       await db.collection('goals').createIndex({ userId: 1, title: 1 }, { unique: false, background: true });
-      console.log("成功重建非唯一索引");
+      console.log("Successfully rebuilt non-unique index");
       
     } catch (indexError) {
-      console.log("索引处理过程中出错:", indexError.message);
-      // 继续执行，不要因为索引问题而阻止服务器启动
+      console.log("Error during index processing:", indexError.message);
+      // Continue execution, don't block server startup due to index issues
     }
     
     app.listen(PORT, () => {

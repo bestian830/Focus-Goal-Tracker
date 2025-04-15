@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { FaTimes } from "react-icons/fa";
-import "../styles/ProfileModal.css";
 import apiService from "../services/api";
+import "../styles/ProfileModal.css";
 
 /**
  * ProfileModal Component
@@ -142,7 +141,7 @@ function ProfileModal({ isOpen, onClose, user }) {
 
       if (response.data && response.data.success) {
         setProfile(response.data.data);
-        setSuccessMessage("資料已成功更新！");
+        setSuccessMessage("Profile updated successfully!");
         setIsEditing(false);
         
         // No need to dispatch custom events here
@@ -154,7 +153,7 @@ function ProfileModal({ isOpen, onClose, user }) {
       if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error.message);
       } else {
-        setError("更新資料時出錯。請稍後再試。");
+        setError("Error updating profile. Please try again later.");
       }
     }
   };
@@ -167,7 +166,7 @@ function ProfileModal({ isOpen, onClose, user }) {
 
     // validate if new password and confirm password match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError("新密碼和確認密碼不匹配。");
+      setError("New password and confirm password do not match.");
       return;
     }
 
@@ -217,7 +216,7 @@ function ProfileModal({ isOpen, onClose, user }) {
           // clear local storage
           localStorage.removeItem("tempId");
 
-          setSuccessMessage("您的臨時帳戶已成功刪除。正在重定向到登錄頁面...");
+          setSuccessMessage("Your temporary account has been successfully deleted. Redirecting to login page...");
 
           // delay redirecting, so the user can read the success message
           setTimeout(() => {
@@ -233,7 +232,7 @@ function ProfileModal({ isOpen, onClose, user }) {
           // clear local storage
           localStorage.removeItem("userId");
 
-          setSuccessMessage("您的帳戶已成功刪除。正在重定向到登錄頁面...");
+          setSuccessMessage("Your account has been successfully deleted. Redirecting to login page...");
 
           // delay redirecting, so the user can read the success message
           setTimeout(() => {

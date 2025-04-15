@@ -46,7 +46,7 @@
   margin: 2px 0;
 }
 
-/* Today標記容器 */
+/* Today label container */
 .todayLabelContainer {
   display: flex;
   justify-content: center;
@@ -65,7 +65,7 @@
   font-weight: 600;
 }
 
-/* 底部區域容器 */
+/* Bottom area container */
 .bottomSection {
   display: flex;
   flex-direction: column;

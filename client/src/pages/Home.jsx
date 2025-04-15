@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import ProfileModal from "../components/ProfileModal";
 import OnboardingModal from "../components/OnboardingModal";
 import Header from "../components/Header/Header";
@@ -27,35 +26,31 @@ function Home() {
   const [loading, setLoading] = useState(true);
   // State for profile modal
   const [showProfileModal, setShowProfileModal] = useState(false);
-  // State for API connection
-  const [apiConnected, setApiConnected] = useState(true);
   // State for onboarding modal
   const [showOnboarding, setShowOnboarding] = useState(false);
   // State for user goals
   const [userGoals, setUserGoals] = useState([]);
-  // 选中的目标ID
+  // Selected goal ID
   const [selectedGoalId, setSelectedGoalId] = useState(null);
 
   // Navigation hook for redirecting if needed
   const navigate = useNavigate();
 
-  // 檢查 API 連接狀態
+  // Check API connection status
   useEffect(() => {
     const checkApiConnection = async () => {
       try {
         const isHealthy = await apiService.healthCheck();
-        setApiConnected(isHealthy);
         console.log("API health check result:", isHealthy);
       } catch (error) {
         console.error("API health check failed:", error);
-        setApiConnected(false);
       }
     };
 
     checkApiConnection();
   }, []);
 
-  // 获取用户目标
+  // Get user goals
   const fetchUserGoals = async (id, isGuest) => {
     try {
       if (!id) {
@@ -74,7 +69,7 @@ function Home() {
           const goals = response.data.data || [];
           setUserGoals(goals);
 
-          // 如果用户没有目标，显示引导流程
+          // If user has no goals, show the guide process
           if (goals.length === 0) {
             console.log("User has no goals, showing onboarding");
             setShowOnboarding(true);

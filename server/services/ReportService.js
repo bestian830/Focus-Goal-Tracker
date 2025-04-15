@@ -111,7 +111,7 @@ ${progress.map(p => `- ${new Date(p.date).toLocaleTimeString()}: ${p.content || 
 
 Please analyze from the following aspects:
 1. Progress Assessment: Analyze the current progress, including completion rate and efficiency
-2. Pattern Recognition: Analyze the user's work/study pattern, find the规律
+2. Pattern Recognition: Analyze the user's work/study pattern, find the pattern
 3. Improvement Suggestions: Based on the analysis, propose specific improvement suggestions
 4. Encouraging Feedback: Give positive feedback and encouragement
 
@@ -123,7 +123,7 @@ Please reply in English, with a positive and encouraging tone, and specific sugg
     const suggestions = [];
 
     if (analysis.totalRecords === 0) {
-      suggestions.push('• Today there is no progress record, please record your progress及时记录您的进展。');
+      suggestions.push('• Today there is no progress record, please record your progress promptly.');
     } else if (analysis.completionRate < 50) {
       suggestions.push('• The current completion rate is low, please make a more specific action plan.');
       suggestions.push('• Consider breaking the task into smaller steps and completing it step by step.');

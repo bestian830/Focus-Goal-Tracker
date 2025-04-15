@@ -1,4 +1,4 @@
-/* Profile.css - 用戶個人資料頁面樣式 */
+/* Profile.css - User profile page styles */
 
 .profile-container {
   max-width: 600px;
@@ -20,7 +20,7 @@
   color: #444;
 }
 
-/* 消息樣式 */
+/* Message styles */
 .error-message {
   background-color: #ffe0e0;
   color: #d32f2f;
@@ -39,7 +39,7 @@
   text-align: center;
 }
 
-/* 資料顯示樣式 */
+/* Data display styles */
 .profile-info {
   margin-bottom: 2rem;
 }
@@ -62,7 +62,7 @@
   color: #333;
 }
 
-/* 按鈕樣式 */
+/* Button styles */
 .profile-actions {
   display: flex;
   flex-wrap: wrap;
@@ -148,7 +148,7 @@
   background-color: #d32f2f;
 }
 
-/* 表單樣式 */
+/* Form styles */
 .profile-form,
 .password-form,
 .delete-confirmation {
@@ -190,7 +190,7 @@
   margin-top: 1.5rem;
 }
 
-/* 刪除確認樣式 */
+/* Delete confirmation styles */
 .delete-confirmation {
   border: 1px solid #ffcdd2;
   background-color: #ffebee;
@@ -206,7 +206,7 @@
   color: #555;
 }
 
-/* 響應式樣式 */
+/* Responsive styles */
 @media (max-width: 650px) {
   .profile-container {
     margin: 1rem;
