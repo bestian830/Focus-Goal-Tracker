@@ -184,9 +184,6 @@ export default function AIFeedback({ goalId }) {
     return date.toLocaleString('en-US', options);
   };
 
-  // Unified color
-  const accentColor = '#4a90e2'; // Use unified Apple blue color
-
   return (
     <Paper 
       elevation={0} /* Remove elevation for flatter Apple look */
@@ -264,13 +261,13 @@ export default function AIFeedback({ goalId }) {
             borderRadius: '8px', /* Slightly smaller radius */
             padding: '6px 16px', /* Adjust padding */
             minWidth: 'auto', /* Allow natural width */
-            bgcolor: accentColor, /* Use accent color */
+            bgcolor: '#0D5E6D', /* Use accent color */
             textTransform: 'none', /* No uppercase */
             fontWeight: 500,
             mb: 1, /* Keep margin bottom */
             boxShadow: 'none', /* Remove shadow */
             '&:hover': {
-              bgcolor: '#3a82e0' /* Slightly darker hover */
+              bgcolor: '#0A4A57' /* Slightly darker hover for the new color */
             }
           }}
         >
@@ -388,7 +385,7 @@ export default function AIFeedback({ goalId }) {
       </Popover>
 
       {/* AI Feedback Sections Container */} 
-      <Box sx={{ px: 2, pt: 0, pb: 2, mt: '5px' /* Move sections up */ }}>
+      <Box sx={{ px: 0, pt: 1, pb: 2, mt: '5px' /* Move sections up */ }}>
         {loading && (
           <Box className="ai-feedback-loading-container">
             <CircularProgress />
@@ -441,7 +438,7 @@ export default function AIFeedback({ goalId }) {
                           sx={{
                             justifyContent: 'space-between', /* Push icon to right */
                             textAlign: 'left',
-                            padding: '10px 12px', /* Adjust padding */
+                            padding: '10px 8px', /* Adjust padding */
                             borderRadius: '8px', /* Apple-like radius */
                             color: '#333', /* Standard text color */
                             backgroundColor: '#ffffff', /* White background */
@@ -471,12 +468,12 @@ export default function AIFeedback({ goalId }) {
             )}
             
             {/* Analysis Timestamp */}
-            <Box className="ai-feedback-timestamp" sx={{ textAlign: 'right', mt: 1 }}>
+            <Box className="ai-feedback-timestamp" sx={{ textAlign: 'right', mt: 0 }}>
               <Typography 
                 variant="caption" 
                 sx={{ 
                   color: '#888',
-                  fontSize: '0.75rem' /* Slightly larger caption */
+                  fontSize: '0.65rem' /* Slightly larger caption */
                 }}
               >
                 Analysis time: {lastUpdate ? formatTimestampAppleStyle(lastUpdate) : 'N/A'}

@@ -93,21 +93,21 @@
 }
 
 .priorityChip.priorityHigh {
-  background-color: rgba(255, 59, 48, 0.9);
-  color: white;
-  border: none;
+  background-color: rgba(255, 59, 48, 0.2); /* Lighter red background */
+  color: #c62828; /* Darker red text */
+  border: 1px solid rgba(255, 59, 48, 0.3);
 }
 
 .priorityChip.priorityMedium {
-  background-color: rgba(255, 204, 0, 0.9);
-  color: #333;
-  border: none;
+  background-color: rgba(255, 204, 0, 0.25); /* Lighter yellow background */
+  color: #a17400; /* Darker yellow text */
+  border: 1px solid rgba(255, 204, 0, 0.35);
 }
 
 .priorityChip.priorityLow {
-  background-color: rgba(52, 199, 89, 0.9);
-  color: white;
-  border: none;
+  background-color: rgba(52, 199, 89, 0.2); /* Lighter green background */
+  color: #1e8e3e; /* Darker green text */
+  border: 1px solid rgba(52, 199, 89, 0.3);
 }
 
 /* Tablet layout (600px - 900px) */
@@ -435,9 +435,9 @@
   }
 }
 
-/* 确保下拉菜单的颜色与标签颜色一致 */
+/* Match dropdown menu colors with tag colors */
 .priorityHighMenuItem {
-  background-color: rgba(255, 59, 48, 0.1) !important; 
+  background-color: rgba(255, 220, 218, 0.1) !important; /* Lighter red */
   color: #333 !important;
 }
 .priorityHighMenuItem:hover {
@@ -445,7 +445,7 @@
 }
 
 .priorityMediumMenuItem {
-  background-color: rgba(255, 204, 0, 0.1) !important;
+  background-color: rgba(255, 245, 186, 0.1) !important; /* Lighter yellow */
   color: #333 !important;
 }
 .priorityMediumMenuItem:hover {
@@ -453,7 +453,7 @@
 }
 
 .priorityLowMenuItem {
-  background-color: rgba(52, 199, 89, 0.1) !important;
+  background-color: rgba(200, 255, 210, 0.1) !important; /* Lighter green */
   color: #333 !important;
 }
 .priorityLowMenuItem:hover {
