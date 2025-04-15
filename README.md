@@ -596,9 +596,9 @@ We plan to enhance the application with the following features:
 - **Extended AI Capabilities**: More personalized feedback and adaptive challenge suggestions
 
 ## Contributors
-- Ryan Liu - Project Lead & Full Stack Developer
-- [Team Member 1] - [Role/Contribution]
-- [Team Member 2] - [Role/Contribution]
+- Ryan Tian
+- Yanbo Chen
+- Neda Changizi - Instructor 
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details. 
