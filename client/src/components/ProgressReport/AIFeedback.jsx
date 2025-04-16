@@ -160,7 +160,13 @@ export default function AIFeedback({ goalId }) {
         response: err.response,
         stack: err.stack
       });
-      setError(err.response?.data?.error || 'Failed to generate analysis, please try again later');
+      
+      // 针对超时错误给出更友好的提示
+      if (err.code === 'ECONNABORTED' || (err.message && err.message.includes('timeout'))) {
+        setError('AI分析服务响应超时，请再次点击生成按钮重试。由于AI分析需要一定时间，这是正常情况。');
+      } else {
+        setError(err.response?.data?.error || 'Failed to generate analysis, please try again later');
+      }
     } finally {
       setLoading(false);
     }
