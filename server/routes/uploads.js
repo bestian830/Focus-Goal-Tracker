@@ -69,6 +69,16 @@ router.get('/signature', requireAuth, (req, res) => {
  * @access Public
  */
 router.get('/health', (req, res) => {
+  // 添加调试日志查看环境变量
+  console.log('Cloudinary 配置检查:', {
+    CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? '已设置' : '未设置',
+    API_KEY: process.env.CLOUDINARY_API_KEY ? '已设置' : '未设置',
+    API_SECRET: process.env.CLOUDINARY_API_SECRET ? '已设置' : '未设置',
+    configured: !!(process.env.CLOUDINARY_CLOUD_NAME && 
+                    process.env.CLOUDINARY_API_KEY && 
+                    process.env.CLOUDINARY_API_SECRET)
+  });
+  
   res.json({
     success: true,
     message: 'Cloudinary upload API is running',

@@ -54,6 +54,21 @@ const VisionStep = ({ value, onChange }) => {
         // Method 2: Using server-side direct upload - more secure and no client signature needed
         console.log('Using server-side direct upload mode');
         
+        // First check if the upload API is properly configured
+        try {
+          const healthCheck = await axios.get('/api/uploads/health', {
+            baseURL: apiService.getDiagnostics().apiUrl,
+            withCredentials: true
+          });
+          
+          if (!healthCheck.data.cloudinary.configured) {
+            throw new Error('Cloudinary is not properly configured on the server');
+          }
+        } catch (healthError) {
+          console.error('Failed to check upload service health:', healthError);
+          throw new Error('Upload service is unavailable. Please try again later or contact support');
+        }
+        
         // Create form data
         const formData = new FormData();
         formData.append('file', file);
@@ -129,7 +144,35 @@ const VisionStep = ({ value, onChange }) => {
       }
     } catch (err) {
       console.error('Error uploading image:', err);
-      setError('Error uploading image, please try again');
+      
+      let errorMessage = 'Error uploading image, please try again';
+      
+      // Provide more specific error messages based on error
+      if (err.response) {
+        if (err.response.status === 500) {
+          if (err.response.data && err.response.data.error) {
+            if (err.response.data.error.message.includes('cloudinary')) {
+              errorMessage = 'Image upload service is not properly configured on the server. Please contact the administrator.';
+              console.error('Cloudinary环境变量可能未正确配置');
+            } else {
+              errorMessage = `Upload error: ${err.response.data.error.message || 'Server error'}`;
+            }
+          } else {
+            errorMessage = 'Server error processing the image. Please try again later';
+          }
+        } else if (err.response.status === 401) {
+          errorMessage = 'Please log in to upload images';
+        } else if (err.response.status === 413) {
+          errorMessage = 'Image is too large. Maximum size is 1MB';
+        }
+      } else if (err.message && err.message.includes('Cloudinary is not properly configured')) {
+        errorMessage = 'Image upload service is not properly configured. Please contact support';
+        console.error('服务器未正确配置Cloudinary环境变量');
+      } else if (err.message && err.message.includes('Network Error')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,24 @@
 // Description: Main server file for the Express.js backend. first part: as the door to the restaurant
 
+// 确保dotenv在最开始就加载
+import dotenv from "dotenv";
+// 立即加载环境变量
+dotenv.config();
+
+// 添加环境变量检查
+console.log("=== 环境变量检查 ===");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("PORT:", process.env.PORT);
+console.log("CLIENT_URL:", process.env.CLIENT_URL);
+console.log("MongoDB URI:", process.env.MONGODB_URI ? "已设置" : "未设置");
+console.log("Cloudinary配置状态:", 
+  !!(process.env.CLOUDINARY_CLOUD_NAME && 
+     process.env.CLOUDINARY_API_KEY && 
+     process.env.CLOUDINARY_API_SECRET) ? "已完成" : "未完成");
+console.log("=======================");
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
@@ -19,9 +35,6 @@ import goalsRoutes from "./routes/goals.js";
 import progressRoutes from "./routes/progress.js";
 import reportsRoutes from './routes/reports.js'; // <--- 添加导入
 
-// load env variables
-dotenv.config();
-
 // connect to MongoDB
 connectDB();
 
@@ -32,6 +45,8 @@ app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
       "http://localhost:5173", 
+      "http://localhost:5174",  // 添加本地Vite开发服务器可能使用的备用端口
+      "http://localhost:5175",  // 添加更多可能的本地端口
       "https://focusappdeploy-frontend.onrender.com", 
       "https://focusfinalproject-frontend-original.onrender.com", 
       "https://focusfinalproject-frontend-original-repo.onrender.com",
@@ -202,9 +217,27 @@ mongoose
       // 继续执行，不要因为索引问题而阻止服务器启动
     }
     
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}!`);
-    });
+    // 检查端口是否被占用并尝试使用其他端口
+    const startServer = (port) => {
+      try {
+        const server = app.listen(port, () => {
+          console.log(`Server is running on port ${port}!`);
+        });
+        
+        server.on('error', (error) => {
+          if (error.code === 'EADDRINUSE') {
+            console.log(`Port ${port} is in use, trying ${port + 1}`);
+            startServer(port + 1);
+          } else {
+            console.error('Server error:', error);
+          }
+        });
+      } catch (error) {
+        console.error('Server startup error:', error);
+      }
+    };
+    
+    startServer(PORT);
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);

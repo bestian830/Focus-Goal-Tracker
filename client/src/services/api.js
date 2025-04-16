@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // set backend API URL - use environment variable for production
-const PRODUCTION_API_URL = import.meta.env.VITE_API_URL || "https://focusfinalproject-backend-original-repo.onrender.com";
+const PRODUCTION_API_URL = import.meta.env.VITE_API_URL || "https://focusfinalproject-main-backend.onrender.com";
 const DEVELOPMENT_API_URL = "http://localhost:5050";
 
 // choose API URL based on environment - optimize environment detection logic
@@ -9,18 +9,52 @@ const isProduction =
   import.meta.env.PROD === true || import.meta.env.MODE === "production";
 const API_URL = isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
 
+// 尝试探测本地API端口是否可用
+const checkLocalApiPort = async (basePort = 5050, maxAttempts = 3) => {
+  if (isProduction) return API_URL; // 生产环境不需要探测
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const portToCheck = basePort + i;
+    const url = `http://localhost:${portToCheck}/api/health`;
+    
+    try {
+      const response = await fetch(url, { 
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (response.ok) {
+        console.log(`找到可用的API端口: ${portToCheck}`);
+        return `http://localhost:${portToCheck}`;
+      }
+    } catch (error) {
+      console.log(`端口 ${portToCheck} 无法连接:`, error.message);
+    }
+  }
+  
+  console.log(`无法找到可用的API端口，使用默认地址: ${API_URL}`);
+  return API_URL;
+};
+
+// 立即开始探测端口 (异步)
+let detectedApiUrl = API_URL;
+checkLocalApiPort().then(url => {
+  detectedApiUrl = url;
+  console.log("API URL已更新为:", detectedApiUrl);
+});
+
 // output configuration information, help diagnose connection issues
 console.log("=== API configuration information ===");
 console.log("Running mode:", import.meta.env.MODE);
 console.log("Is production environment:", import.meta.env.PROD);
 console.log("Environment variable VITE_API_URL:", import.meta.env.VITE_API_URL);
 console.log("Environment detection result:", isProduction ? "Production environment" : "Development environment");
-console.log("Used API URL:", API_URL);
+console.log("Initial API URL:", API_URL);
 console.log("====================");
 
-// create axios instance
+// create axios instance with dynamic baseURL
 const api = axios.create({
-  baseURL: API_URL,
   withCredentials: true, // allow cross-domain requests to carry cookies
   headers: {
     "Content-Type": "application/json",
@@ -28,9 +62,12 @@ const api = axios.create({
   timeout: 10000, // 10 seconds
 });
 
-// request interceptor
+// 请求拦截器，动态设置baseURL
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // 确保使用最新检测到的API URL
+    config.baseURL = detectedApiUrl;
+    
     // record the complete request URL, helpful for debugging
     console.log(`Sending request to: ${config.baseURL}${config.url}`);
 
@@ -57,7 +94,7 @@ api.interceptors.response.use(
         url: error.config
           ? `${error.config.baseURL}${error.config.url}`
           : "Unknown",
-        baseURL: API_URL,
+        baseURL: detectedApiUrl,
         headers: error.config ? error.config.headers : "Unknown",
       });
 
@@ -69,7 +106,7 @@ api.interceptors.response.use(
       ) {
         console.error("Failed to get user data - unable to connect to API server. Possible reasons:");
         console.error("1. Backend service is not running");
-        console.error("2. Incorrect API_URL configuration:", API_URL);
+        console.error("2. Incorrect API_URL configuration:", detectedApiUrl);
         console.error("3. Cross-domain request issue");
         console.error("4. Cookie not set correctly");
 
@@ -126,7 +163,7 @@ const checkApiHealth = async () => {
     return true;
   } catch (error) {
     console.error("API connection error:", error.message);
-    console.log("Attempted API URL:", API_URL);
+    console.log("Attempted API URL:", detectedApiUrl);
     return false;
   }
 };
@@ -188,13 +225,16 @@ const apiService = {
   // diagnostic method
   getDiagnostics: () => {
     return {
-      apiUrl: API_URL,
+      apiUrl: detectedApiUrl,
       mode: import.meta.env.MODE,
       isProd: import.meta.env.PROD,
       allowedOrigins: [
         "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
         "https://focusappdeploy-frontend.onrender.com",
         "https://focusfinalproject-frontend-original.onrender.com",
+        "https://focusfinalproject-main-frontend.onrender.com",
       ],
     };
   },
@@ -228,7 +268,7 @@ const apiService = {
   // user related
   users: {
     getProfile: () => {
-      console.log("Calling getProfile method, API_URL:", API_URL);
+      console.log("Calling getProfile method, API_URL:", detectedApiUrl);
       return api.get("/api/users/profile")
         .then(response => {
           // Cache user data and notify all components
