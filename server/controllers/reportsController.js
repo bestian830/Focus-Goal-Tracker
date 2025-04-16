@@ -84,22 +84,20 @@ const buildPrompt = (goal, startDate, endDate) => {
       }
     });
   } else {
-    prompt += `- No daily progress recorded in the selected date range (${startDateStr} to ${endDateStr}).\n`;
+    // Simplified message for no progress data
+    prompt += `- No progress data for this time period.\n`;
   }
 
-  // Updated instruction to specify output structure and exclude achievements
-  prompt += `\nBased on the goal and the progress log from ${startDateStr} to ${endDateStr}, provide **only** the following sections:
+  // Simplified instruction for Mistral model
+  prompt += `\nBased on the goal information${filteredCards.length > 0 ? ' and progress data' : ''}, please provide:
 
-**Progress Analysis:**
-[1-2 sentences analyzing progress within this date range, focusing on consistency and patterns.]
+1. Progress Analysis: ${filteredCards.length === 0 ? 'General insights about this goal.' : 'Brief analysis of progress patterns.'}
 
-**Potential Challenges:**
-[1 sentence identifying potential challenges or areas needing attention.]
+2. Potential Challenges: ${filteredCards.length === 0 ? 'Possible obstacles for this type of goal.' : 'Key areas needing attention.'}
 
-**Actionable Suggestions:**
-[2-3 sentences with specific, actionable suggestions for next steps or future planning.]
+3. Actionable Suggestions: ${filteredCards.length === 0 ? '2-3 specific actions to make progress on this goal.' : '2-3 specific next steps.'}
 
-Ensure the response is encouraging, realistic, and forward-looking. Do not include any other sections like 'Key Achievements'.`;
+Keep your response encouraging and practical. Focus on helping the user move forward with their goal.`;
 
   console.log("--- Generated AI Prompt ---");
   console.log(prompt);
@@ -122,43 +120,50 @@ const callAIService = async (prompt) => {
   }
 
   try {
-    console.log(`DEBUG: Attempting to call AI service. URL: ${HUGGINGFACE_API_URL}`); // Log the URL being used
+    console.log(`DEBUG: Attempting to call AI service. URL: ${HUGGINGFACE_API_URL}`);
     console.log(`Calling AI service (axios) at: ${HUGGINGFACE_API_URL}`);
-    // Use axios to call the standard Hugging Face Inference API
+    
+    // Mistral-specific formatting - use a proper chat format
+    const mistralPrompt = {
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 300, // Increased for Mistral
+        return_full_text: false,
+        temperature: 0.5,  // Reduced temperature for more focused responses
+        top_p: 0.9,       // Add top_p for Mistral
+      }
+    };
+    
     const response = await axios.post(
       HUGGINGFACE_API_URL,
-      {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 250, // Adjust as needed
-          return_full_text: false, // Often useful to get only the generated part
-          // temperature: 0.7, // Optional: Adjust creativity
-        }
-      },
+      mistralPrompt,
       {
         headers: {
           'Authorization': `Bearer ${HUGGINGFACE_API_TOKEN}`,
           'Content-Type': 'application/json',
         },
-        timeout: 45000 // Increased timeout slightly (45 seconds)
+        timeout: 45000 // 45 seconds timeout
       }
     );
 
     console.log('AI service response status:', response.status);
     console.log('AI service raw response data:', JSON.stringify(response.data, null, 2));
 
-    // Extract feedback - structure might differ slightly, check raw response
+    // Extract feedback - adjust for Mistral response format
     let feedbackContent = "Error: Could not extract feedback from AI response.";
     if (Array.isArray(response.data) && response.data[0] && response.data[0].generated_text) {
       feedbackContent = response.data[0].generated_text.trim();
-    } else if (response.data && response.data.generated_text) { // Some models might return object directly
-       feedbackContent = response.data.generated_text.trim();
+    } else if (response.data && response.data.generated_text) {
+      feedbackContent = response.data.generated_text.trim();
+    } else if (typeof response.data === 'string') {
+      // Mistral might return a simple string
+      feedbackContent = response.data.trim();
     } else {
-        console.error("Unexpected AI response format. Raw data:", response.data);
+      console.error("Unexpected AI response format. Raw data:", response.data);
     }
 
     if (feedbackContent.startsWith("Error:")) {
-         throw new Error("Failed to extract valid feedback from AI response.");
+      throw new Error("Failed to extract valid feedback from AI response.");
     }
 
     // Simple post-processing
@@ -183,7 +188,7 @@ const callAIService = async (prompt) => {
     } else if (error.response?.status === 429) {
       throw new Error("AI service rate limit exceeded. Please try again later.");
     } else if (error.response?.status === 503) {
-        throw new Error("AI service is unavailable or model is loading. Please try again later."); // More specific 503 message
+      throw new Error("AI service is unavailable or model is loading. Please try again later.");
     } else if (error.code === 'ECONNABORTED') {
       throw new Error("AI service request timed out. Please try again later.");
     }
