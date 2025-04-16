@@ -488,6 +488,8 @@ Because the path is already beneath my feet—it's really not that complicated. 
           startDate: startDate,
           endDate: endDate
         }
+      }, {
+        timeout: 60000 // 增加超时时间到60秒，原来是默认的10秒
       })
         .then(response => {
           console.log('reports: report generated successfully, response:', response);
@@ -495,6 +497,12 @@ Because the path is already beneath my feet—it's really not that complicated. 
         })
         .catch(error => {
           console.error('reports: report generation failed, error:', error);
+          // 如果是超时错误，可以在这里处理重试逻辑
+          if (error.code === 'ECONNABORTED' || (error.message && error.message.includes('timeout'))) {
+            console.log('Request timed out, retrying...');
+            // 这里可以添加重试逻辑，但需要注意避免无限重试
+            // 简单起见，当前不自动重试，而是让用户手动重试
+          }
           throw error;
         });
     },
