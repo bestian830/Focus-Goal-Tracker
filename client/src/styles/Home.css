@@ -52,7 +52,7 @@
   margin-right: 1rem;
 }
 
-/* 頭像容器和圖標樣式 */
+/* Avatar container and icon styles */
 .avatar-container {
   cursor: pointer;
   width: 40px;
@@ -82,7 +82,7 @@
   object-fit: cover;
 }
 
-/* 按鈕樣式 */
+/* Button styles */
 .logout-button,
 .login-button,
 .guest-button {
@@ -488,7 +488,7 @@ h3 {
   }
 }
 
-/* 標題區域 */
+/* Title area */
 .home-header {
   display: flex;
   justify-content: space-between;
@@ -539,7 +539,7 @@ h3 {
   background-color: #d32f2f;
 }
 
-/* Sidebar 樣式 */
+/* Sidebar styles */
 .sidebar {
   width: 300px;
   height: 100%;
@@ -600,7 +600,7 @@ h3 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* GoalCard 樣式 */
+/* GoalCard styles */
 .goal-card {
   background-color: #fff;
   border-radius: 8px;
@@ -681,7 +681,7 @@ h3 {
   margin-top: 10px;
 }
 
-/* 調整 DatePicker 在 GoalCard 中的樣式 */
+/* Adjust DatePicker styles in GoalCard */
 .due-date-container .MuiFormControl-root {
   width: 100%;
 }
@@ -734,7 +734,7 @@ h3 {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* 日期選擇器彈出樣式 */
+/* Date picker popup styles */
 .date-picker-popup {
   position: fixed;
   z-index: 9999;
@@ -747,7 +747,7 @@ h3 {
   border: 1px solid #e9ecef;
 }
 
-/* 添加卡片内日期选择器样式 */
+/* Add date picker styles in card */
 .card-date-picker {
   position: absolute;
   top: 100%;
@@ -768,7 +768,7 @@ h3 {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 移除遮罩層 */
+/* Remove overlay */
 .date-picker-overlay {
   display: none;
 }

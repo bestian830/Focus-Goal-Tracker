@@ -1,466 +1,604 @@
-# Focus App - Goal Tracking and Focus Management Application
+# Focus - Minimalist Goal Tracker
+
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Demo](#demo)
+- [Technology Stack](#technology-stack)
+- [API Documentation](#api-documentation)
+- [Data Model](#data-model)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [Accessibility](#accessibility)
+- [Future Improvements](#future-improvements)
+- [Contributors](#contributors)
+- [License](#license)
 
 ## Project Overview
+Focus is a comprehensive yet minimalist goal tracking application designed to help users set, track, and achieve their personal goals with clarity and consistency. The system addresses the common challenge of goal abandonment by providing users with a structured approach based on behavioral psychology principles.
 
-Focus App is a full-stack application designed to help users set, track, and accomplish personal goals. Built on the MERN (MongoDB, Express, React, Node.js) technology stack, it offers rich functionality including user authentication, goal management, progress tracking, AI-generated reports, and data visualization.
+Our application is built upon three core principles:
+- **Simplicity First**: Minimalist interface removes distractions and cognitive load
+- **Atomic Progress**: Break large goals into manageable daily actions
+- **Positive Reinforcement**: Reward-based system to develop sustainable habits
 
-## Technical Architecture
+Inspired by research in behavioral psychology and habit formation (particularly James Clear's "Atomic Habits" and B.J. Fogg's "Tiny Habits"), Focus encourages users to break down large ambitions into manageable daily actions and rewards, fostering a sustainable path towards success.
 
-### Frontend Technology Stack
+The core philosophy is **"Stay focused. Start small. Make it happen."** The application is designed to reduce friction in two key ways:
+1. **Zero-barrier entry**: Users can begin tracking a goal without registration
+2. **Progressive engagement**: Advanced features become available as users develop commitment
 
-- **React 19**: JavaScript library for building user interfaces
-- **React Router 7.3.0**: Handles frontend routing
-- **Material UI 7.0**: Modern UI component library
-- **Emotion**: CSS-in-JS solution for component style management
-- **Zustand 5.0.3**: Lightweight state management library
-- **Axios 1.8.4**: HTTP client for API communication
-- **Date-fns**: Date manipulation utility library
-- **html2canvas & jspdf**: For PDF report generation and export
-- **Vite 6.2.0**: Modern frontend build tool
-- **ESLint 9.21.0**: Code quality checking tool
+## Features
+- **Guest Access**: Instant access without registration via a temporary user ID system, allowing immediate goal tracking with data persistence
+- **Goal Setting Guide**: Intuitive step-by-step onboarding process that guides users through effective goal definition
+- **Daily Progress Tracking**: Simple daily check-in system with journal functionality to record thoughts and obstacles
+- **Weekly Calendar View**: Visual weekly overview of progress with color-coded indicators for completion status
+- **Goal Declaration System**: Auto-generated personalized commitment statements based on goal details
+- **AI-Powered Progress Analysis**: Natural language processing providing personalized insights and recommendations
+- **Priority Management**: Visual priority indicators with quick-access adjustments (High/Medium/Low)
+- **Target Date Tracking**: Deadline management with inline date picker for easy adjustments
+- **Profile & Data Management**: Comprehensive account controls with privacy emphasis and data export options
+- **Responsive Design**: Fully responsive interface that adapts to desktop, tablet, and mobile devices
 
-### Backend Technology Stack
+## Demo
+Check out our project demo video:
 
-- **Node.js**: JavaScript runtime environment
-- **Express 4.21.2**: Web application framework
-- **MongoDB 6.14.2**: NoSQL database
-- **Mongoose 8.12.1**: MongoDB object modeling tool
-- **JSON Web Token**: For authentication and authorization
-- **bcryptjs**: For password hashing
-- **OpenAI API**: For AI functionality integration
-- **HuggingFace Inference**: For AI functionality integration
-- **Cloudinary**: For image upload and storage
-- **dotenv**: For environment variable management
+[![Project Demo](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+
+[Please replace VIDEO_ID with your actual YouTube video ID]
+
+## Technology Stack
+### Frontend
+- **Core**: React.js (built with Vite)
+- **State Management**: Zustand (with devtools and persist middleware)
+- **UI Framework**: Material UI (MUI Components, Icons, Date Pickers)
+- **Routing**: React Router (react-router-dom)
+- **HTTP Client**: Axios
+- **Styling**: CSS Modules + Global CSS
+- **Date Handling**: date-fns
+- **Notifications**: React Hot Toast
+- **Linting**: ESLint
+
+### Backend
+- **Server**: Node.js with Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: JWT (jsonwebtoken), bcrypt, cookie-parser
+- **AI Integration**: Hugging Face Inference API
+- **Image Storage**: Cloudinary
+- **Environment Management**: dotenv
+- **Security**: CORS middleware, HTTP-only cookies
+
+### Development & Deployment
+- **Build Tool**: Vite
+- **Version Control**: Git
+- **Recommended Deployment**: Render (backend), Netlify/Vercel (frontend)
+
+## API Documentation
+Our application provides the following API endpoints:
+
+### Authentication Endpoints
+- `POST /api/auth/register` - Register a new user
+  - Request: `{ username, email, password }`
+  - Response: `{ success, data: { user object minus password } }`
+
+- `POST /api/auth/login` - User login
+  - Request: `{ email, password }`
+  - Response: `{ success, data: { user object minus password } }`
+  - Sets HTTP-only JWT cookie
+
+- `POST /api/auth/logout` - User logout
+  - Response: `{ success, message }`
+  - Clears JWT cookie
+
+- `GET /api/auth/me/:userId` - Get current user data
+  - Response: `{ success, data: { user object minus password } }`
+
+- `POST /api/temp-users` - Create temporary guest user
+  - Request: `{ optional initialization data }`
+  - Response: `{ success, data: { tempId, etc. } }`
+
+### Goal Management Endpoints
+- `GET /api/goals/user/:userId` - Get all goals for a user
+  - Response: `{ success, data: [goals] }`
+
+- `POST /api/goals` - Create a new goal
+  - Request: `{ userId, title, motivation, targetDate, ... }`
+  - Response: `{ success, data: { created goal object } }`
+
+- `GET /api/goals/:id` - Get specific goal details
+  - Response: `{ success, data: { goal object } }`
+
+- `PUT /api/goals/:id` - Update goal details
+  - Request: `{ updated fields }`
+  - Response: `{ success, data: { updated goal object } }`
+
+- `DELETE /api/goals/:id` - Delete a goal
+  - Response: `{ success, message }`
+
+- `PUT /api/goals/:id/status` - Update goal status
+  - Request: `{ status }`
+  - Response: `{ success, data: { updated goal } }`
+
+- `POST /api/goals/:id/checkpoints` - Add checkpoint to goal
+  - Request: `{ title, isDaily }`
+  - Response: `{ success, data: { updated goal with new checkpoint } }`
+
+- `POST /api/goals/:id/daily-card` - Add/update daily progress card
+  - Request: `{ date, dailyTask, dailyReward, etc. }`
+  - Response: `{ success, data: { updated goal with daily card } }`
+
+### Progress Tracking Endpoints
+- `GET /api/progress?goalId=:goalId` - Get progress records for a goal
+  - Response: `{ success, data: [progress records] }`
+
+- `POST /api/progress` - Create progress record
+  - Request: `{ goalId, completionRate, etc. }`
+  - Response: `{ success, data: { created progress record } }`
+
+- `POST /api/progress/:id/records` - Add daily record
+  - Request: `{ date, completed, notes, mood }`
+  - Response: `{ success, data: { updated progress } }`
+
+- `PUT /api/progress/:id/checkpoints/:checkpointId` - Update checkpoint status
+  - Request: `{ status }`
+  - Response: `{ success, data: { updated progress } }`
+
+- `GET /api/progress/summary?goalId=:goalId&startDate=:start&endDate=:end` - Get progress summary
+  - Response: `{ success, data: { summary statistics } }`
+
+### AI Reports Endpoints
+- `POST /api/reports/:goalId` - Generate AI progress report
+  - Request: `{ timeRange: { startDate, endDate } }`
+  - Response: `{ success, data: { generated report } }`
+
+- `GET /api/reports/:goalId/latest` - Get latest report
+  - Response: `{ success, data: { most recent report } }`
+
+- `POST /api/reports/:reportId/rate` - Rate report quality
+  - Request: `{ rating }`
+  - Response: `{ success, data: { updated report } }`
+
+### File Upload Endpoints
+- `POST /api/uploads/image` - Upload goal vision image
+  - Request: multipart/form-data with image
+  - Response: `{ success, data: { imageUrl } }`
+
+- `POST /api/uploads/profile-image` - Upload user profile image
+  - Request: multipart/form-data with image
+  - Response: `{ success, data: { imageUrl } }`
+
+## Data Model
+Our application uses MongoDB as the database with the following collections:
+
+### User Schema
+```javascript
+{
+  _id: ObjectId,                // MongoDB document ID
+  username: String,             // Display name
+  email: {
+    type: String,
+    unique: true,               // Ensures email uniqueness
+    required: true,
+    lowercase: true,
+    trim: true,
+    validate: [isEmail]         // Email format validation
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8,
+    select: false               // Excluded from query results by default
+  },
+  isGuest: {
+    type: Boolean,
+    default: false              // Distinguishes registered vs. temp users
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  lastLogin: Date,
+  profileImageUrl: String,
+  settings: {
+    theme: {
+      type: String,
+      enum: ['light', 'dark', 'system'],
+      default: 'system'
+    },
+    notifications: {
+      enabled: Boolean,
+      email: Boolean,
+      dailyReminder: Boolean,
+      reminderTime: String      // HH:MM format
+    }
+  }
+}
+```
+
+### Goal Schema
+```javascript
+{
+  _id: ObjectId,                // MongoDB document ID
+  userId: {                     // Reference to User or temporary ID
+    type: String,
+    required: true,
+    index: true                 // Indexed for query performance
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 100
+  },
+  description: String,          // Optional longer description
+  motivation: String,           // Why this goal matters
+  status: {
+    type: String,
+    enum: ['active', 'completed', 'archived', 'deleted'],
+    default: 'active'
+  },
+  priority: {
+    type: String,
+    enum: ['High', 'Medium', 'Low'],
+    default: 'Medium'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  targetDate: Date,             // Goal completion target
+  completedAt: Date,            // When goal was marked complete
+  resources: [String],          // Available resources/support
+  dailyTasks: [String],         // Daily actions to take
+  rewards: [String],            // Rewards for completion
+  visionImageUrl: String,       // URL to Cloudinary image
+  declaration: {                // Generated commitment statement
+    content: String,
+    updatedAt: Date
+  },
+  checkpoints: [{               // Milestone tracking
+    title: String,
+    isCompleted: Boolean,
+    isDaily: Boolean,           // Whether this is a recurring task
+    completedAt: Date
+  }],
+  dailyCards: [{                // Daily progress records
+    date: {
+      type: Date,
+      required: true
+    },
+    completed: {                // Task completion tracking
+      type: Map,
+      of: Boolean
+    },
+    dailyTask: String,          // Task for this specific day
+    dailyReward: String,        // Reward for this specific day
+    records: [{                 // Journal entries for this day
+      text: String,
+      timestamp: Date,
+      mood: {
+        type: String,
+        enum: ['great', 'good', 'neutral', 'challenging', 'difficult']
+      }
+    }]
+  }]
+}
+```
+
+### Progress Schema
+```javascript
+{
+  _id: ObjectId,
+  goalId: {                     // Reference to parent Goal
+    type: ObjectId,
+    ref: 'Goal',
+    required: true,
+    index: true
+  },
+  userId: {                     // Duplicated for query efficiency
+    type: String,
+    required: true,
+    index: true
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+    index: true                 // Indexed for date-range queries
+  },
+  completionRate: Number,       // 0-100 percentage
+  streakCount: Number,          // Current streak days
+  longestStreak: Number,        // Historical best streak
+  records: [{                   // Daily records
+    date: Date,
+    completed: Boolean,
+    notes: String,
+    mood: String,
+    timeSpent: Number           // In minutes
+  }],
+  checkpointUpdates: [{         // Checkpoint progress
+    checkpointId: ObjectId,
+    status: Boolean,
+    updatedAt: Date
+  }]
+}
+```
+
+### Report Schema
+```javascript
+{
+  _id: ObjectId,
+  goalId: {
+    type: ObjectId,
+    ref: 'Goal',
+    required: true
+  },
+  userId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  dateRange: {
+    startDate: Date,
+    endDate: Date
+  },
+  generatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  data: {
+    completionRate: Number,
+    streakData: {
+      current: Number,
+      longest: Number,
+      average: Number
+    },
+    patternInsights: String,    // AI-generated pattern recognition
+    suggestions: [String],      // AI-generated recommendations
+    feedback: String,           // AI-generated encouragement
+    analysisText: String        // Complete AI analysis
+  },
+  userRating: {                 // Optional feedback on report quality
+    score: Number,              // 1-5 rating
+    providedAt: Date
+  }
+}
+```
+
+### Relationships Between Collections
+- Users to Goals: One-to-Many relationship (one user can have multiple goals)
+- Goals to Progress: One-to-Many relationship (one goal can have multiple progress records)
+- Goals to Reports: One-to-Many relationship (one goal can have multiple AI analysis reports)
+
+## Installation
+
+### Prerequisites
+- Node.js (v16.x or higher)
+- npm (v8.x or higher)
+- MongoDB (local instance or MongoDB Atlas account)
+- Hugging Face API key (for AI functionality)
+- Cloudinary account (for image uploads)
+
+### Steps
+1. Clone the repository
+   ```bash
+   git clone <your-repository-url>
+   cd FocusFinalProjectGitHub
+   ```
+
+2. Install backend dependencies
+   ```bash
+   cd server
+   npm install
+   ```
+
+3. Set up backend environment variables
+   - Create a `.env` file in the server directory with the following variables:
+     ```
+     MONGODB_URI=your_mongodb_connection_string
+     PORT=5050
+     JWT_SECRET=your_jwt_secret_key
+     NODE_ENV=development
+     CLIENT_URL=http://localhost:5173
+     HUGGING_FACE_API_KEY=your_huggingface_api_key
+     # Optional Cloudinary config if using image uploads
+     CLOUDINARY_CLOUD_NAME=your_cloud_name
+     CLOUDINARY_API_KEY=your_api_key
+     CLOUDINARY_API_SECRET=your_api_secret
+     ```
+
+4. Install frontend dependencies
+   ```bash
+   cd ../client
+   npm install
+   ```
+
+5. Set up frontend environment variables
+   - Create a `.env.development` file in the client directory:
+     ```
+     VITE_API_URL=http://localhost:5050
+     ```
+
+6. Start the development servers
+   ```bash
+   # In the server directory
+   npm run dev
+   
+   # In the client directory (in a new terminal)
+   npm run dev
+   ```
+
+7. Access the application
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:5050
+
+## Usage
+Focus offers an intuitive user experience designed to minimize friction and maximize engagement. Here's how to use the key features:
+
+### Guest Access & User Registration
+1. On the landing page, click "Try it instantly" to create a temporary account without registration
+2. To create a permanent account later, go to the profile section and click "Convert to Registered Account"
+3. For direct registration, use the "Sign Up" option on the landing page or login screen
+
+### Goal Setting (First-time User)
+1. First-time users are automatically guided through the onboarding flow
+2. Enter your goal title (be specific and action-oriented)
+3. Define why this goal matters to you (motivation)
+4. List resources you already have to help you succeed
+5. Define a small daily action (typically requiring <15 minutes)
+6. Set up a reward system for completing daily tasks
+7. Choose a target completion date
+8. Optionally upload a visual representation of your goal
+
+### Dashboard Navigation
+1. **Sidebar**: Browse and select goals, manage priorities, adjust dates
+2. **Goal Details**: View and edit your selected goal's details, track daily progress
+3. **Progress Report**: View AI-generated insights (available on desktop/wider screens)
+
+### Daily Progress Tracking
+1. Select your goal from the sidebar
+2. In the Goal Details panel, click on today's card in the weekly view
+3. Check off your daily task completion
+4. Add notes about your progress, challenges, or insights
+5. Save your progress
+
+### Generating AI Reports
+1. Select your goal
+2. In the Progress Report panel, choose a time range (7 days, 30 days, or custom)
+3. Click "Generate Report"
+4. Review the AI-generated insights and suggestions
+5. Optionally export the report as PDF
+
+### Managing Multiple Goals
+1. Click the "Add Goal" button in the sidebar
+2. Complete the goal setup process
+3. Use the priority indicators (High/Medium/Low) to rank your goals
+4. Archive completed goals by selecting "Archive" from the goal menu
 
 ## Project Structure
 ```
-FocusFinalProject/
-├── client/                   # Frontend application
-│   ├── src/                  # Source code
-│   │   ├── components/       # Reusable UI components
-│   │   ├── pages/            # Route page components
-│   │   ├── services/         # API services
-│   │   ├── store/            # Zustand state management
-│   │   ├── styles/           # Global styles
-│   │   ├── App.jsx           # Main application component
-│   │   └── main.jsx          # Entry file
-│   ├── public/               # Static resources
-│   ├── package.json          # Frontend dependencies
-│   └── vite.config.js        # Vite configuration file
+FocusFinalProjectGitHub/
+├── client/                     # React Frontend (Vite)
+│   ├── public/                 # Static assets
+│   ├── src/                    # Source code
+│   │   ├── components/         # Reusable UI components
+│   │   │   ├── GoalDetails/    # Goal detail components
+│   │   │   │   ├── DailyCard.jsx
+│   │   │   │   ├── GoalDeclaration.jsx
+│   │   │   │   ├── WeeklyDailyCards.jsx
+│   │   │   ├── GoalSettingGuide/ # Onboarding components
+│   │   │   ├── Header/         # App header components
+│   │   │   ├── ProgressReport/ # Progress analysis components
+│   │   │   │   ├── AIFeedback.jsx
+│   │   │   │   ├── ExportButton.jsx
+│   │   │   ├── Sidebar/        # Sidebar components
+│   │   │   │   ├── GoalCard.jsx
+│   │   │   ├── AuthProtected.jsx # Auth wrapper component
+│   │   │   ├── OnboardingModal.jsx # First-time user flow
+│   │   │   ├── ProfileModal.jsx   # User profile management
+│   │   ├── pages/              # Page-level components
+│   │   │   ├── Home.jsx        # Main dashboard
+│   │   │   ├── Login.jsx       # Authentication pages
+│   │   │   ├── Register.jsx
+│   │   │   ├── GuestLogin.jsx  # Temporary user entry
+│   │   │   ├── Profile.jsx     # User profile page
+│   │   ├── services/           # API service layer
+│   │   │   └── api.js          # Axios instance with interceptors
+│   │   ├── store/              # Zustand state stores
+│   │   │   ├── userStore.js    # User authentication state
+│   │   │   ├── reportStore.js  # AI reports cache
+│   │   │   ├── mainTaskStore.js # Goal tasks state
+│   │   ├── styles/             # CSS and styling
+│   │   ├── theme/              # MUI theme customization
+│   │   ├── utils/              # Helper functions
+│   │   ├── App.jsx             # Main component & routing
+│   │   ├── App.css             # Global styles
+│   │   └── main.jsx            # Application entry
+│   ├── .env.production         # Production variables
+│   ├── eslint.config.js        # Linting rules
+│   ├── index.html              # HTML entry
+│   ├── package.json            # Dependencies & scripts
+│   └── vite.config.js          # Build configuration
 │
-├── server/                   # Backend application
-│   ├── config/               # Configuration files
-│   ├── controllers/          # Controllers (handle requests)
-│   ├── middleware/           # Middleware
-│   ├── models/               # Database models
-│   ├── routes/               # API routes
-│   ├── services/             # Business logic services
-│   ├── utils/                # Utility functions
-│   ├── app.js                # Express application configuration
-│   └── server.js             # Server entry file
-│
-├── .env                      # Environment variables (root directory)
-└── package.json              # Project dependencies and scripts
+└── server/                     # Node.js Backend (Express)
+    ├── config/                 # Configuration files
+    │   ├── db.js               # MongoDB connection
+    ├── controllers/            # Request handlers
+    │   ├── authController.js   # Authentication logic
+    │   ├── goalsController.js  # Goal management
+    │   ├── progressController.js # Progress tracking
+    │   ├── reportsController.js  # AI reports
+    ├── middleware/             # Express middleware
+    │   ├── auth.js             # Authentication & authorization
+    │   ├── errorHandler.js     # Global error handling
+    ├── models/                 # Mongoose data models
+    │   ├── User.js             # User account schema
+    │   ├── Goal.js             # Goal definition schema
+    │   ├── Progress.js         # Progress tracking schema
+    │   ├── Report.js           # AI report schema
+    ├── routes/                 # API endpoint definitions
+    │   ├── auth.js             # Auth routes
+    │   ├── goals.js            # Goal management routes
+    │   ├── progress.js         # Progress tracking routes
+    │   ├── reports.js          # AI analysis routes
+    │   ├── tempUserRoutes.js   # Guest access routes
+    │   ├── uploads.js          # File upload routes
+    ├── services/               # Business logic services
+    │   ├── ReportService.js    # AI report generation
+    ├── utils/                  # Helper functions
+    ├── .env                    # Environment variables
+    ├── app.js                  # Express configuration
+    ├── package.json            # Backend dependencies
+    └── server.js               # Server entry point
 ```
-## Database Design
 
-### Model Design (MongoDB Schemas)
+## Testing
+Our project includes a testing framework to ensure reliability and functionality:
 
-#### 1. User Model (User.js)
-```javascript
-const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: function(){ return !this.googleId } },
-  googleId: { type: String, sparse: true },
-  username: { type: String, required: true },
-  tempId: { type: String, sparse: true },
-  avatarUrl: { type: String, default: null },
-  role: { type: String, enum: ['regular', 'premium', 'admin'], default: 'regular' },
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: { type: Date, default: Date.now }
-});
-```
-
-#### 2. Temporary User Model (TempUser.js)
-Provides temporary access for unregistered visitors
-
-#### 3. Goal Model (Goal.js)
-Records goals created by users
-
-#### 4. Progress Model (Progress.js)
-Tracks goal completion progress
-
-#### 5. Report Model (Report.js)
-AI-generated progress reports and analysis results
-
-## Key Features
-
-### 1. User Authentication System
-- Traditional email/password registration and login
-- Temporary user (guest) functionality
-- JWT authentication and authorization
-- User role management (regular user, premium user, administrator)
-
-### 2. Goal Management
-- Create, read, update, and delete goals
-- Set goal deadlines and priorities
-- Goal categorization and tag management
-- Visual goal representation
-
-### 3. Progress Tracking
-- Record goal progress and completion status
-- Progress charts and data visualization
-- Progress history
-- Timeline view
-
-### 4. AI Integration
-- Generate analysis reports based on user progress data
-- AI-assisted goal setting and recommendations
-- Utilizes OpenAI and HuggingFace models
-
-### 5. Image Upload
-- User avatar upload
-- Goal-related image upload
-- Image storage and processing with Cloudinary
-
-### 6. Reporting and Export
-- Generate PDF progress reports
-- Data export functionality
-- Implemented using html2canvas and jspdf
-
-## Installation Guide
-
-### Prerequisites
-- Node.js (v16+)
-- npm or yarn
-- MongoDB database
-- Cloudinary account (for image uploads)
-- OpenAI API key (for AI functionality)
-- HuggingFace API key (for AI functionality)
-
-### Installation Steps
-
-1. Clone the repository:
+### Running Tests
 ```bash
-git clone https://github.com/your-username/focus-app.git
-cd focus-app
+# For backend tests
+cd server
+npm test
+
+# For frontend tests
+cd client
+npm test
 ```
 
-2. Install dependencies:
-```bash
-npm run install-all
-```
-This will install all dependencies for the root directory, frontend, and backend.
+### Test Coverage
+- Unit Tests: Frontend components and utility functions
+- Integration Tests: API endpoint functionality and data flow
+- End-to-End Tests: Key user flows including registration, goal creation, and progress tracking
 
-3. Configure environment variables:
-   
-Create `.env` file in the root directory:
-```c
-NODE_ENV=development
-MONGODB_URI=your_mongodb_connection_string
-```
+## Accessibility
+Focus is designed with accessibility in mind, striving to meet WCAG 2.1 AA standards:
 
-Create `.env` file in the `server` directory:
-```c
-JWT_SECRET=your_jwt_secret_key
-MONGODB_URI=your_mongodb_connection_string
-OPENAI_API_KEY=your_openai_api_key
-HUGGINGFACE_API_KEY=your_huggingface_api_key
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-CLIENT_URL=http://localhost:5173
-```
+### Accessibility Features
+- Semantic HTML structure throughout the application
+- ARIA attributes where necessary for complex interactive elements
+- Keyboard navigation support for all interactive elements
+- Color contrast ratios meeting AA standards
+- Screen reader compatibility with descriptive alt text and labels
+- Responsive design that works across devices and screen sizes
+- Focus indicators for keyboard users
 
-Create `.env` file in the `client` directory (needed for production):
-```c
-VITE_API_URL=http://localhost:5050/api
-```
+## Future Improvements
+We plan to enhance the application with the following features:
 
-4. Start the development server:
-```bash
-npm run dev
-```
-This will start both frontend and backend servers.
+- **Social Accountability**: Optional goal sharing and accountability partner system
+- **Advanced Analytics**: Machine learning-based predictions and deeper behavioral insights
+- **Integration Ecosystem**: Calendar integration (Google, Apple) and task manager connections
+- **Mobile Applications**: Native iOS and Android apps with offline functionality
+- **Enterprise Features**: Team goals, manager dashboards, and organization analytics
+- **Gamification Elements**: Achievement badges, streaks visualization, and milestone celebrations
+- **Extended AI Capabilities**: More personalized feedback and adaptive challenge suggestions
 
-## API Structure
-
-### Authentication APIs
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/guest` - Guest login
-- `GET /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user information
-
-### Goal APIs
-- `GET /api/goals` - Get all user goals
-- `POST /api/goals` - Create new goal
-- `GET /api/goals/:id` - Get single goal details
-- `PUT /api/goals/:id` - Update goal
-- `DELETE /api/goals/:id` - Delete goal
-
-### Progress APIs
-- `GET /api/progress/:goalId` - Get progress for specific goal
-- `POST /api/progress` - Record new progress
-- `GET /api/progress/summary` - Get progress summary
-
-### Report APIs
-- `POST /api/reports/generate` - Generate AI report
-- `GET /api/reports/:id` - Get specific report
-- `GET /api/reports/user/:userId` - Get all user reports
-
-### User APIs
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
-- `DELETE /api/users/profile` - Delete user account
-
-### Upload APIs
-- `POST /api/uploads/avatar` - Upload user avatar
-- `POST /api/uploads/goal-image` - Upload goal-related image
-
-## Frontend Architecture
-
-### State Management (Zustand)
-
-Using Zustand for lightweight state management, more concise and intuitive than Redux:
-
-```javascript
-// User state store example
-const useUserStore = create((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  login: async (credentials) => {
-    set({ isLoading: true });
-    try {
-      const response = await api.login(credentials);
-      set({ user: response.data.user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      set({ isLoading: false });
-      throw error;
-    }
-  },
-  logout: async () => {
-    await api.logout();
-    set({ user: null, isAuthenticated: false });
-  }
-}));
-```
-
-### Component Structure
-
-- **Layout Components**: Page layouts and navigation bars
-- **Form Components**: For data input and user interaction
-- **Display Components**: For displaying data and content
-- **Functional Components**: Components that implement specific functionality
-- **Higher-Order Components**: Components for sharing logic
-
-### Routing Design
-
-Using React Router v7 for frontend routing:
-
-```javascript
-<Router>
-  <Routes>
-    <Route path="/" element={<Dashboard />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/goals" element={<ProtectedRoute><GoalsList /></ProtectedRoute>} />
-    <Route path="/goals/:id" element={<ProtectedRoute><GoalDetail /></ProtectedRoute>} />
-    <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-    <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-  </Routes>
-</Router>
-```
-
-## Backend Architecture
-
-### Middleware
-
-- **Authentication Middleware**: Validates user identity and permissions
-  ```javascript
-  // JWT authentication middleware example
-  export const protect = async (req, res, next) => {
-    let token;
-    
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    } else if (req.cookies.jwt) {
-      token = req.cookies.jwt;
-    }
-    
-    if (!token) {
-      return res.status(401).json({ success: false, error: { message: 'Unauthorized, token missing' } });
-    }
-    
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
-      next();
-    } catch (error) {
-      return res.status(401).json({ success: false, error: { message: 'Token invalid or expired' } });
-    }
-  };
-  ```
-  
-- **Rate Limiting Middleware**: Prevents API abuse
-- **Error Handling Middleware**: Centrally handles errors and returns responses in a unified format
-
-### Controllers
-
-Controllers handle HTTP requests, call service layer methods, and return responses:
-
-```javascript
-// Goal controller example
-export const createGoal = async (req, res) => {
-  try {
-    const { title, description, targetDate, category } = req.body;
-    const userId = req.user._id;
-
-    const goal = await Goal.create({
-      userId,
-      title,
-      description,
-      targetDate,
-      category
-    });
-
-    res.status(201).json({
-      success: true,
-      data: goal
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: { message: error.message }
-    });
-  }
-};
-```
-
-### Service Layer
-
-The service layer encapsulates business logic for controller use:
-
-```javascript
-// Report service example
-export const generateAIReport = async (userId, goalId, timeframe) => {
-  // Get user and goal data
-  const user = await User.findById(userId);
-  const goal = await Goal.findById(goalId);
-  const progress = await Progress.find({ goalId }).sort({ date: 1 });
-  
-  // Prepare data
-  const reportData = {
-    user: { username: user.username },
-    goal: {
-      title: goal.title,
-      description: goal.description,
-      targetDate: goal.targetDate
-    },
-    progress: progress.map(p => ({
-      date: p.date,
-      value: p.value,
-      notes: p.notes
-    }))
-  };
-  
-  // Call AI API to generate report
-  const reportContent = await callAIService(reportData, timeframe);
-  
-  // Save report to database
-  const report = await Report.create({
-    userId,
-    goalId,
-    content: reportContent,
-    type: 'ai-generated',
-    createdAt: new Date()
-  });
-  
-  return report;
-};
-```
-
-## Deployment Guide
-
-### Frontend Deployment (Render.com)
-
-1. Register a Render.com account
-2. Create a new Static Site service
-3. Connect to GitHub repository
-4. Configure build command: `cd client && npm install && npm run build`
-5. Publish directory: `client/dist`
-6. Add environment variables: `VITE_API_URL=https://your-backend-url.onrender.com/api`
-
-### Backend Deployment (Render.com)
-
-1. Create a new Web Service
-2. Connect to GitHub repository
-3. Build command: `npm install`
-4. Start command: `node server/server.js`
-5. Add all necessary environment variables (MongoDB URI, JWT key, various API keys, etc.)
-
-## API Key Configuration
-
-For security reasons, all API keys and sensitive information should be stored in the `.env` file and excluded in `.gitignore`. Users need to obtain their own API keys:
-
-### OpenAI API
-1. Create an OpenAI account: https://platform.openai.com/signup
-2. Generate API key: https://platform.openai.com/api-keys
-3. Add the key to server/.env file: `OPENAI_API_KEY=your_key`
-
-### HuggingFace API
-1. Create a HuggingFace account: https://huggingface.co/join
-2. Generate API token: https://huggingface.co/settings/tokens
-3. Add the token to server/.env file: `HUGGINGFACE_API_KEY=your_key`
-
-### Cloudinary Setup
-1. Create a Cloudinary account: https://cloudinary.com/users/register
-2. Get cloud name, API key, and secret from the dashboard
-3. Add information to server/.env file
-
-### MongoDB Setup
-1. Create a MongoDB Atlas account: https://www.mongodb.com/cloud/atlas/register
-2. Create a new cluster and database
-3. Get the connection string and add to .env file: `MONGODB_URI=your_connection_string`
-
-## Technology Selection Rationale
-
-### Frontend Technology
-
-- **React**: Component-based development, rich ecosystem, Facebook support
-- **Material UI**: Provides high-quality pre-designed components following Material Design guidelines
-- **Emotion**: Powerful CSS-in-JS solution supporting dynamic styles and theming
-- **Zustand**: Simpler state management than Redux, reduces boilerplate code
-- **Vite**: Faster development build tool than webpack, supports hot module replacement
-
-### Backend Technology
-
-- **Express**: Flexible Node.js web framework, easy to extend
-- **MongoDB**: Flexible NoSQL database, suitable for storing variably structured data
-- **Mongoose**: Powerful object data modeling tool providing data validation and middleware functionality
-- **JWT**: Secure user authentication and session management
-
-### Cloud Services
-
-- **Cloudinary**: Specialized service for image management, provides optimization and transformation capabilities
-- **OpenAI API**: Provides advanced language models for generating insightful reports
-- **HuggingFace**: Platform for open-source AI models, provides diverse AI functionality
-
-## Project Summary
-
-Focus App is a comprehensive goal tracking application built using modern frontend and backend technologies. It not only provides basic goal management functionality but also integrates AI-driven report generation and data analysis to help users achieve their goals more effectively. The project uses a layered architecture design to ensure code maintainability and extensibility.
-
-## Contribution Guidelines
-
-Contributions to this project are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Contributors
+- Ryan Tian
+- Yanbo Chen
+- Neda Changizi - Instructor 
 
 ## License
-
-This project is open-source under the ISC license.
+This project is licensed under the MIT License - see the LICENSE file for details. 

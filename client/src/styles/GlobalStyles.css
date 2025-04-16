@@ -1,4 +1,4 @@
-/* 全局布局 */
+/* Global Layout */
 body {
   margin: 0;
   padding: 0;
@@ -6,7 +6,7 @@ body {
   background-color: #f9fafa;
 }
 
-/* 页面布局 */
+/* Page Layout */
 .home-container {
   display: flex;
   flex-direction: column;
@@ -22,7 +22,7 @@ body {
   min-height: calc(100vh - 100px);
 }
 
-/* Sidebar, GoalDetails, ProgressReport 布局基础样式 */
+/* Sidebar, GoalDetails, ProgressReport Base Layout Styles */
 .sidebar,
 .goal-details,
 .progress-report {
@@ -49,7 +49,7 @@ body {
   flex: 1;
 }
 
-/* Header布局 */
+/* Header Layout */
 .header {
   display: flex;
   justify-content: space-between;
@@ -73,7 +73,7 @@ body {
   cursor: pointer;
 }
 
-/* ProfileInfo和ChangePassword样式 */
+/* ProfileInfo and ChangePassword Styles */
 .profile-container {
   padding: 20px;
   display: flex;
@@ -115,14 +115,14 @@ body {
   font-size: 14px;
 }
 
-/* Sidebar组件样式 */
+/* Sidebar Component Styles */
 .sidebar {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* GoalDetails组件样式 */
+/* GoalDetails Component Styles */
 .goal-details {
   display: flex;
   flex-direction: column;
@@ -141,14 +141,14 @@ body {
   margin-bottom: 15px;
 }
 
-/* ProgressReport组件样式 */
+/* ProgressReport Component Styles */
 .progress-report {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* DailyTasks组件样式 */
+/* DailyTasks Component Styles */
 .daily-tasks {
   display: flex;
   flex-direction: column;
@@ -186,7 +186,7 @@ body {
   color: #999;
 }
 
-/* ProgressTimeline组件样式 */
+/* ProgressTimeline Component Styles */
 .progress-timeline {
   display: flex;
   flex-direction: column;
@@ -219,7 +219,7 @@ body {
   background-color: #444;
 }
 
-/* KeyAchievements组件样式 */
+/* KeyAchievements Component Styles */
 .key-achievements {
   margin-top: 15px;
 }
@@ -240,7 +240,7 @@ body {
   color: #555;
 }
 
-/* AIFeedback组件样式 */
+/* AIFeedback Component Styles */
 .ai-feedback {
   padding: 15px;
   background-color: #f8f9ff;
@@ -249,7 +249,7 @@ body {
   border-left: 3px solid #4a6fa5;
 }
 
-/* ExportButton组件样式 */
+/* ExportButton Component Styles */
 .export-btn {
   padding: 10px 14px;
   background-color: #4caf50;
@@ -265,7 +265,7 @@ body {
   background-color: #3d9140;
 }
 
-/* AddGoalButton组件样式 */
+/* AddGoalButton Component Styles */
 .add-goal-btn {
   padding: 10px 14px;
   background-color: #007bff;
@@ -291,7 +291,7 @@ body {
   background-color: #cccccc;
 }
 
-/* GoalCard组件样式 */
+/* GoalCard Component Styles */
 .goal-card {
   padding: 12px;
   border-radius: 8px;
@@ -353,7 +353,7 @@ body {
   opacity: 1;
 }
 
-/* 响应式调整 */
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;

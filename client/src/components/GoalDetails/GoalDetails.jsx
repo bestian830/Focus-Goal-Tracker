@@ -350,14 +350,14 @@ Because the path is already beneath my feet—it's really not that complicated. 
       const updatedGoal = { ...selectedGoal, declaration: declarationData };
       apiService.goals.update(updatedGoal._id, { declaration: declarationData })
         .then(() => {
-          console.log("宣言已成功保存到数据库");
+          console.log("Declaration successfully saved to database");
           // update local state
           setSelectedGoal(updatedGoal);
           // open declaration dialog
           setDeclarationOpen(true);
         })
         .catch(error => {
-          console.error("保存宣言时出错:", error);
+          console.error("Error saving declaration:", error);
           // even if saving fails, still show declaration dialog, but use the temporarily generated content
           setDeclarationOpen(true);
         });
@@ -573,7 +573,7 @@ Because the path is already beneath my feet—it's really not that complicated. 
     }
   };
 
-  // 添加处理查看今日卡片的函数
+  // Add function to handle viewing today's card
   const handleViewTodayCard = (goal) => {
     if (!goal) return;
     
@@ -607,13 +607,6 @@ Because the path is already beneath my feet—it's really not that complicated. 
     } catch (error) {
       console.error('Error navigating to today\'s card:', error);
       toast.error('Failed to open today\'s card');
-    }
-  };
-
-  // 修改openDeclaration函数，传入onViewTodayCard回调
-  const openDeclaration = () => {
-    if (selectedGoal) {
-      setDeclarationOpen(true);
     }
   };
 

@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import axios from "axios";
 import App from "./App.jsx";
 
-// 檢查環境變量
+// Check environment variables
 console.log("=== Main entry environment check ===");
 console.log("MODE:", import.meta.env.MODE);
 console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
