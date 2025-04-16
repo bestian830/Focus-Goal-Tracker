@@ -52,7 +52,7 @@ function Profile() {
         const isHealthy = await apiService.healthCheck();
         setApiConnected(isHealthy);
       } catch (error) {
-        console.error("API健康檢查失敗:", error);
+        console.error("API health check failed:", error);
         setApiConnected(false);
       }
     };
@@ -263,7 +263,7 @@ function Profile() {
     }
   };
   
-  // 重試連接
+  // Retry connection
   const handleRetry = () => {
     window.location.reload();
   };
@@ -319,7 +319,7 @@ function Profile() {
               </div>
               <div className="info-row">
                 <span className="info-label">Last Login：</span>
-                <span className="info-value">{profile.lastLogin ? new Date(profile.lastLogin).toLocaleDateString() : '無記錄'}</span>
+                <span className="info-value">{profile.lastLogin ? new Date(profile.lastLogin).toLocaleDateString() : 'No record'}</span>
               </div>
               
               <div className="profile-actions">

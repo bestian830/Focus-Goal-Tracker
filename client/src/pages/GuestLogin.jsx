@@ -70,7 +70,7 @@ function GuestLogin() {
     try {
       // check if tempId exists in localStorage
       const existingTempId = localStorage.getItem('tempId');
-      console.log('check localStorage中的tempId:', existingTempId);
+      console.log('Checking tempId in localStorage:', existingTempId);
       
       // whether there is an existing tempId, send a request to the backend
       // if there is an existing tempId, pass it to the backend for verification

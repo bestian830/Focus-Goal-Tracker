@@ -2,21 +2,21 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 /**
- * MainTask Store - 管理主任务的全局状态
- * 确保在 GoalDeclaration 更新时，主任务状态能够同步到其他组件
+ * MainTask Store - Global state management for main tasks
+ * Ensures that when GoalDeclaration is updated, the main task state is synchronized to other components
  */
 const useMainTaskStore = create(
   devtools(
     persist(
       (set, get) => ({
-        // 存储每个目标的主任务
+        // Store main tasks for each goal
         mainTasks: {}, // goalId -> mainTask
         
-        // 添加或更新主任务
+        // Add or update main task
         setMainTask: (goalId, taskText) => {
           if (!goalId) return;
           
-          console.log('设置主任务 in MainTaskStore:', { goalId, taskText });
+          console.log('Setting main task in MainTaskStore:', { goalId, taskText });
           set((state) => ({
             mainTasks: {
               ...state.mainTasks,
@@ -25,14 +25,14 @@ const useMainTaskStore = create(
           }));
         },
         
-        // 获取目标的主任务
+        // Get main task for a goal
         getMainTask: (goalId) => {
           if (!goalId) return null;
           const state = get();
           return state.mainTasks[goalId] || null;
         },
         
-        // 移除目标的主任务
+        // Remove main task for a goal
         removeMainTask: (goalId) => {
           if (!goalId) return;
           
@@ -43,7 +43,7 @@ const useMainTaskStore = create(
           });
         },
         
-        // 清除所有主任务
+        // Clear all main tasks
         clearAllMainTasks: () => set({ mainTasks: {} })
       }),
       {
