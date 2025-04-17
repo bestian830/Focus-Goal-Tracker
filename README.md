@@ -56,8 +56,6 @@ https://focusfinalproject-main-frontend.onrender.com/guest-login
 
 [![Project Demo]](https://www.youtube.com/watch?v=RjQjvKvJodc)
 
-[Please replace VIDEO_ID with your actual YouTube video ID]
-
 ## Technology Stack
 
 ### Frontend
