@@ -13,6 +13,7 @@ import { useUserStore } from "../../store/userStore";
  * 2. User information display (user avatar, welcome message)
  * 3. Login/logout functionality
  * 4. Guest login option
+ * 5. Link to profile page (full page, not modal)
  */
 export default function Header({
   user,
@@ -32,6 +33,11 @@ export default function Header({
   
   // Check if the user is a temporary user
   const isTempUser = displayUser?.isGuest || localStorage.getItem("tempId");
+  
+  // Navigate to profile page when avatar is clicked
+  const handleAvatarClick = () => {
+    navigate("/profile");
+  };
 
   return (
     <header className="app-header" style={{ backgroundColor: '#0D5E6D', color: 'white', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', maxWidth: '1200px' }}>
@@ -44,7 +50,7 @@ export default function Header({
             <span style={{ color: "white" }}>Welcome, {displayUser.username}</span>
             <div 
               className="avatar-container" 
-              onClick={toggleProfileModal}
+              onClick={handleAvatarClick}
               style={{ 
                 backgroundColor: "rgba(255, 255, 255, 0.2)",
                 border: "1px solid rgba(255, 255, 255, 0.3)"

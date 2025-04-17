@@ -13,6 +13,7 @@ import "../styles/ProfileModal.css";
  * 3. Allow user to change password
  * 4. Allow user to delete account
  * 5. Show registration option for guest users
+ * 6. Provide link to full profile page
  */
 function ProfileModal({ isOpen, onClose, user }) {
   const navigate = useNavigate();
@@ -200,6 +201,12 @@ function ProfileModal({ isOpen, onClose, user }) {
     onClose();
     navigate("/register");
   };
+  
+  // navigate to full profile page
+  const navigateToProfilePage = () => {
+    onClose();
+    navigate("/profile");
+  };
 
   // handle account delete
   const handleDeleteAccount = async () => {
@@ -322,6 +329,13 @@ function ProfileModal({ isOpen, onClose, user }) {
                         >
                           Change Password
                         </button>
+                        <button
+                          onClick={navigateToProfilePage}
+                          className="btn view-profile-btn"
+                          style={{ backgroundColor: '#2A9D8F' }}
+                        >
+                          View Full Profile
+                        </button>
                       </>
                     )}
                     <button
@@ -375,6 +389,16 @@ function ProfileModal({ isOpen, onClose, user }) {
                       className="btn cancel-btn"
                     >
                       Cancel
+                    </button>
+                  </div>
+                  <div className="form-footer">
+                    <p>Need to manage more profile information?</p>
+                    <button 
+                      type="button" 
+                      onClick={navigateToProfilePage} 
+                      className="link-btn"
+                    >
+                      Go to full profile page
                     </button>
                   </div>
                 </form>
