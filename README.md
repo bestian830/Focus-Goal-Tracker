@@ -54,7 +54,7 @@ Website Application:
 Check out our project demo video:
 https://focusfinalproject-main-frontend.onrender.com/guest-login
 
-[![Project Demo]](https://www.youtube.com/watch?v=RjQjvKvJodc)
+[![Project Demo Video]](https://www.youtube.com/watch?v=RjQjvKvJodc)
 
 ## Technology Stack
 
