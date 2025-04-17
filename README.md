@@ -1,6 +1,7 @@
 # Focus - Minimalist Goal Tracker
 
 ## Table of Contents
+
 - [Project Overview](#project-overview)
 - [Features](#features)
 - [Demo](#demo)
@@ -17,9 +18,11 @@
 - [License](#license)
 
 ## Project Overview
+
 Focus is a comprehensive yet minimalist goal tracking application designed to help users set, track, and achieve their personal goals with clarity and consistency. The system addresses the common challenge of goal abandonment by providing users with a structured approach based on behavioral psychology principles.
 
 Our application is built upon three core principles:
+
 - **Simplicity First**: Minimalist interface removes distractions and cognitive load
 - **Atomic Progress**: Break large goals into manageable daily actions
 - **Positive Reinforcement**: Reward-based system to develop sustainable habits
@@ -27,10 +30,12 @@ Our application is built upon three core principles:
 Inspired by research in behavioral psychology and habit formation (particularly James Clear's "Atomic Habits" and B.J. Fogg's "Tiny Habits"), Focus encourages users to break down large ambitions into manageable daily actions and rewards, fostering a sustainable path towards success.
 
 The core philosophy is **"Stay focused. Start small. Make it happen."** The application is designed to reduce friction in two key ways:
+
 1. **Zero-barrier entry**: Users can begin tracking a goal without registration
 2. **Progressive engagement**: Advanced features become available as users develop commitment
 
 ## Features
+
 - **Guest Access**: Instant access without registration via a temporary user ID system, allowing immediate goal tracking with data persistence
 - **Goal Setting Guide**: Intuitive step-by-step onboarding process that guides users through effective goal definition
 - **Daily Progress Tracking**: Simple daily check-in system with journal functionality to record thoughts and obstacles
@@ -43,14 +48,20 @@ The core philosophy is **"Stay focused. Start small. Make it happen."** The appl
 - **Responsive Design**: Fully responsive interface that adapts to desktop, tablet, and mobile devices
 
 ## Demo
-Check out our project demo video:
 
-[![Project Demo](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+Website Application:
+
+Check out our project demo video:
+https://focusfinalproject-main-frontend.onrender.com/guest-login
+
+[![Project Demo]](https://www.youtube.com/watch?v=RjQjvKvJodc)
 
 [Please replace VIDEO_ID with your actual YouTube video ID]
 
 ## Technology Stack
+
 ### Frontend
+
 - **Core**: React.js (built with Vite)
 - **State Management**: Zustand (with devtools and persist middleware)
 - **UI Framework**: Material UI (MUI Components, Icons, Date Pickers)
@@ -62,6 +73,7 @@ Check out our project demo video:
 - **Linting**: ESLint
 
 ### Backend
+
 - **Server**: Node.js with Express.js
 - **Database**: MongoDB with Mongoose ODM
 - **Authentication**: JWT (jsonwebtoken), bcrypt, cookie-parser
@@ -71,28 +83,35 @@ Check out our project demo video:
 - **Security**: CORS middleware, HTTP-only cookies
 
 ### Development & Deployment
+
 - **Build Tool**: Vite
 - **Version Control**: Git
 - **Recommended Deployment**: Render (backend), Netlify/Vercel (frontend)
 
 ## API Documentation
+
 Our application provides the following API endpoints:
 
 ### Authentication Endpoints
+
 - `POST /api/auth/register` - Register a new user
+
   - Request: `{ username, email, password }`
   - Response: `{ success, data: { user object minus password } }`
 
 - `POST /api/auth/login` - User login
+
   - Request: `{ email, password }`
   - Response: `{ success, data: { user object minus password } }`
   - Sets HTTP-only JWT cookie
 
 - `POST /api/auth/logout` - User logout
+
   - Response: `{ success, message }`
   - Clears JWT cookie
 
 - `GET /api/auth/me/:userId` - Get current user data
+
   - Response: `{ success, data: { user object minus password } }`
 
 - `POST /api/temp-users` - Create temporary guest user
@@ -100,28 +119,36 @@ Our application provides the following API endpoints:
   - Response: `{ success, data: { tempId, etc. } }`
 
 ### Goal Management Endpoints
+
 - `GET /api/goals/user/:userId` - Get all goals for a user
+
   - Response: `{ success, data: [goals] }`
 
 - `POST /api/goals` - Create a new goal
+
   - Request: `{ userId, title, motivation, targetDate, ... }`
   - Response: `{ success, data: { created goal object } }`
 
 - `GET /api/goals/:id` - Get specific goal details
+
   - Response: `{ success, data: { goal object } }`
 
 - `PUT /api/goals/:id` - Update goal details
+
   - Request: `{ updated fields }`
   - Response: `{ success, data: { updated goal object } }`
 
 - `DELETE /api/goals/:id` - Delete a goal
+
   - Response: `{ success, message }`
 
 - `PUT /api/goals/:id/status` - Update goal status
+
   - Request: `{ status }`
   - Response: `{ success, data: { updated goal } }`
 
 - `POST /api/goals/:id/checkpoints` - Add checkpoint to goal
+
   - Request: `{ title, isDaily }`
   - Response: `{ success, data: { updated goal with new checkpoint } }`
 
@@ -130,18 +157,23 @@ Our application provides the following API endpoints:
   - Response: `{ success, data: { updated goal with daily card } }`
 
 ### Progress Tracking Endpoints
+
 - `GET /api/progress?goalId=:goalId` - Get progress records for a goal
+
   - Response: `{ success, data: [progress records] }`
 
 - `POST /api/progress` - Create progress record
+
   - Request: `{ goalId, completionRate, etc. }`
   - Response: `{ success, data: { created progress record } }`
 
 - `POST /api/progress/:id/records` - Add daily record
+
   - Request: `{ date, completed, notes, mood }`
   - Response: `{ success, data: { updated progress } }`
 
 - `PUT /api/progress/:id/checkpoints/:checkpointId` - Update checkpoint status
+
   - Request: `{ status }`
   - Response: `{ success, data: { updated progress } }`
 
@@ -149,11 +181,14 @@ Our application provides the following API endpoints:
   - Response: `{ success, data: { summary statistics } }`
 
 ### AI Reports Endpoints
+
 - `POST /api/reports/:goalId` - Generate AI progress report
+
   - Request: `{ timeRange: { startDate, endDate } }`
   - Response: `{ success, data: { generated report } }`
 
 - `GET /api/reports/:goalId/latest` - Get latest report
+
   - Response: `{ success, data: { most recent report } }`
 
 - `POST /api/reports/:reportId/rate` - Rate report quality
@@ -161,7 +196,9 @@ Our application provides the following API endpoints:
   - Response: `{ success, data: { updated report } }`
 
 ### File Upload Endpoints
+
 - `POST /api/uploads/image` - Upload goal vision image
+
   - Request: multipart/form-data with image
   - Response: `{ success, data: { imageUrl } }`
 
@@ -170,9 +207,11 @@ Our application provides the following API endpoints:
   - Response: `{ success, data: { imageUrl } }`
 
 ## Data Model
+
 Our application uses MongoDB as the database with the following collections:
 
 ### User Schema
+
 ```javascript
 {
   _id: ObjectId,                // MongoDB document ID
@@ -218,6 +257,7 @@ Our application uses MongoDB as the database with the following collections:
 ```
 
 ### Goal Schema
+
 ```javascript
 {
   _id: ObjectId,                // MongoDB document ID
@@ -288,6 +328,7 @@ Our application uses MongoDB as the database with the following collections:
 ```
 
 ### Progress Schema
+
 ```javascript
 {
   _id: ObjectId,
@@ -326,6 +367,7 @@ Our application uses MongoDB as the database with the following collections:
 ```
 
 ### Report Schema
+
 ```javascript
 {
   _id: ObjectId,
@@ -367,6 +409,7 @@ Our application uses MongoDB as the database with the following collections:
 ```
 
 ### Relationships Between Collections
+
 - Users to Goals: One-to-Many relationship (one user can have multiple goals)
 - Goals to Progress: One-to-Many relationship (one goal can have multiple progress records)
 - Goals to Reports: One-to-Many relationship (one goal can have multiple AI analysis reports)
@@ -374,6 +417,7 @@ Our application uses MongoDB as the database with the following collections:
 ## Installation
 
 ### Prerequisites
+
 - Node.js (v16.x or higher)
 - npm (v8.x or higher)
 - MongoDB (local instance or MongoDB Atlas account)
@@ -381,19 +425,23 @@ Our application uses MongoDB as the database with the following collections:
 - Cloudinary account (for image uploads)
 
 ### Steps
+
 1. Clone the repository
+
    ```bash
    git clone <your-repository-url>
    cd FocusFinalProjectGitHub
    ```
 
 2. Install backend dependencies
+
    ```bash
    cd server
    npm install
    ```
 
 3. Set up backend environment variables
+
    - Create a `.env` file in the server directory with the following variables:
      ```
      MONGODB_URI=your_mongodb_connection_string
@@ -409,22 +457,25 @@ Our application uses MongoDB as the database with the following collections:
      ```
 
 4. Install frontend dependencies
+
    ```bash
    cd ../client
    npm install
    ```
 
 5. Set up frontend environment variables
+
    - Create a `.env.development` file in the client directory:
      ```
      VITE_API_URL=http://localhost:5050
      ```
 
 6. Start the development servers
+
    ```bash
    # In the server directory
    npm run dev
-   
+
    # In the client directory (in a new terminal)
    npm run dev
    ```
@@ -434,14 +485,17 @@ Our application uses MongoDB as the database with the following collections:
    - Backend API: http://localhost:5050
 
 ## Usage
+
 Focus offers an intuitive user experience designed to minimize friction and maximize engagement. Here's how to use the key features:
 
 ### Guest Access & User Registration
+
 1. On the landing page, click "Try it instantly" to create a temporary account without registration
 2. To create a permanent account later, go to the profile section and click "Convert to Registered Account"
 3. For direct registration, use the "Sign Up" option on the landing page or login screen
 
 ### Goal Setting (First-time User)
+
 1. First-time users are automatically guided through the onboarding flow
 2. Enter your goal title (be specific and action-oriented)
 3. Define why this goal matters to you (motivation)
@@ -452,11 +506,13 @@ Focus offers an intuitive user experience designed to minimize friction and maxi
 8. Optionally upload a visual representation of your goal
 
 ### Dashboard Navigation
+
 1. **Sidebar**: Browse and select goals, manage priorities, adjust dates
 2. **Goal Details**: View and edit your selected goal's details, track daily progress
 3. **Progress Report**: View AI-generated insights (available on desktop/wider screens)
 
 ### Daily Progress Tracking
+
 1. Select your goal from the sidebar
 2. In the Goal Details panel, click on today's card in the weekly view
 3. Check off your daily task completion
@@ -464,6 +520,7 @@ Focus offers an intuitive user experience designed to minimize friction and maxi
 5. Save your progress
 
 ### Generating AI Reports
+
 1. Select your goal
 2. In the Progress Report panel, choose a time range (7 days, 30 days, or custom)
 3. Click "Generate Report"
@@ -471,12 +528,14 @@ Focus offers an intuitive user experience designed to minimize friction and maxi
 5. Optionally export the report as PDF
 
 ### Managing Multiple Goals
+
 1. Click the "Add Goal" button in the sidebar
 2. Complete the goal setup process
 3. Use the priority indicators (High/Medium/Low) to rank your goals
 4. Archive completed goals by selecting "Archive" from the goal menu
 
 ## Project Structure
+
 ```
 FocusFinalProjectGitHub/
 ├── client/                     # React Frontend (Vite)
@@ -554,9 +613,11 @@ FocusFinalProjectGitHub/
 ```
 
 ## Testing
+
 Our project includes a testing framework to ensure reliability and functionality:
 
 ### Running Tests
+
 ```bash
 # For backend tests
 cd server
@@ -568,14 +629,17 @@ npm test
 ```
 
 ### Test Coverage
+
 - Unit Tests: Frontend components and utility functions
 - Integration Tests: API endpoint functionality and data flow
 - End-to-End Tests: Key user flows including registration, goal creation, and progress tracking
 
 ## Accessibility
+
 Focus is designed with accessibility in mind, striving to meet WCAG 2.1 AA standards:
 
 ### Accessibility Features
+
 - Semantic HTML structure throughout the application
 - ARIA attributes where necessary for complex interactive elements
 - Keyboard navigation support for all interactive elements
@@ -585,6 +649,7 @@ Focus is designed with accessibility in mind, striving to meet WCAG 2.1 AA stand
 - Focus indicators for keyboard users
 
 ## Future Improvements
+
 We plan to enhance the application with the following features:
 
 - **Social Accountability**: Optional goal sharing and accountability partner system
@@ -596,9 +661,11 @@ We plan to enhance the application with the following features:
 - **Extended AI Capabilities**: More personalized feedback and adaptive challenge suggestions
 
 ## Contributors
+
 - Ryan Tian
 - Yanbo Chen
-- Neda Changizi - Instructor 
+- Neda Changizi - Instructor
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details. 
+
+This project is licensed under the MIT License - see the LICENSE file for details.
