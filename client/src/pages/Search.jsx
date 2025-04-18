@@ -65,6 +65,10 @@ function Search() {
         
         // Wait until we have the goals before searching
         setTimeout(() => handleSearch(criteria, start, end), 100);
+      } else {
+        // Ensure we don't show all goals when no search criteria exist
+        setSearchResults([]);
+        setSearched(false);
       }
     });
   }, []);
@@ -139,12 +143,27 @@ function Search() {
       }
       
       // Return true if EITHER title matches OR date is in range
-      return titleMatch || dateMatch;
+      // If we have a query, title must match; if we have dates, dates must match
+      // This ensures we don't return ALL goals when criteria are specified
+      if (query && (startDateStr || endDateStr)) {
+        return titleMatch || dateMatch;
+      } else if (query) {
+        return titleMatch;
+      } else if (startDateStr || endDateStr) {
+        return dateMatch;
+      }
+      return false; // Should never reach here due to initial check
     });
   };
   
   const handleSearch = async (query = searchQuery, start = startDate, end = endDate) => {
-    if (!query && !start && !end) return;
+    // Don't perform search if all criteria are empty
+    if (!query && !start && !end) {
+      setSearchResults([]);
+      setSearched(false);
+      setSearchParams({});
+      return;
+    }
     
     // Update URL with search parameters
     const params = {};
