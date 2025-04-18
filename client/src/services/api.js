@@ -300,7 +300,7 @@ const apiService = {
   // goal related
   goals: {
     getAll: () => api.get("/api/goals"),
-    getById: (id) => api.get(`/api/goals/${id}`),
+    getById: (id) => api.get(`/api/goals/detail/${id}`),
     getUserGoals: (userId) => {
       console.log(`API call getUserGoals, user ID: ${userId}`, { isTemporary: userId && userId.toString().startsWith('temp_') });
       return api.get(`/api/goals/${userId}`)

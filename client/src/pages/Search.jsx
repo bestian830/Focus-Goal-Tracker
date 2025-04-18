@@ -186,7 +186,9 @@ function Search() {
   };
   
   const viewGoalDetails = (goalId) => {
-    navigate(`/goals/${goalId}`);
+    navigate(`/goals/${goalId}?fromSearch=true`, { 
+      state: { fromSearch: true } 
+    });
   };
   
   const formatDate = (date) => {

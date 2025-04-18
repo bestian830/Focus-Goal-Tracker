@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -16,22 +16,57 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import HomeIcon from '@mui/icons-material/Home';
+import GoalDetailsComponent from '../components/GoalDetails/GoalDetails';
 import apiService from '../services/api';
+import styles from '../components/GoalDetails/GoalDetails.module.css';
 
 function GoalDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  const [goal, setGoal] = useState(null);
+  const [goalData, setGoalData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [goals, setGoals] = useState([]);
   
+  // Get current user ID from localStorage
+  const getUserId = () => {
+    return localStorage.getItem("userId") || localStorage.getItem("tempId");
+  };
+  
+  // Check if we came from search page
+  const isFromSearch = location.state?.fromSearch || location.search.includes('fromSearch=true');
+  
+  // Fetch goal details and prepare data for GoalDetails component
   useEffect(() => {
     const fetchGoalDetails = async () => {
       try {
         setLoading(true);
+        // Fetch the specific goal by ID
         const response = await apiService.goals.getById(id);
-        setGoal(response.data);
+        const goalData = response.data.data || response.data;
+        
+        if (!goalData) {
+          throw new Error('Goal data not found');
+        }
+        
+        setGoalData(goalData);
+        
+        // We also need to fetch all goals to pass to the component
+        try {
+          const userId = getUserId();
+          if (userId) {
+            const allGoalsResponse = await apiService.goals.getUserGoals(userId);
+            const allGoals = allGoalsResponse.data.data || allGoalsResponse.data || [];
+            setGoals([...allGoals]);
+          }
+        } catch (goalsErr) {
+          console.error('Error fetching all goals:', goalsErr);
+          // Even if we can't get all goals, we can still show the single goal
+          setGoals([goalData]);
+        }
       } catch (err) {
         console.error('Error fetching goal details:', err);
         setError('Failed to load goal details. Please try again later.');
@@ -67,8 +102,33 @@ function GoalDetails() {
     }
   };
   
+  // Handle going back to previous page
   const handleGoBack = () => {
-    navigate(-1);
+    if (isFromSearch) {
+      navigate('/search');
+    } else {
+      navigate('/');
+    }
+  };
+  
+  // Handle goal deletion (required by GoalDetails component)
+  const handleGoalDeleted = (deletedGoalId) => {
+    console.log(`Goal deleted: ${deletedGoalId}`);
+    // Navigate back after goal is deleted
+    handleGoBack();
+  };
+  
+  // Refresh goal data (required by GoalDetails component)
+  const refreshGoalData = async (goalId) => {
+    try {
+      const response = await apiService.goals.getById(goalId);
+      const refreshedGoal = response.data.data || response.data;
+      setGoalData(refreshedGoal);
+      return refreshedGoal;
+    } catch (error) {
+      console.error('Error refreshing goal data:', error);
+      return null;
+    }
   };
   
   if (loading) {
@@ -94,7 +154,7 @@ function GoalDetails() {
     );
   }
   
-  if (!goal) {
+  if (!goalData) {
     return (
       <Container>
         <Box sx={{ mt: 4, textAlign: 'center' }}>
@@ -110,110 +170,34 @@ function GoalDetails() {
   return (
     <Container>
       <Box pt={4} pb={2}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <IconButton onClick={handleGoBack} sx={{ mr: 1 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h4" component="h1">
-            Goal Details
-          </Typography>
-        </Box>
-        
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              {goal.title}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton onClick={handleGoBack} sx={{ mr: 1 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h4" component="h1">
+              Goal Details
             </Typography>
-            <Chip 
-              label={goal.status || 'pending'} 
-              color={getStatusColor(goal.status)}
-              sx={{ textTransform: 'capitalize' }}
-            />
           </Box>
           
-          <Divider sx={{ mb: 2 }} />
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="body1" paragraph>
-                {goal.description || 'No description provided.'}
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <CalendarTodayIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                <Typography variant="body2">
-                  <strong>Created:</strong> {formatDate(goal.createdAt)}
-                </Typography>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <CalendarTodayIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                <Typography variant="body2">
-                  <strong>Target Date:</strong> {formatDate(goal.targetDate)}
-                </Typography>
-              </Box>
-            </Grid>
-            
-            {goal.checkpoints && goal.checkpoints.length > 0 && (
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Checkpoints
-                </Typography>
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  {goal.checkpoints.map((checkpoint, index) => (
-                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: index < goal.checkpoints.length - 1 ? 1.5 : 0 }}>
-                      {checkpoint.completed ? (
-                        <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-                      ) : (
-                        <RadioButtonUncheckedIcon color="disabled" sx={{ mr: 1 }} />
-                      )}
-                      <Typography variant="body2">
-                        {checkpoint.description || `Checkpoint ${index + 1}`}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Paper>
-              </Grid>
-            )}
-            
-            {goal.rewards && goal.rewards.length > 0 && (
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Rewards
-                </Typography>
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                    {goal.rewards.map((reward, index) => (
-                      <li key={index}>
-                        <Typography variant="body2">{reward}</Typography>
-                      </li>
-                    ))}
-                  </ul>
-                </Paper>
-              </Grid>
-            )}
-            
-            {goal.resources && goal.resources.length > 0 && (
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Resources
-                </Typography>
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                    {goal.resources.map((resource, index) => (
-                      <li key={index}>
-                        <Typography variant="body2">{resource}</Typography>
-                      </li>
-                    ))}
-                  </ul>
-                </Paper>
-              </Grid>
-            )}
-          </Grid>
+          <Button
+            variant="outlined"
+            startIcon={<HomeIcon />}
+            onClick={() => navigate('/')}
+          >
+            Back to Home
+          </Button>
+        </Box>
+        
+        <Paper elevation={3} sx={{ p: 2, mb: 4 }}>
+          {/* Use the GoalDetails component with needed props */}
+          <GoalDetailsComponent
+            goals={goals}
+            goalId={id}
+            onGoalDeleted={handleGoalDeleted}
+            refreshGoalData={refreshGoalData}
+            sx={{ width: '100%' }}
+          />
         </Paper>
       </Box>
     </Container>
