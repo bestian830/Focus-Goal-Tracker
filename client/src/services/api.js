@@ -375,6 +375,9 @@ const apiService = {
       if (dateRange && dateRange.startDate) params.createdStartDate = dateRange.startDate;
       if (dateRange && dateRange.endDate) params.createdEndDate = dateRange.endDate;
       
+      // Add searchType parameter to explicitly request OR logic
+      params.searchType = 'or';
+      
       const queryString = new URLSearchParams(params).toString();
       console.log(`Executing search with query: ${queryString}`);
       console.log(`Full URL: ${detectedApiUrl}/api/goals/search?${queryString}`);

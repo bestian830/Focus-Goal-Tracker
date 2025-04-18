@@ -15,7 +15,8 @@ import {
   Paper,
   CircularProgress,
   Alert,
-  Snackbar
+  Snackbar,
+  Chip
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -24,6 +25,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HomeIcon from '@mui/icons-material/Home';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import apiService from '../services/api';
 
 function Search() {
@@ -52,61 +55,92 @@ function Search() {
     const start = searchParams.get('createdStartDate');
     const end = searchParams.get('createdEndDate');
     
-    if (criteria || start || end) {
-      if (criteria) setSearchQuery(criteria);
-      if (start) setStartDate(new Date(start));
-      if (end) setEndDate(new Date(end));
-      
-      // Perform search with URL parameters
-      handleSearch(criteria, start, end);
-    }
-    
-    // Fetch all goals as fallback
-    fetchAllGoals();
+    // Always fetch all goals first
+    fetchAllGoals().then(() => {
+      // Then perform search if there are criteria
+      if (criteria || start || end) {
+        if (criteria) setSearchQuery(criteria);
+        if (start) setStartDate(new Date(start));
+        if (end) setEndDate(new Date(end));
+        
+        // Wait until we have the goals before searching
+        setTimeout(() => handleSearch(criteria, start, end), 100);
+      }
+    });
   }, []);
   
   const fetchAllGoals = async () => {
     try {
+      // First try to get user goals API which has complete data
+      try {
+        const userId = localStorage.getItem("userId") || localStorage.getItem("tempId");
+        if (userId) {
+          const response = await apiService.goals.getUserGoals(userId);
+          if (response.data && response.data.data) {
+            const goals = response.data.data || [];
+            setAllGoals(goals);
+            return;
+          }
+        }
+      } catch (userGoalsError) {
+        console.error('Failed to fetch user goals, trying general getAll:', userGoalsError);
+      }
+      
+      // Fallback to getAll method
       const response = await apiService.goals.getAll();
       if (response.data) {
-        setAllGoals(Array.isArray(response.data) ? response.data : (response.data.data || []));
+        const goals = Array.isArray(response.data) ? response.data : (response.data.data || []);
+        setAllGoals(goals);
       }
     } catch (error) {
       console.error('Failed to fetch all goals as fallback:', error);
+      setError('Could not load goals. Please try again later.');
+      setShowError(true);
     }
   };
   
   const performLocalSearch = (query, startDateStr, endDateStr) => {
     let filtered = [...allGoals];
     
-    // Filter by title/query
-    if (query) {
-      filtered = filtered.filter(goal => 
-        goal.title && goal.title.toLowerCase().includes(query.toLowerCase())
-      );
+    // If no search criteria, return all goals
+    if (!query && !startDateStr && !endDateStr) {
+      return filtered;
     }
     
-    // Filter by start date
-    if (startDateStr) {
-      const start = new Date(startDateStr);
-      filtered = filtered.filter(goal => {
-        const createdAt = goal.createdAt ? new Date(goal.createdAt) : null;
-        return createdAt && createdAt >= start;
-      });
-    }
-    
-    // Filter by end date
-    if (endDateStr) {
-      const end = new Date(endDateStr);
-      // Set end date to end of day
-      end.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(goal => {
-        const createdAt = goal.createdAt ? new Date(goal.createdAt) : null;
-        return createdAt && createdAt <= end;
-      });
-    }
-    
-    return filtered;
+    // Use OR logic instead of AND - any condition match should return the goal
+    return filtered.filter(goal => {
+      // Check title match if query exists
+      const titleMatch = query ? 
+        (goal.title && goal.title.toLowerCase().includes(query.toLowerCase())) : 
+        false;
+        
+      // Check date range if either start or end date exists
+      let dateMatch = false;
+      const createdAt = goal.createdAt ? new Date(goal.createdAt) : null;
+      
+      // If we have a created date to check against
+      if (createdAt) {
+        // Start date check
+        const afterStartDate = startDateStr ? 
+          (createdAt >= new Date(startDateStr)) : 
+          true;
+          
+        // End date check (set end date to end of day)
+        const beforeEndDate = endDateStr ? 
+          (() => {
+            const endDate = new Date(endDateStr);
+            endDate.setHours(23, 59, 59, 999);
+            return createdAt <= endDate;
+          })() : 
+          true;
+          
+        // Date matches if it's after start date AND before end date
+        dateMatch = afterStartDate && beforeEndDate;
+      }
+      
+      // Return true if EITHER title matches OR date is in range
+      return titleMatch || dateMatch;
+    });
   };
   
   const handleSearch = async (query = searchQuery, start = startDate, end = endDate) => {
@@ -121,39 +155,23 @@ function Search() {
     
     setLoading(true);
     setError(null);
-    setUsingFallback(false);
     
-    try {
-      const dateRange = {};
-      if (start) dateRange.startDate = start instanceof Date ? start.toISOString() : start;
-      if (end) dateRange.endDate = end instanceof Date ? end.toISOString() : end;
-      
-      // Try to use API search first
-      const response = await apiService.goals.search(query, dateRange);
-      setSearchResults(response.data);
-      setSearched(true);
-    } catch (error) {
-      console.error('Search API failed, switching to local filtering:', error);
-      
-      // Use local filtering as fallback
-      setUsingFallback(true);
-      
-      const startStr = start instanceof Date ? start.toISOString() : start;
-      const endStr = end instanceof Date ? end.toISOString() : end;
-      
-      const filteredResults = performLocalSearch(query, startStr, endStr);
-      setSearchResults(filteredResults);
-      
-      if (filteredResults.length === 0) {
-        setError('No matching goals found. Try different search criteria.');
-      } else {
-        setError('Using local search results due to API limitations.');
-      }
+    // Skip the API call and directly use local filtering
+    setUsingFallback(true);
+    
+    const startStr = start instanceof Date ? start.toISOString() : start;
+    const endStr = end instanceof Date ? end.toISOString() : end;
+    
+    const filteredResults = performLocalSearch(query, startStr, endStr);
+    setSearchResults(filteredResults);
+    
+    if (filteredResults.length === 0) {
+      setError('No matching goals found. Try different search criteria.');
       setShowError(true);
-      setSearched(true);
-    } finally {
-      setLoading(false);
     }
+    
+    setSearched(true);
+    setLoading(false);
   };
   
   const handleClear = () => {
@@ -234,7 +252,7 @@ function Search() {
                   <strong>Search by Creation Date Range:</strong>
                 </Typography>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  Find goals created between specific dates
+                  Find goals created between specific dates or with matching titles
                 </Typography>
               </Grid>
               
@@ -331,45 +349,103 @@ function Search() {
                 Search Results ({searchResults.length})
               </Typography>
               <Typography variant="subtitle2" color="textSecondary">
-                {startDate && endDate ? `Goals created between ${formatDate(startDate)} and ${formatDate(endDate)}` : 
-                 startDate ? `Goals created since ${formatDate(startDate)}` : 
-                 endDate ? `Goals created before ${formatDate(endDate)}` : ''}
+                {!searchQuery && !startDate && !endDate ? 'All goals' : 
+                  <span>
+                    {searchQuery && <span>Title contains "{searchQuery}"</span>}
+                    {searchQuery && (startDate || endDate) && <span> or </span>}
+                    {startDate && endDate && <span>Created between {formatDate(startDate)} and {formatDate(endDate)}</span>}
+                    {startDate && !endDate && <span>Created since {formatDate(startDate)}</span>}
+                    {!startDate && endDate && <span>Created before {formatDate(endDate)}</span>}
+                  </span>
+                }
               </Typography>
             </Box>
             
-            <Grid container spacing={3}>
-              {searchResults.map((goal) => (
-                <Grid item xs={12} md={6} lg={4} key={goal._id || goal.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" component="h2" gutterBottom>
-                        {goal.title}
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary" noWrap>
-                        {goal.description || 'No description'}
-                      </Typography>
-                      <Divider sx={{ my: 1.5 }} />
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                        <Typography variant="body2">
-                          <strong>Created:</strong> {formatDate(goal.createdAt)}
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>Target:</strong> {formatDate(goal.targetDate)}
-                        </Typography>
+            <Grid container spacing={2}>
+              {searchResults.map((goal) => {
+                const goalId = goal._id || goal.id;
+                const priorityColor = goal.priority === 'High' ? '#f8d7da' : 
+                                      goal.priority === 'Medium' ? '#fff3cd' : 
+                                      goal.priority === 'Low' ? '#d1e7dd' : '#e2e3e5';
+                
+                return (
+                  <Grid item xs={12} md={6} lg={4} key={goalId}>
+                    <Paper 
+                      elevation={2} 
+                      sx={{ 
+                        p: 2, 
+                        mb: 2, 
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          boxShadow: 3
+                        }
+                      }}
+                      onClick={() => viewGoalDetails(goalId)}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="h6">{goal.title}</Typography>
+                        </Box>
+                        <Chip 
+                          label={goal.priority || 'Medium'} 
+                          size="small" 
+                          sx={{ 
+                            bgcolor: priorityColor,
+                            color: 'text.primary',
+                            fontWeight: 'bold',
+                            minWidth: '60px'
+                          }} 
+                        />
                       </Box>
-                    </CardContent>
-                    <CardActions>
-                      <Button 
-                        size="small" 
-                        endIcon={<ChevronRightIcon />}
-                        onClick={() => viewGoalDetails(goal._id || goal.id)}
-                      >
-                        View Details
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
+                      
+                      {goal.description && (
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ 
+                            mb: 2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {goal.description}
+                        </Typography>
+                      )}
+                      
+                      <Box sx={{ mt: 'auto' }}>
+                        <Divider sx={{ my: 1 }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <CalendarTodayIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary' }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {goal.targetDate ? formatDate(goal.targetDate) : (goal.dueDate ? formatDate(goal.dueDate) : 'No date')}
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Button
+                              size="small"
+                              endIcon={<ChevronRightIcon />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                viewGoalDetails(goalId);
+                              }}
+                            >
+                              View Details
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                );
+              })}
             </Grid>
           </>
         )}
@@ -381,7 +457,16 @@ function Search() {
         onClose={handleCloseError}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseError} severity="info" sx={{ width: '100%' }}>
+        <Alert 
+          onClose={handleCloseError} 
+          severity={searchResults.length > 0 ? "info" : "warning"} 
+          sx={{ width: '100%' }}
+          action={
+            <Button color="inherit" size="small" onClick={handleCloseError}>
+              Dismiss
+            </Button>
+          }
+        >
           {error}
         </Alert>
       </Snackbar>
