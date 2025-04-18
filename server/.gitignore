@@ -4,4 +4,7 @@
 .env.*.local
 node_modules
 
+# Doc directory
+doc/
+
 # ... existing code ... 
