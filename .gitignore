@@ -11,7 +11,7 @@ res/
 *.DS_Store
 
 # ignore doc directories
-client/doc/
+client/src/docs/
 server/doc/
 
 # ignore all .txt files in root directory

@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Doc directory
-doc/
+# Docs directory
+src/docs/
