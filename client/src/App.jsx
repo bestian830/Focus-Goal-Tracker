@@ -10,6 +10,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import Search from "./pages/Search";
+import GoalDetails from "./pages/GoalDetails";
 import theme from "./theme";
 import "./styles/GlobalStyles.css";
 
@@ -29,6 +31,12 @@ function App() {
           
           {/* Profile Page Route */}
           <Route path="/profile" element={<Profile />} />
+          
+          {/* Search Page Routes */}
+          <Route path="/search" element={<Search />} />
+          
+          {/* Goal Details Page Route */}
+          <Route path="/goals/:id" element={<GoalDetails />} />
 
           {/* Default redirect to home page */}
           <Route path="*" element={<Navigate to="/" />} />

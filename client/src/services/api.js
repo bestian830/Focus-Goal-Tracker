@@ -299,7 +299,8 @@ const apiService = {
 
   // goal related
   goals: {
-    getAll: (userId) => api.get(`/api/goals/user/${userId}`),
+    getAll: () => api.get("/api/goals"),
+    getById: (id) => api.get(`/api/goals/${id}`),
     getUserGoals: (userId) => {
       console.log(`API call getUserGoals, user ID: ${userId}`, { isTemporary: userId && userId.toString().startsWith('temp_') });
       return api.get(`/api/goals/${userId}`)
@@ -308,95 +309,24 @@ const apiService = {
           throw error;
         });
     },
-    getById: (id) => api.get(`/api/goals/detail/${id}`),
-    create: (goalData) => api.post("/api/goals", goalData),
-    createGoal: (goalData) => {
-      // ensure goalData contains a valid userId
-      if (!goalData.userId) {
-        console.error("createGoal: missing userId");
-        return Promise.reject(new Error("Goal data missing user ID"));
-      }
-      
-      // ensure description field exists
-      if (!goalData.description && goalData.title && goalData.motivation) {
-        console.log("API layer: found missing description field, generating automatically");
-        goalData.description = `I want to ${goalData.title}, because ${goalData.motivation}.`;
-      }
-      
-      // ensure declaration field exists
-      if (!goalData.declaration || !goalData.declaration.content) {
-        console.log("API layer: found missing declaration field, generating declaration content automatically");
-        
-        // generate declaration content
-        const generateDeclarationText = (data) => {
-          const formattedDate = data.targetDate ? new Date(data.targetDate).toLocaleDateString() : 'Date not set';
-          const dailyTask = data.dailyTasks && data.dailyTasks.length > 0 ? data.dailyTasks[0] : 'daily commitment';
-          const reward = data.rewards && data.rewards.length > 0 ? data.rewards[0] : 'appropriate reward';
-          const resource = data.resources && data.resources.length > 0 ? data.resources[0] : 'necessary preparation';
-          const motivation = data.motivation || data.description || 'this is a deeply meaningful pursuit for me';
-          
-          return `${data.title}
-
-This goal isn't just another item on my list—it's something I genuinely want to achieve.
-
-I'm stepping onto this path because ${motivation}. It's something deeply meaningful to me, a desire that comes straight from my heart.
-
-I trust that I have what it takes, because I already have ${resource} in my hands—these are my sources of confidence and strength as I move forward.
-
-I don't need to wait until I'm "fully ready." The best moment to start is right now. Next, I'll take my first step and let the momentum carry me onward.
-
-I understand that as long as I commit to ${dailyTask} each day, little by little, I'll steadily move closer to the goal I'm eager to achieve.
-
-Every time I complete my daily milestone, I'll reward myself with something small and meaningful: ${reward}.
-
-I've set a deadline for myself: ${formattedDate}. I know there might be ups and downs along the way, but I deeply believe I have enough resources and strength to keep going.
-
-Because the path is already beneath my feet—it's really not that complicated. All I need to do is stay focused and adjust my pace when needed ^^.`;
-        };
-        
-        goalData.declaration = {
-          content: generateDeclarationText(goalData),
-          updatedAt: new Date()
-        };
-      }
-      
-      const isTemporary = typeof goalData.userId === 'string' && goalData.userId.startsWith('temp_');
-      console.log(`calling createGoal API, data:`, {
-        ...goalData,
-        userId: goalData.userId,
-        hasDescription: !!goalData.description,
-        descriptionText: goalData.description ? `${goalData.description.substring(0, 50)}${goalData.description.length > 50 ? '...' : ''}` : null,
-        descriptionLength: goalData.description ? goalData.description.length : 0,
-        hasDeclaration: !!goalData.declaration,
-        declarationLength: goalData.declaration ? goalData.declaration.content.length : 0,
-        hasVisionImageUrl: !!goalData.visionImageUrl,
-        visionImageUrlLength: goalData.visionImageUrl ? goalData.visionImageUrl.length : 0,
-        visionImageUrlPreview: goalData.visionImageUrl ? `${goalData.visionImageUrl.substring(0, 50)}...` : null,
-        isTemporaryUser: isTemporary
-      });
-      
-      return api.post("/api/goals", goalData)
-        .then(response => {
-          console.log(`createGoal: goal created successfully, response:`, response.data);
-          return response;
-        })
-        .catch(error => {
-          console.error(`createGoal: goal creation failed, error:`, {
-            error: error.response ? error.response.data : error.message,
-            status: error.response ? error.response.status : 'unknown',
-            userId: goalData.userId,
-            isTemporaryUser: isTemporary
-          });
-          throw error;
+    create: (goalData) => {
+      // Validate targetDate before submitting
+      if (goalData.targetDate) {
+        console.log("create: targetDate validation:", {
+          value: goalData.targetDate,
+          type: typeof goalData.targetDate,
+          isDateObject: goalData.targetDate instanceof Date,
+          isoString: goalData.targetDate instanceof Date ? goalData.targetDate.toISOString() : goalData.targetDate
         });
+      }
+      
+      return api.post("/api/goals", goalData);
     },
     update: (id, goalData) => {
-      console.log(`update: updating goal request, ID: ${id}, data:`, goalData);
-      
-      // check if targetDate field exists
+      // Validate targetDate before submitting
       if (goalData.targetDate) {
-        console.log(`update: targetDate field exists, checking value:`, {
-          originalValue: goalData.targetDate,
+        console.log("update: targetDate validation:", {
+          value: goalData.targetDate,
           type: typeof goalData.targetDate,
           isDateObject: goalData.targetDate instanceof Date,
           isoString: goalData.targetDate instanceof Date ? goalData.targetDate.toISOString() : goalData.targetDate
@@ -439,6 +369,40 @@ Because the path is already beneath my feet—it's really not that complicated. 
           });
           throw error;
         }),
+    search: (query, dateRange) => {
+      const params = {};
+      if (query) params.query = query;
+      if (dateRange && dateRange.startDate) params.createdStartDate = dateRange.startDate;
+      if (dateRange && dateRange.endDate) params.createdEndDate = dateRange.endDate;
+      
+      const queryString = new URLSearchParams(params).toString();
+      console.log(`Executing search with query: ${queryString}`);
+      console.log(`Full URL: ${detectedApiUrl}/api/goals/search?${queryString}`);
+      
+      return api.get(`/api/goals/search?${queryString}`)
+        .then(response => {
+          console.log('search: goals search completed successfully, criteria:', params, 'results:', response.data);
+          return response;
+        })
+        .catch(error => {
+          console.error('search: goals search failed, criteria:', params);
+          console.error('search: detailed error:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data,
+            url: `${detectedApiUrl}/api/goals/search?${queryString}`
+          });
+          
+          // If backend search endpoint doesn't exist, provide fallback behavior
+          if (error.response?.status === 404) {
+            console.warn('Search endpoint not found. Using fallback method.');
+            // Return empty array as fallback
+            return { data: [] };
+          }
+          
+          throw error;
+        });
+    },
     generateGoalDeclaration: (goalData) => {
       try {
         const generateDeclarationText = (data) => {
