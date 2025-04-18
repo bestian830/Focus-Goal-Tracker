@@ -538,40 +538,55 @@ Focus offers an intuitive user experience designed to minimize friction and maxi
 FocusFinalProjectGitHub/
 ├── client/                     # React Frontend (Vite)
 │   ├── public/                 # Static assets
-│   ├── src/                    # Source code
-│   │   ├── components/         # Reusable UI components
-│   │   │   ├── GoalDetails/    # Goal detail components
-│   │   │   │   ├── DailyCard.jsx
-│   │   │   │   ├── GoalDeclaration.jsx
-│   │   │   │   ├── WeeklyDailyCards.jsx
-│   │   │   ├── GoalSettingGuide/ # Onboarding components
-│   │   │   ├── Header/         # App header components
-│   │   │   ├── ProgressReport/ # Progress analysis components
-│   │   │   │   ├── AIFeedback.jsx
-│   │   │   │   ├── ExportButton.jsx
-│   │   │   ├── Sidebar/        # Sidebar components
-│   │   │   │   ├── GoalCard.jsx
-│   │   │   ├── AuthProtected.jsx # Auth wrapper component
-│   │   │   ├── OnboardingModal.jsx # First-time user flow
-│   │   │   ├── ProfileModal.jsx   # User profile management
-│   │   ├── pages/              # Page-level components
-│   │   │   ├── Home.jsx        # Main dashboard
-│   │   │   ├── Login.jsx       # Authentication pages
-│   │   │   ├── Register.jsx
-│   │   │   ├── GuestLogin.jsx  # Temporary user entry
-│   │   │   ├── Profile.jsx     # User profile page
-│   │   ├── services/           # API service layer
-│   │   │   └── api.js          # Axios instance with interceptors
-│   │   ├── store/              # Zustand state stores
-│   │   │   ├── userStore.js    # User authentication state
-│   │   │   ├── reportStore.js  # AI reports cache
-│   │   │   ├── mainTaskStore.js # Goal tasks state
-│   │   ├── styles/             # CSS and styling
-│   │   ├── theme/              # MUI theme customization
-│   │   ├── utils/              # Helper functions
-│   │   ├── App.jsx             # Main component & routing
-│   │   ├── App.css             # Global styles
-│   │   └── main.jsx            # Application entry
+│   │   ├── src/                    # Source code
+│   │   │   ├── components/         # Reusable UI components
+│   │   │   │   ├── GoalDetails/    # Goal detail components
+│   │   │   │   │   ├── DailyCard.jsx
+│   │   │   │   │   ├── GoalDeclaration.jsx
+│   │   │   │   │   ├── WeeklyDailyCards.jsx
+│   │   │   │   │   ├── GoalSettingGuide/ # Onboarding components
+│   │   │   │   │   ├── Header/         # App header components
+│   │   │   │   │   ├── ProgressReport/ # Progress analysis components
+│   │   │   │   │   │   ├── AIFeedback.jsx
+│   │   │   │   │   │   ├── ExportButton.jsx
+│   │   │   │   │   │   ├── Sidebar/        # Sidebar components
+│   │   │   │   │   │   │   ├── GoalCard.jsx
+│   │   │   │   │   │   │   ├── AuthProtected.jsx # Auth wrapper component
+│   │   │   │   │   │   │   ├── OnboardingModal.jsx # First-time user flow
+│   │   │   │   │   │   │   ├── ProfileModal.jsx   # User profile management
+│   │   │   │   │   │   ├── pages/              # Page-level components
+│   │   │   │   │   │   │   ├── Home.jsx        # Main dashboard
+│   │   │   │   │   │   │   ├── Login.jsx       # Authentication pages
+│   │   │   │   │   │   │   ├── Register.jsx
+│   │   │   │   │   │   │   ├── GuestLogin.jsx  # Temporary user entry
+│   │   │   │   │   │   │   ├── Profile.jsx     # User profile page
+│   │   │   │   │   │   ├── services/           # API service layer
+│   │   │   │   │   │   │   └── api.js          # Axios instance with interceptors
+│   │   │   │   │   │   ├── store/              # Zustand state stores
+│   │   │   │   │   │   │   ├── userStore.js    # User authentication state
+│   │   │   │   │   │   │   ├── reportStore.js  # AI reports cache
+│   │   │   │   │   │   │   ├── mainTaskStore.js # Goal tasks state
+│   │   │   │   │   │   ├── styles/             # CSS and styling
+│   │   │   │   │   │   ├── theme/              # MUI theme customization
+│   │   │   │   │   │   ├── utils/              # Helper functions
+│   │   │   │   │   │   ├── App.jsx             # Main component & routing
+│   │   │   │   │   │   ├── App.css             # Global styles
+│   │   │   │   │   │   └── main.jsx            # Application entry
+│   │   │   │   │   ├── .env.production         # Production variables
+│   │   │   │   │   ├── eslint.config.js        # Linting rules
+│   │   │   │   │   ├── index.html              # HTML entry
+│   │   │   │   │   ├── package.json            # Dependencies & scripts
+│   │   │   │   │   └── vite.config.js          # Build configuration
+│   │   │   │   ├── .env.production         # Production variables
+│   │   │   │   ├── eslint.config.js        # Linting rules
+│   │   │   │   ├── index.html              # HTML entry
+│   │   │   │   ├── package.json            # Dependencies & scripts
+│   │   │   │   └── vite.config.js          # Build configuration
+│   │   │   └── .env.production         # Production variables
+│   │   └── eslint.config.js        # Linting rules
+│   │   ├── index.html              # HTML entry
+│   │   ├── package.json            # Dependencies & scripts
+│   │   └── vite.config.js          # Build configuration
 │   ├── .env.production         # Production variables
 │   ├── eslint.config.js        # Linting rules
 │   ├── index.html              # HTML entry
@@ -660,9 +675,23 @@ We plan to enhance the application with the following features:
 
 ## Contributors
 
-- Ryan Tian
-- Yanbo Chen
-- Neda Changizi - Instructor
+This project was jointly developed by:
+
+- **Ryan** - Full-stack developer responsible for:
+  - AI progress report feature implementation
+  - User authentication and guest access system
+  - React components for goal tracking and daily cards
+  - Database schema design and API integration
+  - Responsive UI implementation and testing
+
+- **Yanbo Chen** - Full-stack developer responsible for:
+  - Project architecture and initial setup
+  - Backend API development with Express and MongoDB
+  - State management with Zustand
+  - Data visualization components
+  - Deployment configuration
+
+This repository is a mirror of the original collaborative project: [FocusFinalProjectGitHub](https://github.com/YanBoChen0928/FocusFinalProjectGitHub)
 
 ## License
 
