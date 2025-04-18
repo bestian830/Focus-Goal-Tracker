@@ -505,7 +505,7 @@ const updateGoalStatus = async (req, res) => {
     const { status } = req.body;
     
     // *** Modification：put "archived" into the valid status list ***
-    const validStatuses = ["active", "completed", "abandoned", "archived"]; // 添加 "archived"
+    const validStatuses = ["active", "completed", "abandoned", "archived"]; // add "archived"
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,

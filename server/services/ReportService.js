@@ -150,8 +150,8 @@ Please reply in English, with a positive and encouraging tone, and specific sugg
       plans.push('2. Review the incomplete tasks, find the difficulties');
       plans.push('3. Adjust the difficulty of the task or seek help');
     } else {
-      plans.push('2. Record today\'s experience and心得');
-      plans.push('3. Plan the重点 for tomorrow\'s task');
+      plans.push('2. Record today\'s experience and insights');
+      plans.push('3. Plan the key points for tomorrow\'s task');
     }
 
     return plans.join('\n');

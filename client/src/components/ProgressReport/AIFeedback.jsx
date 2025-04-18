@@ -161,9 +161,9 @@ export default function AIFeedback({ goalId }) {
         stack: err.stack
       });
       
-      // 针对超时错误给出更友好的提示
+      // For timeout errors, provide a more friendly message
       if (err.code === 'ECONNABORTED' || (err.message && err.message.includes('timeout'))) {
-        setError('AI分析服务响应超时，请再次点击生成按钮重试。由于AI分析需要一定时间，这是正常情况。');
+        setError('AI analysis service response timeout, please click the generate button again. This is normal as AI analysis takes some time.');
       } else {
         setError(err.response?.data?.error || 'Failed to generate analysis, please try again later');
       }

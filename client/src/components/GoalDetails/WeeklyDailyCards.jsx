@@ -203,20 +203,20 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
   // Handle card updates
   const handleCardUpdate = async (updatedCard, index) => {
     try {
-      // 确保卡片数据中包含任务完成状态
+      // Ensure card data contains task completion status
       if (!updatedCard.taskCompletions) {
         updatedCard.taskCompletions = {};
       }
 
-      console.log('WeeklyDailyCards - handleCardUpdate - 更新卡片数据:', {
+      console.log('WeeklyDailyCards - handleCardUpdate - Updating card data:', {
         index,
-        日期: updatedCard.date,
-        任务完成状态: updatedCard.taskCompletions
+        date: updatedCard.date,
+        taskCompletions: updatedCard.taskCompletions
       });
       
-      // 使用深拷贝更新本地状态，避免对象引用问题
+      // Use deep copy to update local state, avoid object reference issues
       const updatedCards = [...currentWeekCards];
-      // 使用深拷贝替换卡片
+      // Use deep copy to replace card
       updatedCards[index] = JSON.parse(JSON.stringify(updatedCard));
       setCurrentWeekCards(updatedCards);
       
@@ -234,7 +234,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
         
       // Notify parent component of update
       if (onCardsUpdate) {
-        console.log('WeeklyDailyCards - handleCardUpdate - 调用 onCardsUpdate 通知 GoalDetails');
+        console.log('WeeklyDailyCards - handleCardUpdate - Calling onCardsUpdate to notify GoalDetails');
         onCardsUpdate(updatedCards);
       }
     } catch (error) {
@@ -243,27 +243,27 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
     }
   };
   
-  // 确保卡片数据中date字段有效
+  // Ensure card data has valid date field
   const validateCardData = (cardData) => {
-    // 保存原始的重要数据
+    // Save original important data
     const originalCompletions = cardData.taskCompletions || {};
     const originalRecords = cardData.records || [];
     const originalCompleted = cardData.completed || { dailyTask: false };
     
-    // 如果没有日期或日期无效，使用当前日期，但保留其他数据
+    // If no date or invalid date, use current date but preserve other data
     if (!cardData.date) {
       console.warn('Card missing date, adding current date:', cardData);
       return {
         ...cardData,
         date: new Date().toISOString(),
-        // 确保保留原始的任务完成状态和记录
+        // Ensure original task completion status and records are preserved
         taskCompletions: originalCompletions,
         records: originalRecords,
         completed: originalCompleted
       };
     }
     
-    // 尝试解析日期，如果无效则重置为当前日期
+    // Try to parse date, if invalid reset to current date
     try {
       const testDate = new Date(cardData.date);
       if (isNaN(testDate.getTime())) {
@@ -271,7 +271,7 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
         return {
           ...cardData,
           date: new Date().toISOString(),
-          // 确保保留原始的任务完成状态和记录
+          // Ensure original task completion status and records are preserved
           taskCompletions: originalCompletions,
           records: originalRecords,
           completed: originalCompleted
@@ -282,14 +282,14 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
       return {
         ...cardData,
         date: new Date().toISOString(),
-        // 确保保留原始的任务完成状态和记录
+        // Ensure original task completion status and records are preserved
         taskCompletions: originalCompletions,
         records: originalRecords,
         completed: originalCompleted
       };
     }
     
-    // 如果日期有效，保持不变
+    // If date is valid, keep unchanged
     return cardData;
   };
   
@@ -472,27 +472,27 @@ export default function WeeklyDailyCards({ goal, dailyCards = [], onCardsUpdate,
             }}
           >
             {currentWeekCards.map((card, index) => {
-              // 检查是否重复的周六日期（解决日期重复问题）
+              // Check for duplicate Saturday dates (solve date duplication issue)
               if (index > 0 && index < currentWeekCards.length) {
                 const prevCardDate = new Date(currentWeekCards[index-1].date);
                 const thisCardDate = new Date(card.date);
                 
-                // 如果前后两个日期相同，跳过渲染
+                // If dates between adjacent cards are the same, skip rendering
                 if (
                   prevCardDate.getFullYear() === thisCardDate.getFullYear() &&
                   prevCardDate.getMonth() === thisCardDate.getMonth() &&
                   prevCardDate.getDate() === thisCardDate.getDate()
                 ) {
-                  console.log('跳过重复的日期卡片:', {
-                    前一个卡片: prevCardDate.toLocaleDateString(),
-                    当前卡片: thisCardDate.toLocaleDateString(),
-                    索引: index
+                  console.log('Skipping duplicate date card:', {
+                    previousCard: prevCardDate.toLocaleDateString(),
+                    currentCard: thisCardDate.toLocaleDateString(),
+                    index: index
                   });
                   return null;
                 }
               }
 
-              // 验证卡片数据，确保日期有效
+              // Validate card data, ensure date is valid
               const validatedCard = validateCardData(card);
               
               return (

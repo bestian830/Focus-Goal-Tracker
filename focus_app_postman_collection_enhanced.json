@@ -25,7 +25,7 @@
             "register"
           ]
         },
-        "description": "創建正式用戶賬戶",
+        "description": "Create official user account",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"tempId\": \"temp_abc123\"\n}",
@@ -59,7 +59,7 @@
             "login"
           ]
         },
-        "description": "用戶登錄",
+        "description": "User login",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
@@ -105,7 +105,7 @@
             "temp-users"
           ]
         },
-        "description": "創建臨時用戶",
+        "description": "Create temporary user",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"tempId\": \"temp_abc123\"\n}",
@@ -142,7 +142,7 @@
             "goals"
           ]
         },
-        "description": "創建新目標",
+        "description": "Create new goal",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"userId\": \"user_123\",\n  \"title\": \"My Goal\",\n  \"description\": \"Learn MERN Stack\"\n}",
@@ -191,7 +191,7 @@
             "progress"
           ]
         },
-        "description": "創建進度記錄",
+        "description": "Create progress record",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"goalId\": \"goal_123\",\n  \"userId\": \"user_123\",\n  \"records\": [\n    {\n      \"content\": \"Completed task A\",\n      \"duration\": 30,\n      \"mood\": \"happy\"\n    }\n  ]\n}",
@@ -236,7 +236,7 @@
             "progress?goalId=goal_123"
           ]
         },
-        "description": "獲取目標進度"
+        "description": "Get goal progress"
       },
       "response": []
     },
@@ -265,7 +265,7 @@
             "progress_123"
           ]
         },
-        "description": "更新進度記錄",
+        "description": "Update progress record",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"records\": [\n    {\n      \"content\": \"Updated task A\",\n      \"duration\": 45,\n      \"mood\": \"focused\"\n    }\n  ],\n  \"summary\": \"Improved productivity\"\n}",
@@ -304,7 +304,7 @@
             "records"
           ]
         },
-        "description": "添加記錄項",
+        "description": "Add record item",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"content\": \"New task B\",\n  \"duration\": 20,\n  \"mood\": \"neutral\"\n}",
@@ -344,7 +344,7 @@
             "checkpoint_1"
           ]
         },
-        "description": "更新檢查點狀態",
+        "description": "Update checkpoint status",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"isCompleted\": true\n}",
@@ -378,7 +378,7 @@
             "summary?goalId=goal_123&startDate=2024-01-01&endDate=2024-01-31"
           ]
         },
-        "description": "獲取進度摘要"
+        "description": "Get progress summary"
       },
       "response": []
     },
@@ -407,7 +407,7 @@
             "generate"
           ]
         },
-        "description": "生成報告",
+        "description": "Generate report",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"goalId\": \"goal_123\",\n  \"userId\": \"user_123\",\n  \"type\": \"weekly\",\n  \"period\": {\n    \"startDate\": \"2024-01-01\",\n    \"endDate\": \"2024-01-07\"\n  }\n}",
@@ -452,7 +452,7 @@
             "reports?goalId=goal_123"
           ]
         },
-        "description": "獲取目標報告"
+        "description": "Get goal reports"
       },
       "response": []
     },
@@ -477,7 +477,7 @@
             "report_123"
           ]
         },
-        "description": "獲取報告詳情"
+        "description": "Get report details"
       },
       "response": []
     },
@@ -506,7 +506,7 @@
             "report_123"
           ]
         },
-        "description": "更新報告內容",
+        "description": "Update report content",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"content\": \"Updated report content\",\n  \"insights\": [\n    \"Insight A\",\n    \"Insight B\"\n  ],\n  \"recommendations\": [\n    \"Do more A\",\n    \"Avoid B\"\n  ]\n}",
@@ -540,7 +540,7 @@
             "report_123"
           ]
         },
-        "description": "刪除報告"
+        "description": "Delete report"
       },
       "response": []
     },
@@ -567,7 +567,7 @@
             "pdf"
           ]
         },
-        "description": "導出報告為 PDF"
+        "description": "Export report as PDF"
       },
       "response": []
     }

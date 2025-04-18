@@ -36,7 +36,7 @@ router.get('/signature', requireAuth, (req, res) => {
       max_file_size: 1000000 // limit to 1MB
     }, process.env.CLOUDINARY_API_SECRET);
 
-    console.log('生成簽名成功:', {
+    console.log('Signature generated successfully:', {
       userId,
       timestamp,
       folder,
@@ -69,11 +69,11 @@ router.get('/signature', requireAuth, (req, res) => {
  * @access Public
  */
 router.get('/health', (req, res) => {
-  // 添加调试日志查看环境变量
-  console.log('Cloudinary 配置检查:', {
-    CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? '已设置' : '未设置',
-    API_KEY: process.env.CLOUDINARY_API_KEY ? '已设置' : '未设置',
-    API_SECRET: process.env.CLOUDINARY_API_SECRET ? '已设置' : '未设置',
+  // Add debug logs to check environment variables
+  console.log('Cloudinary configuration check:', {
+    CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? 'set' : 'not set',
+    API_KEY: process.env.CLOUDINARY_API_KEY ? 'set' : 'not set',
+    API_SECRET: process.env.CLOUDINARY_API_SECRET ? 'set' : 'not set',
     configured: !!(process.env.CLOUDINARY_CLOUD_NAME && 
                     process.env.CLOUDINARY_API_KEY && 
                     process.env.CLOUDINARY_API_SECRET)
@@ -104,7 +104,7 @@ router.post('/direct', requireAuth, express.raw({ type: 'image/*', limit: '1mb' 
       });
     }
 
-    // 獲取用戶ID (支持正式用戶和臨時用戶)
+    // Get user ID (support registered and temporary users)
     const userId = req.user?.id || req.user?.tempId || 'unknown';
     
     console.log('received direct upload request', {

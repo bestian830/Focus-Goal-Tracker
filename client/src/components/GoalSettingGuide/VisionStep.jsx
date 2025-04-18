@@ -153,7 +153,7 @@ const VisionStep = ({ value, onChange }) => {
           if (err.response.data && err.response.data.error) {
             if (err.response.data.error.message.includes('cloudinary')) {
               errorMessage = 'Image upload service is not properly configured on the server. Please contact the administrator.';
-              console.error('Cloudinary环境变量可能未正确配置');
+              console.error('Cloudinary environment variables may not be correctly configured');
             } else {
               errorMessage = `Upload error: ${err.response.data.error.message || 'Server error'}`;
             }
@@ -167,7 +167,7 @@ const VisionStep = ({ value, onChange }) => {
         }
       } else if (err.message && err.message.includes('Cloudinary is not properly configured')) {
         errorMessage = 'Image upload service is not properly configured. Please contact support';
-        console.error('服务器未正确配置Cloudinary环境变量');
+        console.error('Server has not correctly configured Cloudinary environment variables');
       } else if (err.message && err.message.includes('Network Error')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       }

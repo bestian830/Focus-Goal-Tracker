@@ -1,20 +1,20 @@
 // Description: Main server file for the Express.js backend. first part: as the door to the restaurant
 
-// 确保dotenv在最开始就加载
+// Ensure dotenv loads at the very beginning
 import dotenv from "dotenv";
-// 立即加载环境变量
+// Load environment variables immediately
 dotenv.config();
 
-// 添加环境变量检查
-console.log("=== 环境变量检查 ===");
+// Add environment variable check
+console.log("=== Environment Variables Check ===");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("PORT:", process.env.PORT);
 console.log("CLIENT_URL:", process.env.CLIENT_URL);
-console.log("MongoDB URI:", process.env.MONGODB_URI ? "已设置" : "未设置");
-console.log("Cloudinary配置状态:", 
+console.log("MongoDB URI:", process.env.MONGODB_URI ? "Set" : "Not set");
+console.log("Cloudinary Config Status:", 
   !!(process.env.CLOUDINARY_CLOUD_NAME && 
      process.env.CLOUDINARY_API_KEY && 
-     process.env.CLOUDINARY_API_SECRET) ? "已完成" : "未完成");
+     process.env.CLOUDINARY_API_SECRET) ? "Complete" : "Incomplete");
 console.log("=======================");
 
 import express from "express";
@@ -45,8 +45,8 @@ app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
       "http://localhost:5173", 
-      "http://localhost:5174",  // 添加本地Vite开发服务器可能使用的备用端口
-      "http://localhost:5175",  // 添加更多可能的本地端口
+      "http://localhost:5174",  // Add alternate port that Vite development server might use
+      "http://localhost:5175",  // Add more possible local ports
       "https://focusappdeploy-frontend.onrender.com", 
       "https://focusfinalproject-frontend-original.onrender.com", 
       "https://focusfinalproject-frontend-original-repo.onrender.com",
@@ -217,7 +217,7 @@ mongoose
       // Continue execution, don't block server startup due to index issues
     }
     
-    // 检查端口是否被占用并尝试使用其他端口
+    // Check if port is in use and try to use alternative ports
     const startServer = (port) => {
       try {
         const server = app.listen(port, () => {

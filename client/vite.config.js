@@ -1,18 +1,16 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
-import fs from "fs";
-import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  // 加載環境變量
-  const env = loadEnv(mode, process.cwd());
+  // Load environment variables
+  const env = loadEnv(mode, ".");
 
-  // 確保生產環境的 API URL 設置正確
+  // Ensure the API URL is set correctly in production
   const apiUrl = env.VITE_API_URL || "http://localhost:5050";
   console.log(`Building with API URL: ${apiUrl} in mode: ${mode}`);
 
-  // 確保環境變量在生產構建中也可用
+  // Ensure environment variables are available in production build
   const htmlPlugin = () => {
     return {
       name: "html-transform",
@@ -27,7 +25,7 @@ export default defineConfig(({ mode }) => {
     };
   };
 
-  // 開發環境配置
+  // Development environment configuration
   const devConfig = {
     server: {
       proxy: {
@@ -39,9 +37,9 @@ export default defineConfig(({ mode }) => {
     },
   };
 
-  // 生產環境配置
+  // Production environment configuration
   const prodConfig = {
-    // 生產環境不需要代理
+    // No proxy needed in production
   };
 
   return {

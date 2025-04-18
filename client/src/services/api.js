@@ -9,9 +9,9 @@ const isProduction =
   import.meta.env.PROD === true || import.meta.env.MODE === "production";
 const API_URL = isProduction ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
 
-// 尝试探测本地API端口是否可用
+// Try to detect if local API port is available
 const checkLocalApiPort = async (basePort = 5050, maxAttempts = 3) => {
-  if (isProduction) return API_URL; // 生产环境不需要探测
+  if (isProduction) return API_URL; // No detection needed in production environment
 
   for (let i = 0; i < maxAttempts; i++) {
     const portToCheck = basePort + i;
@@ -25,23 +25,23 @@ const checkLocalApiPort = async (basePort = 5050, maxAttempts = 3) => {
       });
       
       if (response.ok) {
-        console.log(`找到可用的API端口: ${portToCheck}`);
+        console.log(`Found available API port: ${portToCheck}`);
         return `http://localhost:${portToCheck}`;
       }
     } catch (error) {
-      console.log(`端口 ${portToCheck} 无法连接:`, error.message);
+      console.log(`Port ${portToCheck} connection failed:`, error.message);
     }
   }
   
-  console.log(`无法找到可用的API端口，使用默认地址: ${API_URL}`);
+  console.log(`Could not find available API port, using default address: ${API_URL}`);
   return API_URL;
 };
 
-// 立即开始探测端口 (异步)
+// Immediately start port detection (asynchronous)
 let detectedApiUrl = API_URL;
 checkLocalApiPort().then(url => {
   detectedApiUrl = url;
-  console.log("API URL已更新为:", detectedApiUrl);
+  console.log("API URL has been updated to:", detectedApiUrl);
 });
 
 // output configuration information, help diagnose connection issues
@@ -62,10 +62,10 @@ const api = axios.create({
   timeout: 10000, // 10 seconds
 });
 
-// 请求拦截器，动态设置baseURL
+// Request interceptor, dynamically set baseURL
 api.interceptors.request.use(
   async (config) => {
-    // 确保使用最新检测到的API URL
+    // Ensure using the latest detected API URL
     config.baseURL = detectedApiUrl;
     
     // record the complete request URL, helpful for debugging
@@ -456,7 +456,7 @@ const apiService = {
           endDate: endDate
         }
       }, {
-        timeout: 60000 // 增加超时时间到60秒，原来是默认的10秒
+        timeout: 60000 // Increase timeout to 60 seconds, originally was 10 seconds default
       })
         .then(response => {
           console.log('reports: report generated successfully, response:', response);
@@ -464,11 +464,11 @@ const apiService = {
         })
         .catch(error => {
           console.error('reports: report generation failed, error:', error);
-          // 如果是超时错误，可以在这里处理重试逻辑
+          // If it's a timeout error, retry logic can be handled here
           if (error.code === 'ECONNABORTED' || (error.message && error.message.includes('timeout'))) {
             console.log('Request timed out, retrying...');
-            // 这里可以添加重试逻辑，但需要注意避免无限重试
-            // 简单起见，当前不自动重试，而是让用户手动重试
+            // Add retry logic here, but be careful to avoid infinite retries
+            // For simplicity, currently not automatically retrying, let the user retry manually
           }
           throw error;
         });

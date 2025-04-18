@@ -168,12 +168,12 @@ const GoalSchema = new mongoose.Schema(
   }
 );
 
-// 确保没有唯一索引限制
-// 完全移除userId和title的组合索引，仅保留单独的userId索引
+// Ensure there are no unique index constraints
+// Completely remove the combined userId and title index, only keep the individual userId index
 GoalSchema.index({ userId: 1 }, { background: true });
-// 明确指定title不是唯一的
+// Explicitly specify that title is not unique
 GoalSchema.index({ title: 1 }, { unique: false, background: true });
-// 显式禁用userId和title的联合唯一索引 
+// Explicitly disable userId and title combined unique index
 GoalSchema.index({ userId: 1, title: 1 }, { unique: false, dropDups: false, background: true });
 
 // Create and export the Goal model
